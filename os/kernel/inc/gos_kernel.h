@@ -229,7 +229,7 @@ typedef struct
 	gos_taskRunTime_t		taskRunTime;			//!< Task run-time.
 	gos_taskCSCounter_t		taskCsCounter;			//!< Task context-switch counter.
 	gos_taskStackSize_t		taskStackSize;			//!< Task stack size.
-	u8_t					taskCpuUsage;			//!< Task processor usage in [%].
+	u16_t					taskCpuUsage;			//!< Task processor usage in [%].
 }gos_taskDescriptor_t;
 
 /**
