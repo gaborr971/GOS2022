@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_queue.c
 //! @author		Gabor Repasi
-//! @date		2022-10-23
-//! @version	1.0
+//! @date		2022-11-15
+//! @version	1.2
 //!
 //! @brief		GOS queue service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_queue.h
@@ -28,6 +28,7 @@
 // 1.1		2022-11-14	Gabor Repasi	+	Dump separator changed
 //										+	Signal sender enumerators added
 //										+	Formatted log used in dump
+// 1.2		2022-11-15	Gabor Repasi	+	Queue peek function added
 //*************************************************************************************************
 /*
  * Includes
@@ -297,6 +298,42 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
 				queueEmptyHook(queueId);
 			}
 
+			queueGetResult = GOS_SUCCESS;
+		}
+	}
+
+	gos_lockRelease(queueLock);
+	return queueGetResult;
+}
+
+/*
+ * Function: gos_queuePeek
+ */
+gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLength_t targetSize)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t		queueGetResult	= GOS_ERROR;
+	gos_queueIndex_t	queueIndex		= 0u;
+
+	/*
+	 * Function code.
+	 */
+	gos_lockWaitGet(queueLock);
+
+	if (queueId >= GOS_DEFAULT_QUEUE_ID &&
+		(queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
+		target != NULL &&
+		queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID &&
+		targetSize >= queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueElements[readCounters[(queueId - GOS_DEFAULT_QUEUE_ID)]].elementLength)
+	{
+		queueIndex = (gos_queueIndex_t)(queueId - GOS_DEFAULT_QUEUE_ID);
+
+		// Check if queue is empty.
+		if (readCounters[queueIndex] != writeCounters[queueIndex])
+		{
+			memcpy(target, queues[queueIndex].queueElements[readCounters[queueIndex]].queueElementBytes, queues[queueIndex].queueElements[readCounters[queueIndex]].elementLength);
 			queueGetResult = GOS_SUCCESS;
 		}
 	}
