@@ -1,0 +1,128 @@
+//*************************************************************************************************
+//
+//                            #####             #####             #####
+//                          #########         #########         #########
+//                         ##                ##       ##       ##
+//                        ##                ##         ##        #####
+//                        ##     #####      ##         ##           #####
+//                         ##       ##       ##       ##                ##
+//                          #########         #########         #########
+//                            #####             #####             #####
+//
+//                                      (c) Gabor Repasi, 2022
+//
+//*************************************************************************************************
+//! @file		gos_signal.h
+//! @author		Gabor Repasi
+//! @date		2022-10-23
+//! @version	1.0
+//!
+//! @brief		GOS signal service header.
+//! @details	Signal service is a way of inter-task or inter-process communication provided by
+//! 			the operating system. Signals can be created, subscribed to and invoked. When a
+//! 			signal is invoked, it is placed into an invoke queue and the signal daemon task
+//! 			will handle the invoke requests in the background. Thus signals are not instantly
+//! 			invoked. When a signal is invoked, all the subscribed functions get called. A
+//! 			signal can be invoked without any subscribers (in this case no function will be
+//! 			called).
+//*************************************************************************************************
+// History
+// ------------------------------------------------------------------------------------------------
+// Version	Date		Author			Description
+// ------------------------------------------------------------------------------------------------
+// 1.0		2022-10-23	Gabor Repasi	Initial version created.
+//*************************************************************************************************
+#ifndef GOS_SIGNAL_H
+#define GOS_SIGNAL_H
+/*
+ * Includes
+ */
+#include "gos_kernel.h"
+
+/*
+ * Type definitions
+ */
+#if CFG_SIGNAL_MAX_NUMBER < 255
+//! Signal ID.
+typedef u8_t	gos_signalId_t;
+//! Signal sender ID.
+typedef u8_t	gos_signalSenderId_t;
+//! Signal index for loops.
+typedef u8_t	gos_signalIndex_t;
+#else
+//! Signal ID.
+typedef u16_t	gos_signalId_t;
+//! Signal sender ID.
+typedef u16_t	gos_signalSenderId_t;
+//! Signal index for loops.
+typedef u16_t	gos_signalIndex_t;
+#endif
+#if CFG_SIGNAL_MAX_SUBSCRIBERS < 255
+//! Signal handler index type.
+typedef u8_t	gos_signalHandlerIndex_t;
+#else
+//! Signal handler index type.
+typedef u16_t	gos_signalHandlerIndex_t;
+#endif
+//! Signal handler function type.
+typedef void (*gos_signalHandler_t)(gos_signalSenderId_t);
+
+/*
+ * Function prototypes
+ */
+/**
+ * @brief	Initializes the signal service.
+ * @details	Initializes the internal signal array, creates a signal queue,
+ *			registers the signal daemon task, creates the kernel dump signal,
+ *			and subscribes the necessary components for the dump signal.
+ *
+ * @return	-
+ */
+gos_result_t gos_signalInit (void_t);
+
+/**
+ * @brief	Creates a new signal.
+ * @details	Finds the next free slot in the signal array and
+ * 			registers the new signal there.
+ *
+ * @param 	pSignal	: Pointer to a signal identifier.
+ *
+ * @return	Success of signal creation.
+ *
+ * @retval	GOS_SUCCESS	:	Creation successful.
+ * @retval	GOS_ERROR 	:	Signal array full.
+ */
+gos_result_t gos_signalCreate (gos_signalId_t* pSignal);
+
+/**
+ * @brief	Subscribes to the given signal.
+ * @details	Finds the next free slot in the signal handler array and registers the
+ * 			signal handler there.
+ *
+ * @param 	signalId		:	Signal identifier.
+ * @param 	signalHandler	:	Signal handler function pointer.
+ *
+ * @return	Success of signal subscription.
+ *
+ * @retval	GOS_SUCCESS	:	Subscription successful.
+ * @retval	GOS_ERROR	:	Invalid signal ID, signal handler NULL pointer, or
+ * 							handler array full.
+ */
+gos_result_t gos_signalSubscribe (gos_signalId_t signalId, gos_signalHandler_t signalHandler);
+
+/**
+ * @brief	Invokes the given signal.
+ * @details	Places the given signal in the invoke queue (for the signal daemon to
+ * 			actually invoke the signal in the background).
+ *
+ * @param 	signalId	:	Signal identifier.
+ * @param 	senderId	:	Sender identifier (or data to pass).
+ *
+ * @return	Success of signal invoking.
+ *
+ * @retval	GOS_SUCCESS	:	Invoking successful.
+ * @retval	GOS_ERROR	:	Invalid signal ID or signal unused.
+ */
+gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSenderId_t senderId);
+
+#endif
