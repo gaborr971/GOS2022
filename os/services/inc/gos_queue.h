@@ -15,10 +15,18 @@
 //! @file		gos_queue.h
 //! @author		Gabor Repasi
 //! @date		2022-11-15
-//! @version	1.1
+//! @version	1.2
 //!
 //! @brief		GOS queue service header.
-//! @details	TODO
+//! @details	Queue service is one of the inter-task communication solutions offered by the OS.
+//! 			A queue can hold a given number of elements with a given element size. The queue
+//! 			is implemented as a FIFO. Queues are unsafe in a way that any task with the
+//! 			queue ID in their knowledge can put and get elements to/from the queue. So queues
+//! 			are most suitable for serializing data that are coming from multiple resources but
+//! 			processes by a single task. It is also possible to peek the queue, meaning that
+//! 			the next element of the queue can be requested without deleting it form the queue.
+//! 			This way multiple tasks can process data coming from a queue in a cooperative way,
+//! 			but they rely on each others data processing.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
@@ -26,6 +34,8 @@
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-10-23	Gabor Repasi	Initial version created.
 // 1.1		2022-11-15	Gabor Repasi	+	Function descriptions updated
+// 1.2		2022-11-15	Gabor Repasi	+	Queue peek function added
+//										+	Service description added
 //*************************************************************************************************
 #ifndef GOS_QUEUE_H
 #define GOS_QUEUE_H
@@ -156,6 +166,21 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
  * @retval	GOS_ERROR   : TODO
  */
 gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLength_t targetSize);
+
+/**
+ * @brief	This function gets the next element from the given queue without removing it.
+ * @details	TODO
+ *
+ * @param	queueId		: Queue ID.
+ * @param	target		: Pointer to target variable.
+ * @param 	targetSize	: Size of target.
+ *
+ * @return	Result of element getting.
+ *
+ * @retval	GOS_SUCCESS : Element successfully copied from queue to target.
+ * @retval	GOS_ERROR   : TODO
+ */
+gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLength_t targetSize);
 
 /**
  * @brief	This function registers a queue full hook function.
