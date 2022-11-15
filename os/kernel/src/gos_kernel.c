@@ -259,6 +259,46 @@ GOS_STATIC const gos_kernelConfigDescriptor_t	kernelConfig [] =
 		.configName = "Shell daemon stack size",
 		.configValue = CFG_TASK_SHELL_DAEMON_STACK
 	},
+	// Message daemon task priority.
+	{
+		.configName = "Message daemon priority",
+		.configValue = CFG_TASK_MESSAGE_DAEMON_PRIO
+	},
+	// Signal daemon task priority.
+	{
+		.configName = "Signal daemon priority",
+		.configValue = CFG_TASK_SIGNAL_DAEMON_PRIO
+	},
+	// Process daemon task priority.
+	{
+		.configName = "Process daemon priority",
+		.configValue = CFG_TASK_PROC_DAEMON_PRIO
+	},
+	// Shell daemon task priority.
+	{
+		.configName = "Shell daemon priority",
+		.configValue = CFG_TASK_SHELL_DAEMON_PRIO
+	},
+	// Time task priority.
+	{
+		.configName = "Time task priority",
+		.configValue = CFG_TASK_TIME_PRIO
+	},
+	// Kernel dump priority.
+	{
+		.configName = "Kernel dump task priority",
+		.configValue = CFG_TASK_KERNEL_DUMP_PRIO
+	},
+	// Queue dump priority.
+	{
+		.configName = "Queue dump task priority",
+		.configValue = CFG_TASK_QUEUE_DUMP_PRIO
+	},
+	// Process dump priority.
+	{
+		.configName = "Process dump task priority",
+		.configValue = CFG_TASK_PROC_DUMP_PRIO
+	},
 };
 
 /*
@@ -1519,7 +1559,7 @@ GOS_STATIC void_t gos_kernelIdleTask (void_t)
 		}
 		for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
 		{
-			taskDescriptors[taskIndex].taskCpuUsage = 100 * taskDescriptors[taskIndex].taskRunTime / totalSystemTime;
+			taskDescriptors[taskIndex].taskCpuUsage = (u16_t)((10000 * taskDescriptors[taskIndex].taskRunTime) / totalSystemTime);
 			if (taskDescriptors[taskIndex].taskFunction == NULL)
 			{
 				break;
@@ -1637,13 +1677,14 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
 				break;
 			}
 			gos_logLogFormatted(
-					"| 0x%04X | %26s | 0x%04X | %4d | %11lu | %7d | %9s |\r\n",
+					"| 0x%04X | %26s | 0x%04X | %4d | %11lu | %3u.%-3u | %9s |\r\n",
 					taskDescriptors[taskIndex].taskId,
 					taskDescriptors[taskIndex].taskName,
 					taskDescriptors[taskIndex].taskStackSize,
 					taskDescriptors[taskIndex].taskPriority,
 					(u32_t)taskDescriptors[taskIndex].taskRunTime,
-					taskDescriptors[taskIndex].taskCpuUsage,
+					taskDescriptors[taskIndex].taskCpuUsage / 100,
+					taskDescriptors[taskIndex].taskCpuUsage % 100,
 					gos_kernelGetTaskStateString(taskDescriptors[taskIndex].taskState)
 					);
 		}
