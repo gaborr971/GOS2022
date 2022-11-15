@@ -14,17 +14,41 @@
 //*************************************************************************************************
 //! @file		gos_time.h
 //! @author		Gabor Repasi
-//! @date		2022-10-24
-//! @version	1.0
+//! @date		2022-11-15
+//! @version	1.1
 //!
 //! @brief		GOS time service header.
-//! @details	TODO
+//! @details	Time service provides an easy interface to manipulate time structures, track the
+//! 			passage of time.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
 // Version	Date		Author			Description
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-10-24	Gabor Repasi	Initial version created.
+// 1.1		2022-11-15	Gabor Repasi	+	License added
+//										*	gos_monthEnum_t renamed to gos_timeMonthEnum_t
+//										+	gos_timeElapsedSenderId_t type added
+//										-	Elapsed sender ID getter API functions removed
+//*************************************************************************************************
+//
+// Copyright (c) 2022 Gabor Repasi
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 //*************************************************************************************************
 #ifndef GOS_TIME_H
 #define GOS_TIME_H
@@ -86,7 +110,20 @@ typedef enum
 	GOS_TIME_DECEMBER,		//!< December.
 
 	GOS_TIME_NUMBER_OF_MONTHS = 12	//!< Number of months in a year.
-}gos_monthEnum_t;
+}gos_timeMonthEnum_t;
+
+/**
+ * Time elapsed sender IDs.
+ */
+typedef enum
+{
+	GOS_TIME_SECOND_ELAPSED_SENDER_ID,	//!< Second elapsed sender ID.
+	GOS_TIME_MINUTE_ELAPSED_SENDER_ID,	//!< Minute elapsed sender ID.
+	GOS_TIME_HOUR_ELAPSED_SENDER_ID,	//!< Hour elapsed sender ID.
+	GOS_TIME_DAY_ELAPSED_SENDER_ID,		//!< Day elapsed sender ID.
+	GOS_TIME_MONTH_ELAPSED_SENDER_ID,	//!< Month elapsed sender ID.
+	GOS_TIME_YEAR_ELAPSED_SENDER_ID		//!< Year elapsed sender ID.
+}gos_timeElapsedSenderId_t;
 
 /*
  * Global variables
@@ -113,22 +150,4 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
 
 //! TODO
 gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds);
-
-//! TODO
-const gos_signalSenderId_t gos_timeGetSecondElapsedSenderId (void_t);
-
-//! TODO
-const gos_signalSenderId_t gos_timeGetMinuteElapsedSenderId (void_t);
-
-//! TODO
-const gos_signalSenderId_t gos_timeGetHourElapsedSenderId (void_t);
-
-//! TODO
-const gos_signalSenderId_t gos_timeGetDayElapsedSenderId (void_t);
-
-//! TODO
-const gos_signalSenderId_t gos_timeGetMonthElapsedSenderId (void_t);
-
-//! TODO
-const gos_signalSenderId_t gos_timeGetYearElapsedSenderId (void_t);
 #endif

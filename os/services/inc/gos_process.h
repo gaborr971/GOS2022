@@ -18,7 +18,13 @@
 //! @version	1.1
 //!
 //! @brief		GOS process service header.
-//! @details	TODO
+//! @details	Process service is an alternative of tasks in the GOS system. Processes are
+//! 			lightweight functions that do not contain a blocking loop and are periodically
+//! 			called from the process daemon task. These functions are 'memory-less' so if
+//! 			it is required to have different behaviors based on a program state, a global
+//! 			variable is needed. Processes have similar API functions to tasks. The stack size
+//! 			of a process cannot be explicitly setup, the maximum stack size of a processes is
+//! 			approximately the stack size of the process daemon task.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
@@ -26,6 +32,27 @@
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-10-22	Gabor Repasi	Initial version created.
 // 1.1		2022-11-15	Gabor Repasi	+	Function descriptions updated
+//										+	Service description added
+//										+	License added
+//*************************************************************************************************
+//
+// Copyright (c) 2022 Gabor Repasi
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 //*************************************************************************************************
 #ifndef GOS_PROCESS_H
 #define GOS_PROCESS_H

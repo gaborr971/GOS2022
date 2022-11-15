@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_time.c
 //! @author		Gabor Repasi
-//! @date		2022-10-24
-//! @version	1.0
+//! @date		2022-11-15
+//! @version	1.1
 //!
 //! @brief		GOS time service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_time.h
@@ -25,6 +25,28 @@
 // Version	Date		Author			Description
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-10-24	Gabor Repasi	Initial version created.
+// 1.1		2022-11-15	Gabor Repasi	+	License added
+//										-	Elapsed sender ID getter API functions removed
+//										+	New elapsed sender ID enumerators are used
+//*************************************************************************************************
+//
+// Copyright (c) 2022 Gabor Repasi
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 //*************************************************************************************************
 /*
  * Includes
@@ -85,16 +107,6 @@ GOS_STATIC const gos_day_t dayLookupTable [GOS_TIME_NUMBER_OF_MONTHS] =
  * Time task ID.
  */
 GOS_STATIC gos_tid_t timeDaemonTaskId;
-
-/*
- * Time signal sender IDs. Each to distinguish which event triggered the signal.
- */
-GOS_STATIC const gos_signalSenderId_t	secondElapsedSenderId 	= 0;	//!< Second elapsed sender ID.
-GOS_STATIC const gos_signalSenderId_t	minuteElapsedSenderId 	= 1;	//!< Minute elapsed sender ID.
-GOS_STATIC const gos_signalSenderId_t	hourElapsedSenderId 	= 2;	//!< Hour elapsed sender ID.
-GOS_STATIC const gos_signalSenderId_t	dayElapsedSenderId 		= 3;	//!< Day elapsed sender ID.
-GOS_STATIC const gos_signalSenderId_t	monthElapsedSenderId 	= 4;	//!< Month elapsed sender ID.
-GOS_STATIC const gos_signalSenderId_t	yearElapsedSenderId		= 5;	//!< Year elapsed sender ID.
 
 /*
  * Function prototypes
@@ -298,72 +310,6 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds)
 	return timeAddSecondsResult;
 }
 
-/*
- * Function: gos_timeGetSecondElapsedSenderId
- */
-const gos_signalSenderId_t gos_timeGetSecondElapsedSenderId (void_t)
-{
-	/*
-	 * Function code.
-	 */
-	return secondElapsedSenderId;
-}
-
-/*
- * Function: gos_timeGetMinuteElapsedSenderId
- */
-const gos_signalSenderId_t gos_timeGetMinuteElapsedSenderId (void_t)
-{
-	/*
-	 * Function code.
-	 */
-	return minuteElapsedSenderId;
-}
-
-/*
- * Function: gos_timeGetHourElapsedSenderId
- */
-const gos_signalSenderId_t gos_timeGetHourElapsedSenderId (void_t)
-{
-	/*
-	 * Function code.
-	 */
-	return hourElapsedSenderId;
-}
-
-/*
- * Function: gos_timeGetDayElapsedSenderId
- */
-const gos_signalSenderId_t gos_timeGetDayElapsedSenderId (void_t)
-{
-	/*
-	 * Function code.
-	 */
-	return dayElapsedSenderId;
-}
-
-/*
- * Function: gos_timeGetMonthElapsedSenderId
- */
-const gos_signalSenderId_t gos_timeGetMonthElapsedSenderId (void_t)
-{
-	/*
-	 * Function code.
-	 */
-	return monthElapsedSenderId;
-}
-
-/*
- * Function: gos_timeGetYearElapsedSenderId
- */
-const gos_signalSenderId_t gos_timeGetYearElapsedSenderId (void_t)
-{
-	/*
-	 * Function code.
-	 */
-	return yearElapsedSenderId;
-}
-
 /**
  * @brief	Time daemon task.
  * @details	Increases the system time approximately every second and invokes the
@@ -392,37 +338,37 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
 		// Invoke second elapsed signal.
 		if (systemTime.seconds > previousTime.seconds)
 		{
-			gos_signalInvoke(timeSignalId, secondElapsedSenderId);
+			gos_signalInvoke(timeSignalId, GOS_TIME_SECOND_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke minute elapsed signal.
 		if (systemTime.minutes > previousTime.minutes)
 		{
-			gos_signalInvoke(timeSignalId, minuteElapsedSenderId);
+			gos_signalInvoke(timeSignalId, GOS_TIME_MINUTE_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke hour elapsed signal.
 		if (systemTime.hours > previousTime.hours)
 		{
-			gos_signalInvoke(timeSignalId, hourElapsedSenderId);
+			gos_signalInvoke(timeSignalId, GOS_TIME_HOUR_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke day elapsed signal.
 		if (systemTime.days > previousTime.days)
 		{
-			gos_signalInvoke(timeSignalId, dayElapsedSenderId);
+			gos_signalInvoke(timeSignalId, GOS_TIME_DAY_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke month elapsed signal.
 		if (systemTime.months > previousTime.months)
 		{
-			gos_signalInvoke(timeSignalId, monthElapsedSenderId);
+			gos_signalInvoke(timeSignalId, GOS_TIME_MONTH_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke year elapsed signal.
 		if (systemTime.years > previousTime.years)
 		{
-			gos_signalInvoke(timeSignalId, yearElapsedSenderId);
+			gos_signalInvoke(timeSignalId, GOS_TIME_YEAR_ELAPSED_SENDER_ID);
 		}
 
 		gos_kernelTaskSleep(1002);
