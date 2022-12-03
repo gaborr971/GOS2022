@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_time.h
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @date		2022-12-03
+//! @version	1.2
 //!
 //! @brief		GOS time service header.
 //! @details	Time service provides an easy interface to manipulate time structures, track the
@@ -30,6 +30,7 @@
 //										*	gos_monthEnum_t renamed to gos_timeMonthEnum_t
 //										+	gos_timeElapsedSenderId_t type added
 //										-	Elapsed sender ID getter API functions removed
+// 1.2		2022-12-03	Gabor Repasi	+	Function header skeletons added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -136,18 +137,69 @@ gos_signalId_t	timeSignalId;
 /*
  * Function prototypes
  */
-//! TODO
+/**
+ * @brief	This function initializes the time service.
+ * @details	TODO
+ *
+ * @return	Result of initialization.
+ *
+ * @retval	GOS_SUCCESS : Initialization succesful.
+ * @retval	GOS_ERROR   : TODO
+ */
 gos_result_t gos_timeInit (void_t);
 
-//! TODO
+/**
+ * @brief	TODO
+ * @details	TODO
+ *
+ * @param	pTime	:	TODO
+ *
+ * @return	TODO
+ *
+ * @retval	GOS_SUCCESS : TODO
+ * @retval	GOS_ERROR   : TODO
+ */
 gos_result_t gos_timeGet (gos_time_t* pTime);
 
-//! TODO
+/**
+ * @brief	This function TODO
+ * @details	TODO
+ *
+ * @param	pTime	:	TODO
+ *
+ * @return	TODO
+ *
+ * @retval	GOS_SUCCESS : TODO
+ * @retval	GOS_ERROR   : TODO
+ */
 gos_result_t gos_timeSet (gos_time_t* pTime);
 
-//! TODO
+/**
+ * @brief	This function TODO
+ * @details	TODO
+ *
+ * @param	pTime1	:	TODO
+ * @param	pTime2	:	TODO
+ * @param	result	:	TODO
+ *
+ * @return	TODO
+ *
+ * @retval	GOS_SUCCESS : TODO
+ * @retval	GOS_ERROR   : TODO
+ */
 gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeComprareResult_t* result);
 
-//! TODO
+/**
+ * @brief	This function TODO
+ * @details	TODO
+ *
+ * @param	pTime	:	TODO
+ * @param	seconds	:	TODO
+ *
+ * @return	TODO
+ *
+ * @retval	GOS_SUCCESS : TODO
+ * @retval	GOS_ERROR   : TODO
+ */
 gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds);
 #endif

@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_shell.h
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @date		2022-12-03
+//! @version	1.2
 //!
 //! @brief		GOS shell service header.
 //! @details	The shell service provides an easy interface to receive and process commands in a
@@ -31,6 +31,7 @@
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-11-04	Gabor Repasi	Initial version created.
 // 1.1		2022-11-15	Gabor Repasi	+	License added
+// 1.2		2022-12-03	Gabor Repasi	+ 	gos_shellRegisterCommands added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -97,13 +98,28 @@ typedef u16_t	gos_shellCommandIndex_t;	//!< Shell command index type.
 gos_result_t gos_shellInit (void_t);
 
 /**
+ * @brief	This function registers an array of commands in the shell.
+ * @details	Checks the array pointer and registers the commands one by one.
+ *
+ * @param	commands	:	Pointer to the command structure array to register.
+ * @param	arraySize	:	Size of the array in bytes.
+ *
+ * @return	Result of shell command registration.
+ *
+ * @retval	GOS_SUCCESS :	Command registration successful.
+ * @retval	GOS_ERROR   :	Command function or name is NULL or internal command
+ * 							array is full.
+ */
+gos_result_t gos_shellRegisterCommands (gos_shellCommand_t* commands, u16_t arraySize);
+
+/**
  * @brief	This function registers a command in the shell.
  * @details	Checks the command structure and registers the command in the next
  * 			empty slot in the internal command array.
  *
  * @param	command	:	Pointer to the command structure to register.
  *
- * @return Result of shell command registration.
+ * @return	Result of shell command registration.
  *
  * @retval	GOS_SUCCESS :	Command registration successful.
  * @retval	GOS_ERROR   :	Command function or name is NULL or internal command
