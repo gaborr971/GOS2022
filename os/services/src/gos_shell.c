@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_shell.c
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @date		2022-12-03
+//! @version	1.2
 //!
 //! @brief		GOS shell service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_shell.h
@@ -26,6 +26,9 @@
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-11-04	Gabor Repasi	Initial version created.
 // 1.1		2022-11-15	Gabor Repasi	+	License added
+// 1.2		2022-12-03	Gabor Repasi	+	gos_shellRegisterCommands added
+//										*	Actual command and command parameter buffers
+//											made modul global instead of task local
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -83,6 +86,16 @@ GOS_STATIC u16_t				commandBufferIndex;
  */
 GOS_STATIC bool_t				useEcho;
 
+/**
+ * Actual command buffer.
+ */
+GOS_STATIC char_t				actualCommand	[CFG_SHELL_MAX_COMMAND_LENGTH];
+
+/**
+ * Command parameters buffer.
+ */
+GOS_STATIC char_t				commandParams	[CFG_SHELL_MAX_COMMAND_LENGTH];
+
 /*
  * Function prototypes
  */
@@ -125,6 +138,42 @@ gos_result_t gos_shellInit (void_t)
 		shellInitResult = GOS_SUCCESS;
 	}
 	return shellInitResult;
+}
+
+/*
+ * Function: gos_shellRegisterCommands
+ */
+gos_result_t gos_shellRegisterCommands (gos_shellCommand_t* commands, u16_t arraySize)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t registerResult = GOS_ERROR;
+	u16_t numberOfCommands = 0u;
+	u16_t index = 0u;
+
+	/*
+	 * Function code.
+	 */
+	if (commands != NULL)
+	{
+		numberOfCommands = arraySize / sizeof(commands[0]);
+
+		for (index = 0u; index < numberOfCommands; index++)
+		{
+			if (gos_shellRegisterCommand(&commands[index]) != GOS_SUCCESS)
+			{
+				break;
+			}
+		}
+
+		if (index == numberOfCommands)
+		{
+			registerResult = GOS_SUCCESS;
+		}
+	}
+
+	return registerResult;
 }
 
 /*
@@ -247,8 +296,6 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 	gos_shellCommandIndex_t index = 0u;
 	u16_t					actualCommandIndex;
 	u16_t					paramIndex;
-	char_t					actualCommand	[CFG_SHELL_MAX_COMMAND_LENGTH];
-	char_t					commandParams	[CFG_SHELL_MAX_COMMAND_LENGTH];
 
 	/*
 	 * Function code.
@@ -262,7 +309,19 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 				gos_uartTransmit(CFG_LOG_PORT, &commandBuffer[commandBufferIndex]);
 			}
 
-			if (commandBuffer[commandBufferIndex] == '\r')
+			/*
+			 * Backspace character check
+			 */
+			if (commandBuffer[commandBufferIndex] == '\177')
+			{
+				commandBuffer[commandBufferIndex] = '\0';
+				commandBufferIndex--;
+			}
+
+			/*
+			 * Enter character check
+			 */
+			else if (commandBuffer[commandBufferIndex] == '\r')
 			{
 				if (useEcho == GOS_TRUE)
 				{
@@ -293,7 +352,10 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 				{
 					if (strcmp(shellCommands[index].command, actualCommand) == 0)
 					{
-						shellCommands[index].commandHandler(commandParams);
+						if (shellCommands[index].commandHandler != NULL)
+						{
+							shellCommands[index].commandHandler(commandParams);
+						}
 						break;
 					}
 				}
