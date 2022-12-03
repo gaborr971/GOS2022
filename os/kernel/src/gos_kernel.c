@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_kernel.c
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @date		2022-12-03
+//! @version	1.2
 //!
 //! @brief		GOS kernel source.
 //! @details	For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -26,6 +26,10 @@
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-10-21	Gabor Repasi	Initial version created.
 // 1.1		2022-11-15	Gabor Repasi	+	License added
+// 1.2		2022-12-03	Gabor Repasi	+	gos_kernelTaskRegisterTasks added
+//										+	Tasks external task ID handling added
+//										+	Kernel configuration structure array added
+//										+	Cooperative scheduling introduced
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -88,7 +92,7 @@
 /**
  * Dump separator line.
  */
-#define DUMP_SEPARATOR		"+--------+----------------------------+--------+------+-------------+---------+-----------+\r\n"
+#define DUMP_SEPARATOR		"+--------+------------------------------+--------+------+-------------+---------+-----------+\r\n"
 
 /**
  * Number of config parameters.
@@ -319,6 +323,31 @@ GOS_STATIC const gos_kernelConfigDescriptor_t	kernelConfig [] =
 		.configName = "Process dump task priority",
 		.configValue = CFG_TASK_PROC_DUMP_PRIO
 	},
+	// Process service use flag.
+	{
+		.configName = "Process service use flag",
+		.configValue = CFG_PROC_USE_SERVICE
+	},
+	// Maximum process priority levels.
+	{
+		.configName = "Maximum process priority levels",
+		.configValue = CFG_PROC_MAX_PRIO_LEVELS
+	},
+	// Idle process priority.
+	{
+		.configName = "Idle process priority",
+		.configValue = CFG_PROC_IDLE_PRIO
+	},
+	// Maximum process name length.
+	{
+		.configName = "Maximum process name length",
+		.configValue = CFG_PROC_MAX_NAME_LENGTH
+	},
+	// Maximum number of processes.
+	{
+		.configName = "Maximum number of processes",
+		.configValue = CFG_PROC_MAX_NUMBER
+	}
 };
 
 /*
@@ -486,6 +515,42 @@ gos_result_t gos_kernelStart (void_t)
 }
 
 /*
+ * Function: gos_kernelTaskRegisterTasks
+ */
+gos_result_t gos_kernelTaskRegisterTasks (gos_taskDescriptor_t* taskDescriptors, u16_t arraySize)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t registerResult = GOS_ERROR;
+	u16_t numberOfTasks = 0u;
+	u16_t index = 0u;
+
+	/*
+	 * Function code.
+	 */
+	if (taskDescriptors != NULL)
+	{
+		numberOfTasks = arraySize / sizeof(taskDescriptors[0]);
+
+		for (index = 0u; index < numberOfTasks; index++)
+		{
+			if (gos_kernelTaskRegister(&taskDescriptors[index], NULL) != GOS_SUCCESS)
+			{
+				break;
+			}
+		}
+
+		if (index == numberOfTasks)
+		{
+			registerResult = GOS_SUCCESS;
+		}
+	}
+
+	return registerResult;
+}
+
+/*
  * Function: gos_kernelInit
  */
 gos_result_t gos_kernelTaskRegister (gos_taskDescriptor_t* taskDescriptor, gos_tid_t* taskId)
@@ -567,6 +632,10 @@ gos_result_t gos_kernelTaskRegister (gos_taskDescriptor_t* taskDescriptor, gos_t
 			if (taskId != NULL)
 			{
 				*taskId = taskDescriptors[taskIndex].taskId;
+			}
+			if (taskDescriptor->taskIdEx != NULL)
+			{
+				*taskDescriptor->taskIdEx = taskDescriptors[taskIndex].taskId;
 			}
 		}
 	}
@@ -1215,8 +1284,10 @@ void_t SysTick_Handler (void_t)
      */
 	sysTicks++;
 
+#if CFG_SCHED_COOPERATIVE == 0
 	// Privileged.
 	gos_kernelReschedule(GOS_PRIVILEGED);
+#endif
 }
 
 /*
@@ -1585,6 +1656,7 @@ GOS_STATIC void_t gos_kernelIdleTask (void_t)
 				break;
 			}
 		}
+		gos_kernelTaskYield();
 	}
 }
 
@@ -1679,7 +1751,7 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
 		gos_logLogFormatted("Task dump:\r\n");
 		gos_logLogFormatted(DUMP_SEPARATOR);
 		gos_logLogFormatted(
-			"| %6s | %26s | %6s | %4s | %11s | %7s | %9s |\r\n",
+			"| %6s | %28s | %6s | %4s | %11s | %7s | %9s |\r\n",
 			"tid",
 			"name",
 			"stack",
@@ -1697,7 +1769,7 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
 				break;
 			}
 			gos_logLogFormatted(
-					"| 0x%04X | %26s | 0x%04X | %4d | %11lu | %3u.%-3u | %9s |\r\n",
+					"| 0x%04X | %28s | 0x%04X | %4d | %11lu | %3u.%-3u | %9s |\r\n",
 					taskDescriptors[taskIndex].taskId,
 					taskDescriptors[taskIndex].taskName,
 					taskDescriptors[taskIndex].taskStackSize,
@@ -1782,6 +1854,7 @@ void_t UsageFault_Handler (void_t)
 	/*
 	 * Function code.
 	 */
+
 	for (;;)
 	{
 		GOS_NOP;
