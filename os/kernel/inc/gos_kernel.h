@@ -33,6 +33,9 @@
 // 1.1		2022-11-14	Gabor Repasi	+	Task previous state added to task descriptor type
 //										+	Dump signal sender enumerators added
 // 1.2		2022-11-15	Gabor Repasi	+	License added
+// 1.3		2022-12-03	Gabor Repasi	+	gos_kernelTaskRegisterTasks added
+//										+	GOS_PARAM_IGNORE macro added
+//										+	taskIdEx added to gos_taskDescriptor_t
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -131,6 +134,11 @@
 										GOS_EXTERN bool_t schedulingDisabled;	\
 										schedulingDisabled = GOS_FALSE;			\
 									}
+
+/**
+ * Parameter ignore value.
+ */
+#define GOS_PARAM_IGNORE			( 0 )
 /*
  * Type definitions
  */
@@ -242,7 +250,8 @@ typedef struct
 	gos_taskState_t			taskPreviousState;		//!< Task previous state (for restoration).
 	gos_taskPrio_t			taskPriority;			//!< Task priority.
 	gos_taskName_t			taskName;				//!< Task name.
-	gos_tid_t				taskId;					//!< Task ID.
+	gos_tid_t				taskId;					//!< Task ID (internal).
+	gos_tid_t*				taskIdEx;				//!< Task ID (external).
 	gos_taskSleepTick_t		taskSleepTicks;			//!< Task sleep ticks.
 	gos_taskPsp_t			taskPsp;				//!< Task PSP.
 	gos_taskRunCounter_t	taskRunCounter;			//!< Task run counter.
@@ -282,6 +291,23 @@ typedef enum
  * @retval	GOS_ERROR	:	Kernel dump task or task suspension unsuccessful.
  */
 gos_result_t gos_kernelInit (void_t);
+
+/**
+ * @brief	This function registers an array of tasks for scheduling.
+ * @details	Checks the task descriptor array pointer and registers the tasks one by one.
+ *
+ * @param	taskDescriptors	:	Pointer to a task descriptor structure array.
+ * @param	arraySize		:	Size of the array in bytes.
+ *
+ * @return	Result of task registration.
+ *
+ * @retval	GOS_SUCCESS	:	Tasks registered successfully.
+ * @retval	GOS_ERROR	:	Invalid task descriptor (NULL function pointer,
+ * 							invalid priority level, invalid stack size, idle task registration,
+ * 							or stack size is not 4-byte-aligned) in one of the array elements or
+ * 							task array is full.
+ */
+gos_result_t gos_kernelTaskRegisterTasks (gos_taskDescriptor_t* taskDescriptors, u16_t arraySize);
 
 /**
  * @brief	This function registers a task for scheduling.
