@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_config.h
 //! @author		Gabor Repasi
-//! @date		2022-10-24
-//! @version	1.0
+//! @date		2022-12-03
+//! @version	1.1
 //!
 //! @brief		GOS configuration header.
 //! @details	This header contains the kernel and service configurations of the operating system.
@@ -25,6 +25,7 @@
 // Version	Date		Author			Description
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-10-24	Gabor Repasi	Initial version created.
+// 1.1		2022-12-03	Gabor Repasi	+	CFG_SCHED_COOPERATIVE added
 //*************************************************************************************************
 #ifndef GOS_CONFIG_H
 #define GOS_CONFIG_H
@@ -36,6 +37,9 @@
 /*
  * Macros
  */
+//! Cooperative scheduling flag.
+#define CFG_SCHED_COOPERATIVE			( 1 )
+
 //! Maximum task priority levels.
 #define CFG_TASK_MAX_PRIO_LEVELS		( UINT8_MAX )
 //! Idle task priority.
@@ -67,7 +71,7 @@
 //! Message daemon task stack size.
 #define CFG_TASK_MESSAGE_DAEMON_STACK	( 1024 )
 //! Shell daemon task stack size.
-#define CFG_TASK_SHELL_DAEMON_STACK		( 1024 )
+#define CFG_TASK_SHELL_DAEMON_STACK		( 512 )
 
 
 //! Message daemon task priority.
@@ -147,7 +151,6 @@
 //! Log maximum (line) length.
 #define CFG_LOG_MAX_LENGTH				( 256 )
 
-
 /**
 * DRV_UART1 : 0
 * DRV_UART2 : 1
@@ -155,5 +158,4 @@
 * DRV_UART4 : 3
  */
 #define CFG_LOG_PORT					( 1 )
-
 #endif
