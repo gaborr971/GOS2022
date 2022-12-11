@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_log.h
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.2
+//! @date		2022-12-11
+//! @version	1.3
 //!
 //! @brief		GOS log service header.
 //! @details	Log service is a simple interface to send out strings via a configured UART
@@ -29,6 +29,9 @@
 // 1.1		2022-11-14	Gabor Repasi	+	Formatted log function added
 //										+	Descriptions added
 // 1.2		2022-11-15	Gabor Repasi	+	License added
+// 1.3		2022-12-11	Gabor Repasi	+	Font formatting macros added
+//										+	Unsafe formatted log function added
+//										*	Function descriptions updated
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -57,34 +60,60 @@
 #include "gos_kernel.h"
 
 /*
+ * Macros
+ */
+#define LOG_FG_WHITE_START		"\x1B[37m"	//!< White foreground start.
+#define LOG_FG_CYAN_START		"\x1B[36m"	//!< Cyan foreground start.
+#define LOG_FG_MAGENTA_START	"\x1B[35m"	//!< Magenta foreground start.
+#define LOG_FG_BLUE_START		"\x1B[34m"	//!< Blue foreground start.
+#define LOG_FG_YELLOW_START		"\x1B[33m"	//!< Yellow foreground start.
+#define LOG_FG_GREEN_START		"\x1B[32m"	//!< Green foreground start.
+#define LOG_FG_RED_START		"\x1B[31m"	//!< Red foreground start.
+#define LOG_FORMAT_RESET 		"\x1B[0m"	//!< Reset formatting.
+
+/*
  * Function prototypes
  */
 /**
  * @brief	Initializes the log service.
- * @details	Creates a lock for logging and initializes the UART periphery
- * 			based on the configuration settings.
+ * @details	Creates a log queue and registers the log daemon in the kernel.
  *
  * @return	Result of initialization.
  *
  * @retval 	GOS_SUCCESS	: Initialization successful.
- * @retval	GOS_ERROR	: Lock creation error or UART initialization error.
+ * @retval	GOS_ERROR	: Queue creation or task registration error.
  */
 gos_result_t gos_logInit (void_t);
 
 /**
  * @brief	Logs a given message.
- * @details	Sends out the given log message via UART.
+ * @details	Places the given message to the log queue (for the log daemon to print it).
  *
  * @param	logMessage	: String to log.
  *
  * @return	Result of logging.
  *
  * @retval 	GOS_SUCCESS	: Logging successful.
- * @retval	GOS_ERROR	: Lock get/release error or UART transmit error.
+ * @retval	GOS_ERROR	: Queue put error.
  *
  * @remark	This function uses the lock service.
  */
 gos_result_t gos_logLog (char_t* logMessage);
+
+/**
+ * @brief	Logs a given formatted message.
+ * @details	Prints the formatted message into a local buffer and places it
+ * 			to the log queue (for the log daemon to print it).
+ *
+ * @param 	logFormat	: Formatter string.
+ * @param	...			: Optional parameters.
+ *
+ * @return	Result of formatted logging.
+ *
+ * @retval	GOS_SUCCESS	: Formatted logging successful.
+ * @retval	GOS_ERROR	: Queue put error.
+ */
+gos_result_t gos_logLogFormatted (const char_t* logFormat, ...);
 
 /**
  * @brief	Logs a given formatted message.
@@ -97,8 +126,8 @@ gos_result_t gos_logLog (char_t* logMessage);
  * @return	Result of formatted logging.
  *
  * @retval	GOS_SUCCESS	: Message logged successfully.
- * @retval	GOS_ERROR	: Lock get or UART transmit error.
+ * @retval	GOS_ERROR	: Transmit error.
  */
-gos_result_t gos_logLogFormatted (const char_t* logFormat, ...);
+gos_result_t gos_logLogFormattedUnsafe (const char_t* logFormat, ...);
 
 #endif
