@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_kernel.c
 //! @author		Gabor Repasi
-//! @date		2022-12-03
-//! @version	1.2
+//! @date		2022-12-08
+//! @version	1.4
 //!
 //! @brief		GOS kernel source.
 //! @details	For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -30,6 +30,10 @@
 //										+	Tasks external task ID handling added
 //										+	Kernel configuration structure array added
 //										+	Cooperative scheduling introduced
+// 1.3		2022-12-04	Gabor Repasi	*	Sleep, wake-up, suspend, resume, block, unblock	hook
+//											functions removed
+//										+	Kernel dump ready signal added
+// 1.4		2022-12-08	Gabor Repasi	+	Task priority setter and getter functions added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -56,10 +60,11 @@
 #include <string.h>
 #include <stdio.h>
 #include "gos_kernel.h"
+#include "gos_error.h"
 #include "gos_log.h"
 #include "gos_process.h"
 #include "gos_signal.h"
-#include "gos_tmr.h"
+#include "gos_timer_driver.h"
 
 /*
  * Macros
@@ -67,37 +72,37 @@
 /**
  * System Handler control and state register.
  */
-#define SHCSR				*( (volatile u32_t*) 0xE000ED24u )
+#define SHCSR					*( (volatile u32_t*) 0xE000ED24u )
 
 /**
  * Interrupt Control and State Register.
  */
-#define ICSR				*( (volatile u32_t*) 0xE000ED04u )
+#define ICSR					*( (volatile u32_t*) 0xE000ED04u )
 
 /**
  * RAM start address.
  */
-#define RAM_START			( 0x20000000u )
+#define RAM_START				( 0x20000000u )
 
 /**
  * RAM size (128kB).
  */
-#define RAM_SIZE			( 128 * 1024 )
+#define RAM_SIZE				( 128 * 1024 )
 
 /**
  * Main stack.
  */
-#define MAIN_STACK			( RAM_START + RAM_SIZE )
+#define MAIN_STACK				( RAM_START + RAM_SIZE )
 
 /**
- * Dump separator line.
+ * Task dump separator line.
  */
-#define DUMP_SEPARATOR		"+--------+------------------------------+--------+------+-------------+---------+-----------+\r\n"
+#define TASK_DUMP_SEPARATOR		"+--------+------------------------------+--------+------+-------------+---------+-----------+\r\n"
 
 /**
- * Number of config parameters.
+ * Config dump separator line.
  */
-#define CONFIG_PARAM_NUM	( 15 )
+#define CONFIG_DUMP_SEPARATOR	"+----------------------------------+--------+\r\n"
 
 /*
  * Type definitions
@@ -154,49 +159,9 @@ GOS_STATIC gos_taskIdleHook_t 		kernelIdleHookFunction 		= NULL;
 GOS_STATIC gos_taskSwapHook_t		kernelSwapHookFunction		= NULL;
 
 /**
- * Kernel resume hook function.
- */
-GOS_STATIC gos_taskResumeHook_t		kernelResumeHookFunction	= NULL;
-
-/**
- * Kernel sleep hook function.
- */
-GOS_STATIC gos_taskSleepHook_t		kernelSleepHookFunction		= NULL;
-
-/**
- * Kernel suspend hook function.
- */
-GOS_STATIC gos_taskSuspendHook_t	kernelSuspendHookFunction	= NULL;
-
-/**
- * Kernel wakeup hook function.
- */
-GOS_STATIC gos_taskWakeupHook_t		kernelWakeupHookFunction	= NULL;
-
-/**
- * Kernel block hook function.
- */
-GOS_STATIC gos_taskBlockHook_t		kernelBlockHookFunction		= NULL;
-
-/**
- * Kernel unblock hook function.
- */
-GOS_STATIC gos_taskUnblockHook_t	kernelUnblockHookFunction	= NULL;
-
-/**
- * Kernel delete hook function.
- */
-GOS_STATIC gos_taskDeleteHook_t		kernelDeleteHookFunction	= NULL;
-
-/**
  * Kernel dump task ID.
  */
 GOS_STATIC gos_tid_t				kernelDumpTaskId			= GOS_INVALID_TASK_ID;
-
-/**
- * Kernel reset function.
- */
-GOS_STATIC gos_kernelReset_t		kernelResetFunction;
 
 /**
  * Reset required flag.
@@ -206,6 +171,7 @@ GOS_STATIC bool_t					resetRequired				= GOS_FALSE;
 /**
  * Configuration parameter lookup table.
  */
+#if CFG_KERNEL_DUMP_CONFIG == 1
 GOS_STATIC const gos_kernelConfigDescriptor_t	kernelConfig [] =
 {
 	// Maximum task priority levels.
@@ -349,9 +315,10 @@ GOS_STATIC const gos_kernelConfigDescriptor_t	kernelConfig [] =
 		.configValue = CFG_PROC_MAX_NUMBER
 	}
 };
+#endif
 
 /*
- * Kernel global variables
+ * Global variables
  */
 /**
  * Kernel dump signal.
@@ -359,10 +326,19 @@ GOS_STATIC const gos_kernelConfigDescriptor_t	kernelConfig [] =
 gos_signalId_t						kernelDumpSignal;
 
 /**
+ * Kernel dump ready signal.
+ */
+gos_signalId_t						kernelDumpReadySignal;
+
+/**
+ * Kernel task delete signal.
+ */
+gos_signalId_t						kernelTaskDeleteSignal;
+
+/**
  * Scheduling disabled flag.
  */
 bool_t								schedulingDisabled			= GOS_FALSE;
-
 
 /*
  * Kernel global functions
@@ -380,11 +356,13 @@ GOS_STATIC 			void_t 			gos_kernelIdleTask				(void_t);
 GOS_STATIC_INLINE 	void_t			gos_kernelReschedule			(gos_kernel_privilege_t privilege);
 GOS_STATIC 			char_t* 		gos_kernelGetTaskStateString 	(gos_taskState_t taskState);
 GOS_STATIC			void_t			gos_kernelDumpTask				(void_t);
+GOS_STATIC 			void_t 			gos_kernelProcessorReset 		(void_t);
 
 /**
  * Internal task array.
  */
-GOS_STATIC gos_taskDescriptor_t	taskDescriptors [CFG_TASK_MAX_NUMBER] = {
+GOS_STATIC gos_taskDescriptor_t	taskDescriptors [CFG_TASK_MAX_NUMBER] =
+{
 	[0] =
 		{
 			.taskFunction 	= gos_kernelIdleTask,
@@ -401,10 +379,10 @@ GOS_STATIC gos_taskDescriptor_t	taskDescriptors [CFG_TASK_MAX_NUMBER] = {
  */
 gos_taskDescriptor_t kernelDumpTaskDesc =
 {
-		.taskFunction	= gos_kernelDumpTask,
-		.taskPriority	= CFG_TASK_KERNEL_DUMP_PRIO,
-		.taskName		= "gos_kernel_dump_task",
-		.taskStackSize	= CFG_TASK_KERNEL_DUMP_STACK
+	.taskFunction	= gos_kernelDumpTask,
+	.taskPriority	= CFG_TASK_KERNEL_DUMP_PRIO,
+	.taskName		= "gos_kernel_dump_task",
+	.taskStackSize	= CFG_TASK_KERNEL_DUMP_STACK
 };
 
 /*
@@ -424,10 +402,11 @@ gos_result_t gos_kernelInit (void_t)
     // Initialize task descriptors.
     for (taskIndex = 1u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
     {
-    	taskDescriptors[taskIndex].taskFunction	= NULL;
-    	taskDescriptors[taskIndex].taskPriority	= CFG_TASK_MAX_PRIO_LEVELS;
-    	taskDescriptors[taskIndex].taskState	= GOS_TASK_SUSPENDED;
-    	taskDescriptors[taskIndex].taskId		= GOS_INVALID_TASK_ID;
+    	taskDescriptors[taskIndex].taskFunction			= NULL;
+    	taskDescriptors[taskIndex].taskPriority			= CFG_TASK_MAX_PRIO_LEVELS;
+    	taskDescriptors[taskIndex].taskOriginalPriority	= CFG_TASK_MAX_PRIO_LEVELS;
+    	taskDescriptors[taskIndex].taskState			= GOS_TASK_SUSPENDED;
+    	taskDescriptors[taskIndex].taskId				= GOS_INVALID_TASK_ID;
     }
 
     // Register idle task PSP.
@@ -505,7 +484,7 @@ gos_result_t gos_kernelStart (void_t)
 	gos_task_t firstTask = taskDescriptors[currentTaskIndex].taskFunction;
 
 	// Initialize system timer value.
-	sysTimerValue = gos_timerSysTimerGet();
+	sysTimerValue = gos_timerDriverSysTimerGet();
 
 	// Execute the handler.
 	firstTask();
@@ -614,11 +593,12 @@ gos_result_t gos_kernelTaskRegister (gos_taskDescriptor_t* taskDescriptor, gos_t
 			taskDescriptors[taskIndex].taskPsp	= (u32_t)psp;
 
 			// Initial state.
-			taskDescriptors[taskIndex].taskState		= GOS_TASK_READY;
-			taskDescriptors[taskIndex].taskFunction		= taskDescriptor->taskFunction;
-			taskDescriptors[taskIndex].taskPriority		= taskDescriptor->taskPriority;
-			taskDescriptors[taskIndex].taskStackSize	= taskDescriptor->taskStackSize;
-			taskDescriptors[taskIndex].taskId			= (GOS_DEFAULT_TASK_ID + taskIndex);
+			taskDescriptors[taskIndex].taskState			= GOS_TASK_READY;
+			taskDescriptors[taskIndex].taskFunction			= taskDescriptor->taskFunction;
+			taskDescriptors[taskIndex].taskPriority			= taskDescriptor->taskPriority;
+			taskDescriptors[taskIndex].taskOriginalPriority	= taskDescriptor->taskPriority;
+			taskDescriptors[taskIndex].taskStackSize		= taskDescriptor->taskStackSize;
+			taskDescriptors[taskIndex].taskId				= (GOS_DEFAULT_TASK_ID + taskIndex);
 
 			// Copy task name.
 			if (taskDescriptor->taskName != NULL &&
@@ -672,12 +652,6 @@ GOS_INLINE gos_result_t gos_kernelTaskSleep (gos_taskSleepTick_t sleepTicks)
 
 		if (taskSleepResult == GOS_SUCCESS)
 		{
-			// Call hook.
-			if (kernelSleepHookFunction != NULL)
-			{
-				kernelSleepHookFunction((GOS_DEFAULT_TASK_ID + currentTaskIndex));
-			}
-
 			// Unprivileged.
 			gos_kernelReschedule(GOS_UNPRIVILEGED);
 		}
@@ -712,12 +686,6 @@ GOS_INLINE gos_result_t gos_kernelTaskWakeup (gos_tid_t taskId)
 			}
 		}
 		GOS_ATOMIC_EXIT
-
-		if (taskWakeupResult == GOS_SUCCESS && kernelWakeupHookFunction != NULL)
-		{
-			// Call hook.
-			kernelWakeupHookFunction(taskId);
-		}
 	}
 
 	return taskWakeupResult;
@@ -744,7 +712,8 @@ GOS_INLINE gos_result_t gos_kernelTaskSuspend (gos_tid_t taskId)
 		GOS_ATOMIC_ENTER
 		{
 			if (taskDescriptors[taskIndex].taskState == GOS_TASK_READY ||
-				taskDescriptors[taskIndex].taskState == GOS_TASK_SLEEPING)
+				taskDescriptors[taskIndex].taskState == GOS_TASK_SLEEPING ||
+				taskDescriptors[taskIndex].taskState == GOS_TASK_BLOCKED)
 			{
 				taskDescriptors[taskIndex].taskPreviousState = taskDescriptors[taskIndex].taskState;
 				taskDescriptors[taskIndex].taskState = GOS_TASK_SUSPENDED;
@@ -755,12 +724,6 @@ GOS_INLINE gos_result_t gos_kernelTaskSuspend (gos_tid_t taskId)
 
 		if (taskSuspendResult == GOS_SUCCESS)
 		{
-			// Call hook.
-			if (kernelSuspendHookFunction != NULL)
-			{
-				kernelSuspendHookFunction(taskId);
-			}
-
 			if (currentTaskIndex == taskIndex)
 			{
 				// Unprivileged.
@@ -799,12 +762,6 @@ GOS_INLINE gos_result_t gos_kernelTaskResume (gos_tid_t taskId)
 			}
 		}
 		GOS_ATOMIC_EXIT
-
-		if (taskResumeResult == GOS_SUCCESS && kernelResumeHookFunction != NULL)
-		{
-			// Call hook.
-			kernelResumeHookFunction(taskId);
-		}
 	}
 
 	return taskResumeResult;
@@ -840,12 +797,6 @@ GOS_INLINE gos_result_t gos_kernelTaskBlock (gos_tid_t taskId)
 
 		if (taskBlockResult == GOS_SUCCESS)
 		{
-			// Call hook.
-			if (kernelBlockHookFunction != NULL)
-			{
-				kernelBlockHookFunction(taskId);
-			}
-
 			if (currentTaskIndex == taskIndex)
 			{
 				// Unprivileged.
@@ -884,12 +835,6 @@ GOS_INLINE gos_result_t gos_kernelTaskUnblock (gos_tid_t taskId)
 			}
 		}
 		GOS_ATOMIC_EXIT
-
-		if (taskUnblockResult == GOS_SUCCESS && kernelUnblockHookFunction != NULL)
-		{
-			// Call hook.
-			kernelUnblockHookFunction(taskId);
-		}
 	}
 
 	return taskUnblockResult;
@@ -923,10 +868,10 @@ GOS_INLINE gos_result_t gos_kernelTaskDelete (gos_tid_t taskId)
 		}
 		GOS_ATOMIC_EXIT
 
-		if (taskDeletekResult == GOS_SUCCESS && kernelDeleteHookFunction != NULL)
+		if (taskDeletekResult == GOS_SUCCESS)
 		{
-			// Call hook.
-			kernelDeleteHookFunction(taskId);
+			// Invoke signal.
+			gos_signalInvoke(kernelTaskDeleteSignal, taskId);
 		}
 
 		if (currentTaskIndex == taskIndex)
@@ -936,6 +881,126 @@ GOS_INLINE gos_result_t gos_kernelTaskDelete (gos_tid_t taskId)
 	}
 
 	return taskDeletekResult;
+}
+
+/*
+ * Function: gos_kernelTaskSetPriority
+ */
+gos_result_t gos_kernelTaskSetPriority (gos_tid_t taskId, gos_taskPrio_t taskPriority)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t	taskSetPriorityResult	= GOS_ERROR;
+	u32_t			taskIndex				= 0u;
+
+	/*
+	 * Function code.
+	 */
+	if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
+		taskPriority < CFG_TASK_MAX_PRIO_LEVELS)
+	{
+		taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
+
+		GOS_ATOMIC_ENTER
+		{
+			taskDescriptors[taskIndex].taskPriority = taskPriority;
+		}
+		GOS_ATOMIC_EXIT
+
+		taskSetPriorityResult = GOS_SUCCESS;
+	}
+	return taskSetPriorityResult;
+}
+
+/*
+ * Function: gos_kernelTaskSetOriginalPriority
+ */
+gos_result_t gos_kernelTaskSetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t taskPriority)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t	taskSetPriorityResult	= GOS_ERROR;
+	u32_t			taskIndex				= 0u;
+
+	/*
+	 * Function code.
+	 */
+	if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
+		taskPriority < CFG_TASK_MAX_PRIO_LEVELS)
+	{
+		taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
+
+		GOS_ATOMIC_ENTER
+		{
+			taskDescriptors[taskIndex].taskOriginalPriority = taskPriority;
+		}
+		GOS_ATOMIC_EXIT
+
+		taskSetPriorityResult = GOS_SUCCESS;
+	}
+	return taskSetPriorityResult;
+}
+
+/*
+ * Function: gos_kernelTaskGetPriority
+ */
+gos_result_t gos_kernelTaskGetPriority (gos_tid_t taskId, gos_taskPrio_t* taskPriority)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t	taskGetPriorityResult	= GOS_ERROR;
+	u32_t			taskIndex				= 0u;
+
+	/*
+	 * Function code.
+	 */
+	if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
+		taskPriority != NULL)
+	{
+		taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
+
+		GOS_ATOMIC_ENTER
+		{
+			*taskPriority = taskDescriptors[taskIndex].taskPriority;
+		}
+		GOS_ATOMIC_EXIT
+
+		taskGetPriorityResult = GOS_SUCCESS;
+	}
+	return taskGetPriorityResult;
+}
+
+/*
+ * Function: gos_kernelTaskGetOriginalPriority
+ */
+gos_result_t gos_kernelTaskGetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t* taskPriority)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t	taskGetPriorityResult	= GOS_ERROR;
+	u32_t			taskIndex				= 0u;
+
+	/*
+	 * Function code.
+	 */
+	if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
+		taskPriority != NULL)
+	{
+		taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
+
+		GOS_ATOMIC_ENTER
+		{
+			*taskPriority = taskDescriptors[taskIndex].taskOriginalPriority;
+		}
+		GOS_ATOMIC_EXIT
+
+		taskGetPriorityResult = GOS_SUCCESS;
+	}
+	return taskGetPriorityResult;
 }
 
 /*
@@ -1103,157 +1168,45 @@ gos_result_t gos_kernelRegisterIdleHook (gos_taskIdleHook_t idleHookFunction)
 }
 
 /*
- * Function: gos_kernelRegisterTaskSleepHook
+ * Function: gos_kernelSubscribeTaskDeleteSignal
  */
-gos_result_t gos_kernelRegisterTaskSleepHook (gos_taskSleepHook_t sleepHookFunction)
+gos_result_t gos_kernelSubscribeTaskDeleteSignal (gos_signalHandler_t deleteSignalHandler)
 {
 	/*
 	 * Local variables.
 	 */
-	gos_result_t hookRegisterResult = GOS_ERROR;
+	gos_result_t subscriptionResult = GOS_ERROR;
 
 	/*
 	 * Function code.
 	 */
-	if (sleepHookFunction != NULL && kernelSleepHookFunction == NULL)
+	if (deleteSignalHandler != NULL)
 	{
-		kernelSleepHookFunction = sleepHookFunction;
-		hookRegisterResult = GOS_SUCCESS;
+		subscriptionResult = gos_signalSubscribe(kernelTaskDeleteSignal, deleteSignalHandler);
 	}
 
-	return hookRegisterResult;
+	return subscriptionResult;
 }
 
 /*
- * Function: gos_kernelRegisterTaskWakeupHook
+ * Function: gos_kernelSubscribeDumpReadySignal
  */
-gos_result_t gos_kernelRegisterTaskWakeupHook (gos_taskWakeupHook_t wakeupHookFunction)
+gos_result_t gos_kernelSubscribeDumpReadySignal (gos_signalHandler_t dumpReadySignalHandler)
 {
 	/*
 	 * Local variables.
 	 */
-	gos_result_t hookRegisterResult = GOS_ERROR;
+	gos_result_t subscriptionResult = GOS_ERROR;
 
 	/*
 	 * Function code.
 	 */
-	if (wakeupHookFunction != NULL && kernelWakeupHookFunction == NULL)
+	if (dumpReadySignalHandler != NULL)
 	{
-		kernelWakeupHookFunction = wakeupHookFunction;
-		hookRegisterResult = GOS_SUCCESS;
+		subscriptionResult = gos_signalSubscribe(kernelDumpReadySignal, dumpReadySignalHandler);
 	}
 
-	return hookRegisterResult;
-}
-
-/*
- * Function: gos_kernelRegisterTaskSuspendHook
- */
-gos_result_t gos_kernelRegisterTaskSuspendHook (gos_taskSuspendHook_t suspendHookFunction)
-{
-	/*
-	 * Local variables.
-	 */
-	gos_result_t hookRegisterResult = GOS_ERROR;
-
-	/*
-	 * Function code.
-	 */
-	if (suspendHookFunction != NULL && kernelSuspendHookFunction == NULL)
-	{
-		kernelSuspendHookFunction = suspendHookFunction;
-		hookRegisterResult = GOS_SUCCESS;
-	}
-
-	return hookRegisterResult;
-}
-
-/*
- * Function: gos_kernelRegisterTaskResumeHook
- */
-gos_result_t gos_kernelRegisterTaskResumeHook (gos_taskResumeHook_t resumeHookFunction)
-{
-	/*
-	 * Local variables.
-	 */
-	gos_result_t hookRegisterResult = GOS_ERROR;
-
-	/*
-	 * Function code.
-	 */
-	if (resumeHookFunction != NULL && kernelResumeHookFunction == NULL)
-	{
-		kernelResumeHookFunction = resumeHookFunction;
-		hookRegisterResult = GOS_SUCCESS;
-	}
-
-	return hookRegisterResult;
-}
-
-/*
- * Function: gos_kernelRegisterTaskBlockHook
- */
-gos_result_t gos_kernelRegisterTaskBlockHook (gos_taskBlockHook_t blockHookFunction)
-{
-	/*
-	 * Local variables.
-	 */
-	gos_result_t hookRegisterResult = GOS_ERROR;
-
-	/*
-	 * Function code.
-	 */
-	if (blockHookFunction != NULL && kernelBlockHookFunction == NULL)
-	{
-		kernelBlockHookFunction = blockHookFunction;
-		hookRegisterResult = GOS_SUCCESS;
-	}
-
-	return hookRegisterResult;
-}
-
-/*
- * Function: gos_kernelRegisterTaskUnblockHook
- */
-gos_result_t gos_kernelRegisterTaskUnblockHook (gos_taskUnblockHook_t unblockHookFunction)
-{
-	/*
-	 * Local variables.
-	 */
-	gos_result_t hookRegisterResult = GOS_ERROR;
-
-	/*
-	 * Function code.
-	 */
-	if (unblockHookFunction != NULL && kernelUnblockHookFunction == NULL)
-	{
-		kernelUnblockHookFunction = unblockHookFunction;
-		hookRegisterResult = GOS_SUCCESS;
-	}
-
-	return hookRegisterResult;
-}
-
-/*
- * Function: gos_kernelRegisterTaskDeleteHook
- */
-gos_result_t gos_kernelRegisterTaskDeleteHook (gos_taskDeleteHook_t deleteHookFunction)
-{
-	/*
-	 * Local variables.
-	 */
-	gos_result_t hookRegisterResult = GOS_ERROR;
-
-	/*
-	 * Function code.
-	 */
-	if (deleteHookFunction != NULL && kernelDeleteHookFunction == NULL)
-	{
-		kernelDeleteHookFunction = deleteHookFunction;
-		hookRegisterResult = GOS_SUCCESS;
-	}
-
-	return hookRegisterResult;
+	return subscriptionResult;
 }
 
 /*
@@ -1285,8 +1238,11 @@ void_t SysTick_Handler (void_t)
 	sysTicks++;
 
 #if CFG_SCHED_COOPERATIVE == 0
-	// Privileged.
-	gos_kernelReschedule(GOS_PRIVILEGED);
+	if (schedulingDisabled == GOS_FALSE)
+	{
+		// Privileged.
+		gos_kernelReschedule(GOS_PRIVILEGED);
+	}
 #endif
 }
 
@@ -1320,22 +1276,25 @@ void_t gos_kernelDumpSignalHandler (gos_signalSenderId_t senderId)
 	/*
 	 * Function code.
 	 */
-	if (senderId == 0)
+	if (senderId == GOS_DUMP_SENDER_USER)
 	{
 		gos_kernelTaskResume(kernelDumpTaskId);
+	}
+	else if (senderId == GOS_DUMP_SENDER_LAST)
+	{
+		gos_signalInvoke(kernelDumpReadySignal, 0);
 	}
 }
 
 /*
  * Function: gos_kernelReset
  */
-void_t gos_kernelReset (gos_kernelReset_t resetFunction)
+void_t gos_kernelReset (void_t)
 {
 	/*
 	 * Function code.
 	 */
 	resetRequired = GOS_TRUE;
-	kernelResetFunction = resetFunction;
 	gos_kernelReschedule(GOS_UNPRIVILEGED);
 }
 
@@ -1352,8 +1311,8 @@ void_t gos_kernelDelayUs (u16_t microseconds)
 	/*
 	 * Function code.
 	 */
-	tmrValue = gos_timerSysTimerGet();
-	while ((gos_timerSysTimerGet() - tmrValue) < microseconds);
+	tmrValue = gos_timerDriverSysTimerGet();
+	while ((gos_timerDriverSysTimerGet() - tmrValue) < microseconds);
 }
 
 /*
@@ -1393,7 +1352,7 @@ GOS_NAKED void_t SVC_Handler (void_t)
 	if (resetRequired == GOS_TRUE)
 	{
 		resetRequired = GOS_FALSE;
-		kernelResetFunction();
+		gos_kernelProcessorReset();
 	}
 
 	// Pass R0 as the argument.
@@ -1576,7 +1535,6 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
 	 * Local variables.
 	 */
 	u16_t			taskIndex			= 0u;
-	u16_t			currentTask 		= currentTaskIndex;
 	gos_taskPrio_t	lowestPrio			= CFG_TASK_IDLE_PRIO;
 	u16_t			nextTask			= 0u;
 	u64_t			currentRunTime		= 0u;
@@ -1596,7 +1554,7 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
 			}
 
 			// Choose the highest priority task - that is not the current one, and is ready - to run.
-			if (taskIndex != currentTask &&
+			if (taskIndex != currentTaskIndex &&
 				taskDescriptors[taskIndex].taskState == GOS_TASK_READY &&
 				taskDescriptors[taskIndex].taskPriority < lowestPrio)
 			{
@@ -1608,16 +1566,16 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
 		// If there was a task-swap, call the hook function.
 		if (currentTaskIndex != nextTask && kernelSwapHookFunction != NULL)
 		{
-			kernelSwapHookFunction(taskDescriptors[currentTask].taskId, taskDescriptors[nextTask].taskId);
+			kernelSwapHookFunction(taskDescriptors[currentTaskIndex].taskId, taskDescriptors[nextTask].taskId);
 			taskDescriptors[currentTaskIndex].taskCsCounter++;
 		}
 
 		// Update run-time statistics.
-		currentRunTime = (gos_timerSysTimerGet() - sysTimerValue);
+		currentRunTime = (gos_timerDriverSysTimerGet() - sysTimerValue);
 		// Increase system up-time.
 		totalSystemTime += currentRunTime;
 		taskDescriptors[currentTaskIndex].taskRunTime += currentRunTime;
-		sysTimerValue = gos_timerSysTimerGet();
+		sysTimerValue = gos_timerDriverSysTimerGet();
 
 		// Set current task.
 		currentTaskIndex = nextTask;
@@ -1641,6 +1599,8 @@ GOS_STATIC void_t gos_kernelIdleTask (void_t)
 	/*
 	 * Function code.
 	 */
+	gos_traceInit("Starting OS...", GOS_SUCCESS);
+
 	for (;;)
 	{
 		taskDescriptors[0].taskRunCounter++;
@@ -1678,23 +1638,23 @@ GOS_STATIC char_t* gos_kernelGetTaskStateString (gos_taskState_t taskState)
 	{
 		case GOS_TASK_READY:
 		{
-			return "ready";
+			return LOG_FG_GREEN_START"ready    ";
 		}break;
 		case GOS_TASK_SLEEPING:
 		{
-			return "sleeping";
+			return LOG_FG_YELLOW_START"sleeping ";
 		}break;
 		case GOS_TASK_SUSPENDED:
 		{
-			return "suspended";
+			return LOG_FG_MAGENTA_START"suspended";
 		}break;
 		case GOS_TASK_BLOCKED:
 		{
-			return "blocked";
+			return LOG_FG_CYAN_START"blocked  ";
 		}break;
 		case GOS_TASK_ZOMBIE:
 		{
-			return "zombie";
+			return LOG_FG_RED_START"zombie   ";
 		}
 		default:
 		{
@@ -1702,8 +1662,6 @@ GOS_STATIC char_t* gos_kernelGetTaskStateString (gos_taskState_t taskState)
 		}
 	}
 }
-
-#include "gos_lock.h"
 
 /**
  * @brief	Kernel dump task.
@@ -1719,7 +1677,9 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
 	 * Local variables.
 	 */
 	u16_t 	taskIndex = 0u;
+#if CFG_KERNEL_DUMP_CONFIG == 1
 	u8_t	confIndex = 0u;
+#endif
 
 	/*
 	 * Function code.
@@ -1729,29 +1689,29 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
 #if CFG_KERNEL_DUMP_CONFIG == 1
 		// Log configuration.
 		gos_logLogFormatted("\nKernel configuration parameters:\r\n");
-		gos_logLogFormatted("+--------------------------------+--------+\r\n");
+		gos_logLogFormatted(CONFIG_DUMP_SEPARATOR);
 		gos_logLogFormatted(
-				"| %30s | %6s |\r\n",
+				"| %32s | %6s |\r\n",
 				"parameter",
 				"value"
 				);
-		gos_logLogFormatted("+--------------------------------+--------+\r\n");
+		gos_logLogFormatted(CONFIG_DUMP_SEPARATOR);
 
-		for (confIndex = 0u; confIndex < CONFIG_PARAM_NUM; confIndex++)
+		for (confIndex = 0u; confIndex < sizeof(kernelConfig) / sizeof(kernelConfig[0]); confIndex++)
 		{
 			gos_logLogFormatted(
-					"| %30s | %6d |\r\n",
+					"| %32s | %6d |\r\n",
 					kernelConfig[confIndex].configName,
 					kernelConfig[confIndex].configValue
 					);
 		}
-		gos_logLogFormatted("+--------------------------------+--------+\r\n\n");
+		gos_logLogFormatted(CONFIG_DUMP_SEPARATOR"\n");
 #endif
 
 		gos_logLogFormatted("Task dump:\r\n");
-		gos_logLogFormatted(DUMP_SEPARATOR);
+		gos_logLogFormatted(TASK_DUMP_SEPARATOR);
 		gos_logLogFormatted(
-			"| %6s | %28s | %6s | %4s | %11s | %7s | %9s |\r\n",
+			"| %6s | %28s | %6s | %4s | %11s | %6s | %9s |\r\n",
 			"tid",
 			"name",
 			"stack",
@@ -1760,7 +1720,7 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
 			"cpu [%]",
 			"state"
 			);
-		gos_logLogFormatted(DUMP_SEPARATOR);
+		gos_logLogFormatted(TASK_DUMP_SEPARATOR);
 
 		for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
 		{
@@ -1769,7 +1729,7 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
 				break;
 			}
 			gos_logLogFormatted(
-					"| 0x%04X | %28s | 0x%04X | %4d | %11lu | %3u.%-3u | %9s |\r\n",
+					"| 0x%04X | %28s | 0x%04X | %4d | %11lu | %4u.%02u | %9s "LOG_FORMAT_RESET"|\r\n",
 					taskDescriptors[taskIndex].taskId,
 					taskDescriptors[taskIndex].taskName,
 					taskDescriptors[taskIndex].taskStackSize,
@@ -1780,9 +1740,31 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
 					gos_kernelGetTaskStateString(taskDescriptors[taskIndex].taskState)
 					);
 		}
-		gos_logLogFormatted(DUMP_SEPARATOR"\n");
+		gos_logLogFormatted(TASK_DUMP_SEPARATOR"\n");
 		gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_KERNEL);
 		gos_kernelTaskSuspend(kernelDumpTaskId);
+	}
+}
+
+/**
+ * @brief	Kernel processor reset.
+ * @details	Resets the processor.
+ *
+ * @return	-
+ */
+GOS_STATIC void_t gos_kernelProcessorReset (void_t)
+{
+	/*
+	 * Function code.
+	 */
+	GOS_ASM ("dsb 0xF":::"memory");
+	*(u32_t*)(0xE000ED0CUL) = (u32_t)((0x5FAUL << 16U) | (*(u32_t*)(0xE000ED0CUL) & (7UL << 8U)) | (1UL << 2U));
+	GOS_ASM ("dsb 0xF":::"memory");
+
+	// Wait for reset.
+	for(;;)
+	{
+		GOS_NOP;
 	}
 }
 
