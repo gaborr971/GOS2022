@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_shell.c
 //! @author		Gabor Repasi
-//! @date		2022-12-03
-//! @version	1.2
+//! @date		2022-12-11
+//! @version	1.3
 //!
 //! @brief		GOS shell service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_shell.h
@@ -29,6 +29,7 @@
 // 1.2		2022-12-03	Gabor Repasi	+	gos_shellRegisterCommands added
 //										*	Actual command and command parameter buffers
 //											made modul global instead of task local
+// 1.3		2022-12-11	Gabor Repasi	+	Built-in shell commands (dump and reset) added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -56,7 +57,7 @@
 #include <stdio.h>
 #include "gos_log.h"
 #include "gos_shell.h"
-#include "gos_uart.h"
+#include "gos_shell_driver.h"
 
 /*
  * Static variables
@@ -100,6 +101,7 @@ GOS_STATIC char_t				commandParams	[CFG_SHELL_MAX_COMMAND_LENGTH];
  * Function prototypes
  */
 GOS_STATIC void_t gos_shellDaemonTask (void_t);
+GOS_STATIC void_t gos_shellCommandHandler (char_t* params);
 
 /**
  * Shell daemon task descriptor.
@@ -110,6 +112,15 @@ GOS_STATIC gos_taskDescriptor_t shellDaemonTaskDesc =
 	.taskName		= "gos_shell_task",
 	.taskPriority	= CFG_TASK_SHELL_DAEMON_PRIO,
 	.taskStackSize	= CFG_TASK_SHELL_DAEMON_STACK
+};
+
+/**
+ * Shell info command.
+ */
+GOS_STATIC gos_shellCommand_t shellCommand =
+{
+	.command = "shell",
+	.commandHandler = gos_shellCommandHandler
 };
 
 /*
@@ -133,7 +144,8 @@ gos_result_t gos_shellInit (void_t)
 		shellCommands[index].commandHandler = NULL;
 	}
 
-	if (gos_kernelTaskRegister(&shellDaemonTaskDesc, &shellDaemonTaskId) == GOS_SUCCESS)
+	if (gos_kernelTaskRegister(&shellDaemonTaskDesc, &shellDaemonTaskId) == GOS_SUCCESS &&
+		gos_shellRegisterCommand(&shellCommand) == GOS_SUCCESS)
 	{
 		shellInitResult = GOS_SUCCESS;
 	}
@@ -302,11 +314,11 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 	 */
 	for(;;)
 	{
-		if (gos_uartReceiveChar(CFG_LOG_PORT, &commandBuffer[commandBufferIndex]) == GOS_SUCCESS)
+		if (gos_shellDriverReceiveChar(&commandBuffer[commandBufferIndex]) == GOS_SUCCESS)
 		{
 			if (useEcho == GOS_TRUE)
 			{
-				gos_uartTransmit(CFG_LOG_PORT, &commandBuffer[commandBufferIndex]);
+				gos_shellDriverTransmitString(&commandBuffer[commandBufferIndex]);
 			}
 
 			/*
@@ -325,7 +337,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 			{
 				if (useEcho == GOS_TRUE)
 				{
-					gos_uartTransmit(CFG_LOG_PORT, "\n");
+					gos_shellDriverTransmitString("\n");
 				}
 
 				commandBuffer[commandBufferIndex] = '\0';
@@ -363,7 +375,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 				// If command not found.
 				if (index == CFG_SHELL_MAX_COMMAND_NUMBER)
 				{
-					gos_logLog("Unrecognized command!\r\n");
+					gos_shellDriverTransmitString("Unrecognized command!\r\n");
 				}
 
 				memset((void_t*)commandBuffer, '\0', (CFG_SHELL_MAX_COMMAND_LENGTH + 1) * sizeof(char_t));
@@ -375,5 +387,26 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 			}
 		}
 		gos_kernelTaskSleep(50);
+	}
+}
+
+/**
+ * @brief	Shell command handler.
+ * @details Handles the built-in shell command.
+ *
+ * @return	-
+ */
+GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
+{
+	/*
+	 * Function code.
+	 */
+	if (strcmp(params, "dump") == 0)
+	{
+		gos_kernelDump();
+	}
+	else if (strcmp(params, "reset") == 0)
+	{
+		gos_kernelReset();
 	}
 }
