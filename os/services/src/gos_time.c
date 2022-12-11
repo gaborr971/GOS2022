@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_time.c
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @date		2022-12-08
+//! @version	1.2
 //!
 //! @brief		GOS time service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_time.h
@@ -28,6 +28,7 @@
 // 1.1		2022-11-15	Gabor Repasi	+	License added
 //										-	Elapsed sender ID getter API functions removed
 //										+	New elapsed sender ID enumerators are used
+// 1.2		2022-12-08	Gabor Repasi	+	Run-time handling added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -52,6 +53,7 @@
  * Includes
  */
 #include "gos_time.h"
+#include "gos_error.h"
 
 /*
  * Macros
@@ -83,6 +85,11 @@ GOS_STATIC gos_time_t systemTime =
 	.months	= TIME_DEFAULT_MONTH,
 	.days	= TIME_DEFAULT_DAY
 };
+
+/**
+ * System run-time.
+ */
+GOS_STATIC gos_runtime_t systemRunTime;
 
 /**
  * Number of days in each month - lookup table.
@@ -119,7 +126,7 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t);
 GOS_STATIC gos_taskDescriptor_t timeDaemonTaskDesc =
 {
 	.taskFunction 	= gos_timeDaemonTask,
-	.taskName		= "gos_time_task",
+	.taskName		= "gos_time_daemon",
 	.taskStackSize	= CFG_TASK_TIME_STACK,
 	.taskPriority	= CFG_TASK_TIME_PRIO
 };
@@ -132,15 +139,21 @@ gos_result_t gos_timeInit (void_t)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t timeInitResult = GOS_ERROR;
+	gos_result_t timeInitResult = GOS_SUCCESS;
 
 	/*
 	 * Function code.
 	 */
-	if (gos_signalCreate(&timeSignalId) == GOS_SUCCESS &&
-		gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) == GOS_SUCCESS)
+	if (gos_signalCreate(&timeSignalId) != GOS_SUCCESS)
 	{
-		timeInitResult = GOS_SUCCESS;
+		gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time signal registration failed.");
+		timeInitResult = GOS_ERROR;
+	}
+
+	if (gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
+	{
+		gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time daemon task registration failed.");
+		timeInitResult = GOS_ERROR;
 	}
 
 	return timeInitResult;
@@ -200,6 +213,32 @@ gos_result_t gos_timeSet (gos_time_t* pTime)
 	}
 
 	return timeSetResult;
+}
+
+/*
+ * Function: gos_runTimeGet
+ */
+gos_result_t gos_runTimeGet (gos_runtime_t* pRunTime)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t runtimeGetResult = GOS_ERROR;
+
+	/*
+	 * Function code.
+	 */
+	if (pRunTime != NULL)
+	{
+		pRunTime->seconds 	= systemRunTime.seconds;
+		pRunTime->minutes 	= systemRunTime.minutes;
+		pRunTime->hours		= systemRunTime.hours;
+		pRunTime->days		= systemRunTime.days;
+
+		runtimeGetResult = GOS_SUCCESS;
+	}
+
+	return runtimeGetResult;
 }
 
 /*
@@ -310,6 +349,51 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds)
 	return timeAddSecondsResult;
 }
 
+/*
+ * Function: gos_runTimeAddSeconds
+ */
+gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, gos_second_t seconds)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t	runtimeAddSecondsResult	= GOS_ERROR;
+	gos_second_t	secondCounter			= 0u;
+
+	/*
+	 * Function code.
+	 */
+	if (pRunTime != NULL)
+	{
+		while (secondCounter++ < seconds)
+		{
+			pRunTime->seconds++;
+			if (pRunTime->seconds >= 60)
+			{
+				pRunTime->seconds = 0U;
+				pRunTime->minutes++;
+
+				// Check minutes.
+				if (pRunTime->minutes >= 60)
+				{
+					pRunTime->minutes = 0U;
+					pRunTime->hours++;
+
+					// Check hours.
+					if (pRunTime->hours >= 24)
+					{
+						pRunTime->hours = 0U;
+						pRunTime->days++;
+					}
+				}
+			}
+		}
+		runtimeAddSecondsResult = GOS_SUCCESS;
+	}
+
+	return runtimeAddSecondsResult;
+}
+
 /**
  * @brief	Time daemon task.
  * @details	Increases the system time approximately every second and invokes the
@@ -334,6 +418,9 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
 	{
 		// Increase time by 1 second.
 		gos_timeAddSeconds(&systemTime, 1);
+
+		// Increase run-time by 1 second.
+		gos_runTimeAddSeconds(&systemRunTime, 1);
 
 		// Invoke second elapsed signal.
 		if (systemTime.seconds > previousTime.seconds)
@@ -371,6 +458,6 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
 			gos_signalInvoke(timeSignalId, GOS_TIME_YEAR_ELAPSED_SENDER_ID);
 		}
 
-		gos_kernelTaskSleep(1002);
+		gos_kernelTaskSleep(1000);
 	}
 }
