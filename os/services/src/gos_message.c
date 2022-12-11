@@ -113,7 +113,7 @@ GOS_STATIC gos_messageWaiterIndex_t	nextWaiterIndex;
 /**
  * Message lock to protect the internal arrays as shared resources.
  */
-GOS_STATIC gos_lock_t				messageLock;
+GOS_STATIC gos_lockId_t				messageLockId;
 
 /*
  * Function prototypes
@@ -161,7 +161,7 @@ gos_result_t gos_messageInit (void_t)
 	}
 
 	if (gos_kernelTaskRegister(&messageDaemonTaskDesc, &messageDaemonTaskId) == GOS_SUCCESS &&
-		gos_lockCreate(&messageLock) == GOS_SUCCESS)
+		gos_lockCreate(&messageLockId) == GOS_SUCCESS)
 	{
 		messageInitResult = GOS_SUCCESS;
 	}
@@ -190,7 +190,7 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
 		if (messageWaiterArray[nextWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID)
 		{
 			// Get message lock.
-			gos_lockWaitGet(messageLock);
+			gos_lockWaitGet(messageLockId);
 
 			// Add waiter to array.
 			gos_kernelTaskGetCurrentId(&currentTaskId);
@@ -218,7 +218,7 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
 			}
 
 			// Release message lock.
-			gos_lockRelease(messageLock);
+			gos_lockRelease(messageLockId);
 
 			// Block task (to be unblocked by daemon).
 			gos_kernelTaskBlock(currentTaskId);
@@ -243,7 +243,7 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t		messageTxResult = GOS_ERROR;
+	gos_result_t messageTxResult = GOS_ERROR;
 
 	/**
 	 * Function code.
@@ -256,7 +256,7 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
 		if (messageArray[nextMessageIndex].messageId == GOS_MESSAGE_INVALID_ID)
 		{
 			// Get message lock.
-			gos_lockWaitGet(messageLock);
+			gos_lockWaitGet(messageLockId);
 
 			memcpy((void_t*)&messageArray[nextMessageIndex], (void_t*)message, sizeof(*message));
 			messageTxResult = GOS_SUCCESS;
@@ -266,7 +266,7 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
 			}
 
 			// Release message lock.
-			gos_lockRelease(messageLock);
+			gos_lockRelease(messageLockId);
 		}
 	}
 
@@ -310,7 +310,7 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
 							messageArray[messageIndex].messageId)
 						{
 							// Get message lock.
-							gos_lockWaitGet(messageLock);
+							gos_lockWaitGet(messageLockId);
 
 							// ID match found. Copy message to target and delete waiter and message.
 							memcpy(messageWaiterArray[messageWaiterIndex].target->messageBytes,
@@ -326,7 +326,7 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
 							waiterServed = GOS_TRUE;
 
 							// Release message lock.
-							gos_lockRelease(messageLock);
+							gos_lockRelease(messageLockId);
 
 							break;
 						}
