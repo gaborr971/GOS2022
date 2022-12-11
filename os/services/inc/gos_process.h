@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_process.h
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @date		2022-12-11
+//! @version	1.2
 //!
 //! @brief		GOS process service header.
 //! @details	Process service is an alternative of tasks in the GOS system. Processes are
@@ -34,6 +34,7 @@
 // 1.1		2022-11-15	Gabor Repasi	+	Function descriptions updated
 //										+	Service description added
 //										+	License added
+// 1.2		2022-12-11	Gabor Repasi	+	Function descriptions completed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -181,20 +182,22 @@ gos_result_t gos_procSleep (gos_procSleepTick_t sleepTicks);
 
 /**
  * @brief	Wakes up a process.
- * @details	TODO
+ * @details	Checks whether the process is in sleeping state and if so, it sends it to
+ * 			ready state.
  *
  * @param	procId	:	Process ID.
  *
  * @return	Result of waking up.
  *
  * @retval	GOS_SUCCESS : Wake-up successful.
- * @retval	GOS_ERROR	: TODO
+ * @retval	GOS_ERROR	: Invalid process ID or process is not in sleeping state.
  */
 gos_result_t gos_procWakeup (gos_pid_t procId);
 
 /**
  * @brief	Sends the given process to suspended state.
- * @details	TODO
+ * @details	Checks whether the process is in ready or sleeping state and if so, it sends it to
+ * 			suspended state.
  *
  * @param	procId	: Process ID.
  *
@@ -207,7 +210,8 @@ gos_result_t gos_procSuspend (gos_pid_t procId);
 
 /**
  * @brief	Resumes a process.
- * @details	TODO
+ * @details	Checks whether the process is in suspended state and if so, it sends it to
+ * 			ready state.
  *
  * @param	procId	: Process ID.
  *
@@ -220,7 +224,7 @@ gos_result_t gos_procResume (gos_pid_t procId);
 
 /**
  * @brief	Gets the process name.
- * @details	TODO
+ * @details	Checks the process ID and copies the process name to the given variable.
  *
  * @param	procId		: Process ID.
  * @param	procName	: Process name character array (to store the
@@ -229,7 +233,7 @@ gos_result_t gos_procResume (gos_pid_t procId);
  * @return	Result of name getting.
  *
  * @retval	GOS_SUCCESS : Name getting successful.
- * @retval	GOS_ERROR	: Invalid process ID.
+ * @retval	GOS_ERROR	: Invalid process ID or process name variable is NULL.
  */
 gos_result_t gos_procGetName (gos_pid_t procId, gos_procName_t procName);
 
@@ -254,7 +258,7 @@ gos_result_t gos_procGetId (gos_procName_t procName, gos_pid_t* procId);
 
 /**
  * @brief	Gets the process data.
- * @details	TODO
+ * @details	Checks the process ID and copies the process data to the given variable.
  *
  * @param	procId		: Process ID.
  * @param	procData	: Pointer to a process descriptor structure.
@@ -268,7 +272,8 @@ gos_result_t gos_procGetData (gos_pid_t procId, gos_procDescriptor_t* procData);
 
 /**
  * @brief	Registers a swap hook.
- * @details	TODO
+ * @details	Checks the given function and if another swap hook has already been registered,
+ * 			and it saves the given function.
  *
  * @param	swapHookFunction	: Swap hook function.
  *
@@ -281,7 +286,8 @@ gos_result_t gos_procRegisterSwapHook (gos_procSwapHook_t swapHookFunction);
 
 /**
  * @brief	Registers an idle hook.
- * @details	TODO
+ * @details	Checks the given function and if another idle hook has already been registered,
+ * 			and it saves the given function.
  *
  * @param	idleHookFunction	: Idle hook function.
  *
@@ -294,7 +300,8 @@ gos_result_t gos_procRegisterIdleHook (gos_procIdleHook_t idleHookFunction);
 
 /**
  * @brief	Registers a sleep hook.
- * @details	TODO
+ * @details	Checks the given function and if another sleep hook has already been registered,
+ * 			and it saves the given function.
  *
  * @param	sleepHookFunction	: Sleep hook function.
  *
@@ -307,7 +314,8 @@ gos_result_t gos_procRegisterSleepHook (gos_procSleepHook_t sleepHookFunction);
 
 /**
  * @brief	Registers a wake-up hook.
- * @details	TODO
+ * @details	Checks the given function and if another wake-up hook has already been registered,
+ * 			and it saves the given function.
  *
  * @param	wakeupHookFunction	: Wake-up hook function.
  *
@@ -320,7 +328,8 @@ gos_result_t gos_procRegisterWakeupHook (gos_procWakeupHook_t wakeupHookFunction
 
 /**
  * @brief	Registers a suspend hook.
- * @details	TODO
+ * @details	Checks the given function and if another suspend hook has already been registered,
+ * 			and it saves the given function.
  *
  * @param	suspendHookFunction	: Suspend hook function.
  *
@@ -333,7 +342,8 @@ gos_result_t gos_procRegisterSuspendHook (gos_procSuspendHook_t suspendHookFunct
 
 /**
  * @brief	Registers a resume hook.
- * @details	TODO
+ * @details	Checks the given function and if another resume hook has already been registered,
+ * 			and it saves the given function.
  *
  * @param	resumeHookFunction	: Resume hook function.
  *

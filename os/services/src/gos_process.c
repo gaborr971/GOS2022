@@ -59,7 +59,7 @@
 #include "gos_log.h"
 #include "gos_process.h"
 #include "gos_signal.h"
-#include "gos_tmr.h"
+#include "gos_timer_driver.h"
 
 #if CFG_PROC_USE_SERVICE == 1
 /*
@@ -68,7 +68,7 @@
 /**
  * Dump separator line.
  */
-#define DUMP_SEPARATOR	"+--------+----------------------------+------------+--------------+----------+------------+\r\n"
+#define DUMP_SEPARATOR	"+--------+------------------------------+---------------+-------------+---------+-----------+\r\n"
 
 /*
  * Type definitions
@@ -308,7 +308,6 @@ gos_result_t gos_procSleep (gos_procSleepTick_t sleepTicks)
 				procDescriptors[currentProcIndex].procSleepTicks	= gos_kernelGetSysTicks() + sleepTicks;
 				procSleepResult = GOS_SUCCESS;
 			}
-
 		}
 		GOS_ATOMIC_EXIT
 
@@ -663,7 +662,11 @@ void_t gos_procDumpSignalHandler (gos_signalSenderId_t senderId)
 		gos_kernelTaskResume(procDumpTaskId);
 	}
 #else
-	gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_PROC);
+	if (senderId == GOS_DUMP_SENDER_KERNEL)
+	{
+		GOS_EXTERN gos_signalId_t kernelDumpSignal;
+		gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_PROC);
+	}
 #endif
 }
 
@@ -789,10 +792,10 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
 		currentProcIndex = nextProc;
 
 		// Call selected process.
-		sysTimerCurrVal = gos_timerSysTimerGet();
+		sysTimerCurrVal = gos_timerDriverSysTimerGet();
 		procDescriptors[currentProcIndex].procFunction();
 		procDescriptors[currentProcIndex].procRunCounter++;
-		currentRunTime = (gos_timerSysTimerGet() - sysTimerCurrVal);
+		currentRunTime = (gos_timerDriverSysTimerGet() - sysTimerCurrVal);
 		procDescriptors[currentProcIndex].procRunTime += currentRunTime;
 		totalProcRunTime += currentRunTime;
 
@@ -817,15 +820,15 @@ GOS_STATIC char_t* gos_procGetProcStateString (gos_procState_t procState)
 	{
 		case GOS_PROC_READY:
 		{
-			return "ready";
+			return LOG_FG_GREEN_START"ready    ";
 		}break;
 		case GOS_PROC_SLEEPING:
 		{
-			return "sleeping";
+			return LOG_FG_YELLOW_START"sleeping " ;
 		}break;
 		case GOS_PROC_SUSPENDED:
 		{
-			return "suspended";
+			return LOG_FG_MAGENTA_START"suspended";
 		}break;
 		default:
 		{
@@ -856,19 +859,8 @@ GOS_STATIC void_t gos_procDumpTask (void_t)
 	{
 		gos_logLogFormatted("Process dump:\r\n");
 		gos_logLogFormatted(DUMP_SEPARATOR);
-		/*sprintf(procDumpLine,
-				"| %6s | %26s | %10s | %12s | %8s | %10s |\r\n",
-				"pid",
-				"name",
-				"prio",
-				"time [us]",
-				"[%]",
-				"state"
-				);
-		gos_logLog(procDumpLine);*/
-
 		gos_logLogFormatted(
-				"| %6s | %26s | %10s | %12s | %8s | %10s |\r\n",
+				"| %6s | %28s | %13s | %11s | %7s | %9s |\r\n",
 				"pid",
 				"name",
 				"prio",
@@ -884,20 +876,8 @@ GOS_STATIC void_t gos_procDumpTask (void_t)
 			{
 				break;
 			}
-			/*sprintf(procDumpLine,
-					"| 0x%04X | %26s | %10d | %12lu | %8d | %10s |\r\n",
-					procDescriptors[procIndex].procId,
-					procDescriptors[procIndex].procName,
-					procDescriptors[procIndex].procPriority,
-					(u32_t)procDescriptors[procIndex].procRunTime,
-					procDescriptors[procIndex].procCpuUsage,
-					gos_procGetProcStateString(procDescriptors[procIndex].procState)
-					);
-
-			gos_logLog(procDumpLine);*/
-
 			gos_logLogFormatted(
-					"| 0x%04X | %26s | %10d | %12lu | %8d | %10s |\r\n",
+					"| 0x%04X | %28s | %13d | %11lu | %7d | %9s "LOG_FORMAT_RESET"|\r\n",
 					procDescriptors[procIndex].procId,
 					procDescriptors[procIndex].procName,
 					procDescriptors[procIndex].procPriority,
