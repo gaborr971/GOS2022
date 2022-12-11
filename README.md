@@ -23,4 +23,4 @@ If you have any questions or ideas, feel free to contact me: gaborr97@gmail.com
 The code can be used for basic testing at this point, but not recommended for building
 complex applications yet.
 
-Last updated: 2022-11-15
+Last updated: 2022-12-11
