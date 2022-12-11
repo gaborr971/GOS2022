@@ -14,12 +14,12 @@
 //*************************************************************************************************
 //! @file		gos.h
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.2
+//! @date		2022-12-11
+//! @version	1.3
 //!
 //! @brief		GOS header.
 //! @details	This header is a wrapper for the inclusion of all OS services and drivers for
-//! 			GOS2022 v0.1
+//! 			GOS2022 v0.2
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
@@ -29,6 +29,7 @@
 // 1.1		2022-11-14	Gabor Repasi	+	Header description added
 //										+	Function descriptions added
 // 1.2		2022-11-15	Gabor Repasi	+	License added
+// 1.3		2022-12-11	Gabor Repasi	-	Function prototypes removed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -54,7 +55,9 @@
 /*
  * Includes
  */
-#include "gos_drv.h"
+#include "gos_driver.h"
+#include "gos_error.h"
+#include "gos_gcp.h"
 #include "gos_kernel.h"
 #include "gos_lock.h"
 #include "gos_log.h"
@@ -65,31 +68,4 @@
 #include "gos_shell.h"
 #include "gos_time.h"
 
-/*
- * Function prototypes
- */
-/**
- * @brief	OS initializer function.
- * @details	Calls the necessary driver and service initializer functions.
- *
- * @return	Result of OS initialization.
- *
- * @retval	GOS_SUCCESS	: OS initialization successful.
- * @retval	GOS_ERROR	: At least one driver or service initialization failed.
- */
-gos_result_t gos_Init (void_t);
-
-/**
- * @brief	Starts the OS.
- * @details	Checks whether the initializer function has set the error flag to GOS_FALSE,
- * 			and if so, it starts the kernel (and thus the scheduling of tasks).
- *
- * @return	Result of OS starting.
- *
- * @retval	GOS_ERROR	: OS not started due to initialization error or kernel start error.
- *
- * @remark	This function should only return with error. If the initialization is successful,
- * 			the function is not expected to return.
- */
-gos_result_t gos_Start (void_t);
 #endif
