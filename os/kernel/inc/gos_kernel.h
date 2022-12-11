@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_kernel.h
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.2
+//! @date		2022-12-11
+//! @version	1.6
 //!
 //! @brief		GOS kernel header.
 //! @details	The GOS kernel is the core of the GOS system. It contains the basic type
@@ -36,6 +36,12 @@
 // 1.3		2022-12-03	Gabor Repasi	+	gos_kernelTaskRegisterTasks added
 //										+	GOS_PARAM_IGNORE macro added
 //										+	taskIdEx added to gos_taskDescriptor_t
+// 1.4		2022-12-04	Gabor Repasi	*	Sleep, wake-up, suspend, resume, block, unblock, delete
+//											hook functions replaced with signals
+// 1.5		2022-12-08	Gabor Repasi	+	Task original priority added
+//										+	Task priority setter and getter functions added
+// 1.6		2022-12-11	Gabor Repasi	-	GOS_PARAM_IGNORE removed
+//										+	Interface descriptions added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -68,7 +74,10 @@
  * Macros
  */
 #ifndef NULL
-#define NULL ((void *)0) //! Null pointer.
+/**
+ * NULL pointer.
+ */
+#define NULL ( (void *) 0 )
 #endif
 
 /**
@@ -94,7 +103,7 @@
 /**
  * Static in-line macro.
  */
-#define GOS_STATIC_INLINE           static GOS_INLINE
+#define GOS_STATIC_INLINE           GOS_STATIC GOS_INLINE
 
 //! Extern macro.
 #define GOS_EXTERN					extern
@@ -135,10 +144,6 @@
 										schedulingDisabled = GOS_FALSE;			\
 									}
 
-/**
- * Parameter ignore value.
- */
-#define GOS_PARAM_IGNORE			( 0 )
 /*
  * Type definitions
  */
@@ -212,11 +217,6 @@ typedef void_t	(*gos_taskUnblockHook_t		)(gos_tid_t				);	//!< Task unblock hook
 typedef void_t	(*gos_taskDeleteHook_t		)(gos_tid_t				);	//!< Task delete hook type.
 
 /**
- * Kernel reset function type.
- */
-typedef void_t	(*gos_kernelReset_t			)(void_t				);
-
-/**
  *  Result type enumerator.
  *  @note Hamming distance of
  *  - success and error:	7
@@ -249,6 +249,7 @@ typedef struct
 	gos_taskState_t			taskState;				//!< Task state.
 	gos_taskState_t			taskPreviousState;		//!< Task previous state (for restoration).
 	gos_taskPrio_t			taskPriority;			//!< Task priority.
+	gos_taskPrio_t			taskOriginalPriority;	//!< Task original priority.
 	gos_taskName_t			taskName;				//!< Task name.
 	gos_tid_t				taskId;					//!< Task ID (internal).
 	gos_tid_t*				taskIdEx;				//!< Task ID (external).
@@ -273,7 +274,8 @@ typedef enum
 	GOS_DUMP_SENDER_SIGNAL,		//!< Sender is the signal service.
 	GOS_DUMP_SENDER_MESSAGE,	//!< Sender is the message service.
 	GOS_DUMP_SENDER_SHELL,		//!< Sender is the shell service.
-	GOS_DUMP_SENDER_TIME		//!< Sender is the time service.
+	GOS_DUMP_SENDER_TIME,		//!< Sender is the time service.
+	GOS_DUMP_SENDER_LAST		//!< Sender is the last one.
 }gos_dumpSignalSender_t;
 
 /*
@@ -431,6 +433,62 @@ gos_result_t gos_kernelTaskUnblock (gos_tid_t taskId);
 gos_result_t gos_kernelTaskDelete (gos_tid_t taskId);
 
 /**
+ * @brief	Sets the current priority of the given task to the given value (for temporary change).
+ * @details	Checks the given parameters and sets the current priority of the given task.
+ *
+ * @param 	taskId			:	ID of the task to change the priority of.
+ * @param	taskPriority	:	The desired task priority.
+ *
+ * @return	Result of priority change.
+ *
+ * @retval	GOS_SUCCESS	:	Current priority changed successfully.
+ * @retval	GOS_ERROR	:	Invalid task ID or priority.
+ */
+gos_result_t gos_kernelTaskSetPriority (gos_tid_t taskId, gos_taskPrio_t taskPriority);
+
+/**
+ * @brief	Sets the original priority of the given task to the given value (for permanent change).
+ * @details	Checks the given parameters and sets the original priority of the given task.
+ *
+ * @param 	taskId			:	ID of the task to change the priority of.
+ * @param	taskPriority	:	The desired task priority.
+ *
+ * @return	Result of priority change.
+ *
+ * @retval	GOS_SUCCESS	:	Original priority changed successfully.
+ * @retval	GOS_ERROR	:	Invalid task ID or priority.
+ */
+gos_result_t gos_kernelTaskSetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t taskPriority);
+
+/**
+ * @brief	Gets the current priority of the given task.
+ * @details	Checks the given parameters and saves the current priority in the given variable.
+ *
+ * @param 	taskId			:	ID of the task to get the priority of.
+ * @param	taskPriority	:	Pointer to a priority variable to store the priority in.
+ *
+ * @return	Result of priority getting.
+ *
+ * @retval	GOS_SUCCESS	:	Current priority getting successfully.
+ * @retval	GOS_ERROR	:	Invalid task ID or priority variable is NULL.
+ */
+gos_result_t gos_kernelTaskGetPriority (gos_tid_t taskId, gos_taskPrio_t* taskPriority);
+
+/**
+ * @brief	Gets the original priority of the given task.
+ * @details	Checks the given parameters and saves the original priority in the given variable.
+ *
+ * @param 	taskId			:	ID of the task to get the priority of.
+ * @param	taskPriority	:	Pointer to a priority variable to store the priority in.
+ *
+ * @return	Result of priority getting.
+ *
+ * @retval	GOS_SUCCESS	:	Original priority getting successfully.
+ * @retval	GOS_ERROR	:	Invalid task ID or priority variable is NULL.
+ */
+gos_result_t gos_kernelTaskGetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t* taskPriority);
+
+/**
  * @brief	Gets the task name of the task with the given ID.
  * @details	Copies the task name corresponding with the given task ID to the task name
  * 			variable.
@@ -527,102 +585,30 @@ gos_result_t gos_kernelRegisterSwapHook (gos_taskSwapHook_t swapHookFunction);
 gos_result_t gos_kernelRegisterIdleHook (gos_taskIdleHook_t idleHookFunction);
 
 /**
- * @brief	Registers a task sleep hook function.
- * @details	Checks whether the param is NULL pointer and a hook function is already
- * 			registered, and both conditions are false, it registers the hook function.
+ * @brief	Subscribes the given handler to the task delete signal.
+ * @details	Subscribes the given handler to the task delete signal.
  *
- * @param 	sleepHookFunction	:	Sleep hook function.
+ * @param 	deleteSignalHandler	:	Delete signal handler function.
  *
- * @return	Result of registration.
+ * @return	Result of subscription.
  *
- * @retval	GOS_SUCCESS	:	Registration successful.
- * @retval	GOS_ERROR	:	Registration failed (hook function already exists or parameter is NULL).
+ * @retval	GOS_SUCCESS	:	Subscription successful.
+ * @retval	GOS_ERROR	:	Subscription failed or signal handler is NULL.
  */
-gos_result_t gos_kernelRegisterTaskSleepHook (gos_taskSleepHook_t sleepHookFunction);
+gos_result_t gos_kernelSubscribeTaskDeleteSignal (void_t (*deleteSignalHandler)(u16_t));
 
 /**
- * @brief	Registers a task wake-up hook function.
- * @details	Checks whether the param is NULL pointer and a hook function is already
- * 			registered, and both conditions are false, it registers the hook function.
+ * @brief	Subscribes the given handler to the dump ready signal.
+ * @details	Subscribes the given handler to the dump ready signal.
  *
- * @param 	wakeupHookFunction	: Wake-up hook function.
+ * @param 	dumpReadySignalHandler	:	Dump ready signal handler function.
  *
- * @return	Result of registration.
+ * @return	Result of subscription.
  *
- * @retval	GOS_SUCCESS	:	Registration successful.
- * @retval	GOS_ERROR	:	Registration failed (hook function already exists or parameter is NULL).
+ * @retval	GOS_SUCCESS	:	Subscription successful.
+ * @retval	GOS_ERROR	:	Subscription failed or signal handler is NULL.
  */
-gos_result_t gos_kernelRegisterTaskWakeupHook (gos_taskWakeupHook_t wakeupHookFunction);
-
-/**
- * @brief	Registers a task suspend hook function.
- * @details	Checks whether the param is NULL pointer and a hook function is already
- * 			registered, and both conditions are false, it registers the hook function.
- *
- * @param 	suspendHookFunction	:	Suspend hook function.
- *
- * @return	Result of registration.
- *
- * @retval	GOS_SUCCESS	:	Registration successful.
- * @retval	GOS_ERROR	:	Registration failed (hook function already exists or parameter is NULL).
- */
-gos_result_t gos_kernelRegisterTaskSuspendHook (gos_taskSuspendHook_t suspendHookFunction);
-
-/**
- * @brief	Registers a task resume hook function.
- * @details	Checks whether the param is NULL pointer and a hook function is already
- * 			registered, and both conditions are false, it registers the hook function.
- *
- * @param 	resumeHookFunction	:	Resume hook function.
- *
- * @return	Result of registration.
- *
- * @retval	GOS_SUCCESS	:	Registration successful.
- * @retval	GOS_ERROR	:	Registration failed (hook function already exists or parameter is NULL).
- */
-gos_result_t gos_kernelRegisterTaskResumeHook (gos_taskResumeHook_t resumeHookFunction);
-
-/**
- * @brief	Registers a task block hook function.
- * @details	Checks whether the param is NULL pointer and a hook function is already
- * 			registered, and both conditions are false, it registers the hook function.
- *
- * @param 	blockHookFunction	:	Block hook function.
- *
- * @return	Result of registration.
- *
- * @retval	GOS_SUCCESS	:	Registration successful.
- * @retval	GOS_ERROR	:	Registration failed (hook function already exists or parameter is NULL).
- */
-gos_result_t gos_kernelRegisterTaskBlockHook (gos_taskBlockHook_t blockHookFunction);
-
-/**
- * @brief	Registers a task unblock hook function.
- * @details	Checks whether the param is NULL pointer and a hook function is already
- * 			registered, and both conditions are false, it registers the hook function.
- *
- * @param 	unblockHookFunction	:	Unblock hook function.
- *
- * @return	Result of registration.
- *
- * @retval	GOS_SUCCESS	:	Registration successful.
- * @retval	GOS_ERROR	:	Registration failed (hook function already exists or parameter is NULL).
- */
-gos_result_t gos_kernelRegisterTaskUnblockHook (gos_taskUnblockHook_t unblockHookFunction);
-
-/**
- * @brief	Registers a task delete hook function.
- * @details	Checks whether the param is NULL pointer and a hook function is already
- * 			registered, and both conditions are false, it registers the hook function.
- *
- * @param 	deleteHookFunction	:	Delete hook function.
- *
- * @return	Result of registration.
- *
- * @retval	GOS_SUCCESS	:	Registration successful.
- * @retval	GOS_ERROR	:	Registration failed (hook function already exists or parameter is NULL).
- */
-gos_result_t gos_kernelRegisterTaskDeleteHook (gos_taskDeleteHook_t deleteHookFunction);
+gos_result_t gos_kernelSubscribeDumpReadySignal (void_t (*dumpReadySignalHandler)(u16_t));
 
 /**
  * @brief	Invokes the kernel dump signal.
@@ -669,7 +655,7 @@ gos_result_t gos_kernelStart (void_t);
  *
  * @return	-
  */
-void_t gos_kernelReset (gos_kernelReset_t resetFunction);
+void_t gos_kernelReset (void_t);
 
 /**
  * @brief	Blocking delay in microsecond range.
@@ -692,4 +678,26 @@ void_t gos_kernelDelayUs (u16_t microseconds);
  * @return	-
  */
 void_t gos_kernelDelayMs (u16_t milliseconds);
+
+/**
+ * @brief	Platform driver initializer. Used for the platform-specific driver initializations.
+ * @details	This function is weak and therefore should be over-defined by the user. It prints
+ * 			a warning message to the log output in case it is not over-defined.
+ *
+ * @return	-
+ *
+ * @retval	GOS_SUCCESS	:	-
+ */
+__attribute__((weak)) gos_result_t gos_platformDriverInit (void_t);
+
+/**
+ * @brief	User application initializer. Used for the application-related initializations.
+ * @details	This function is weak and therefore should be over-defined by the user. It prints
+ * 			a warning message to the log output in case it is not over-defined.
+ *
+ * @return	-
+ *
+ * @retval	GOS_SUCCESS	:	-
+ */
+__attribute__((weak)) gos_result_t gos_userApplicationInit (void_t);
 #endif
