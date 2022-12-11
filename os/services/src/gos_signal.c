@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_signal.c
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @date		2022-12-04
+//! @version	1.2
 //!
 //! @brief		GOS signal service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_signal.h
@@ -26,6 +26,7 @@
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-10-23	Gabor Repasi	Initial version created.
 // 1.1		2022-11-15	Gabor Repasi	+	License added
+// 1.2		2022-12-04	Gabor Repasi	+	Kernel dump ready signal handler added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -97,9 +98,11 @@ GOS_STATIC gos_queueDescriptor_t	signalInvokeQueueDesc = {
 GOS_STATIC gos_tid_t				signalDaemonTaskId;
 
 /*
- * External data
+ * External variables
  */
 GOS_EXTERN gos_signalId_t			kernelDumpSignal;
+GOS_EXTERN gos_signalId_t			kernelDumpReadySignal;
+GOS_EXTERN gos_signalId_t			kernelTaskDeleteSignal;
 
 /*
  * External functions
@@ -148,6 +151,8 @@ gos_result_t gos_signalInit (void_t)
 	if (gos_queueCreate(&signalInvokeQueueDesc) == GOS_SUCCESS &&
 		gos_kernelTaskRegister(&signalDaemonTaskDescriptor, &signalDaemonTaskId) == GOS_SUCCESS &&
 		gos_signalCreate(&kernelDumpSignal) == GOS_SUCCESS &&
+		gos_signalCreate(&kernelDumpReadySignal) == GOS_SUCCESS &&
+		gos_signalCreate(&kernelTaskDeleteSignal) == GOS_SUCCESS &&
 		gos_signalSubscribe(kernelDumpSignal, gos_kernelDumpSignalHandler) == GOS_SUCCESS &&
 		gos_signalSubscribe(kernelDumpSignal, gos_procDumpSignalHandler) == GOS_SUCCESS &&
 		gos_signalSubscribe(kernelDumpSignal, gos_queueDumpSignalHandler) == GOS_SUCCESS)
@@ -265,7 +270,7 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
 	 */
 	for (;;)
 	{
-		if (gos_queueGet(signalInvokeQueueDesc.queueId, (void_t*)&signalInvokeDescriptor, sizeof(signalInvokeDescriptor)) == GOS_SUCCESS)
+		while (gos_queueGet(signalInvokeQueueDesc.queueId, (void_t*)&signalInvokeDescriptor, sizeof(signalInvokeDescriptor)) == GOS_SUCCESS)
 		{
 			for (signalHandlerIndex = 0u; signalHandlerIndex < CFG_SIGNAL_MAX_SUBSCRIBERS; signalHandlerIndex++)
 			{
@@ -281,6 +286,6 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
 				}
 			}
 		}
-		gos_kernelTaskSleep(100);
+		gos_kernelTaskSleep(50);
 	}
 }

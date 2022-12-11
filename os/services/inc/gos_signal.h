@@ -66,7 +66,7 @@
 //! Signal ID.
 typedef u8_t	gos_signalId_t;
 //! Signal sender ID.
-typedef u8_t	gos_signalSenderId_t;
+typedef u16_t	gos_signalSenderId_t;
 //! Signal index for loops.
 typedef u8_t	gos_signalIndex_t;
 #else
@@ -85,7 +85,7 @@ typedef u8_t	gos_signalHandlerIndex_t;
 typedef u16_t	gos_signalHandlerIndex_t;
 #endif
 //! Signal handler function type.
-typedef void (*gos_signalHandler_t)(gos_signalSenderId_t);
+typedef void_t (*gos_signalHandler_t)(gos_signalSenderId_t);
 
 /*
  * Function prototypes
