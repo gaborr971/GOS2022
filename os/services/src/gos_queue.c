@@ -116,7 +116,7 @@ GOS_STATIC	gos_queueLength_t	writeCounters	[CFG_QUEUE_MAX_NUMBER];
 /**
  * Queue lock.
  */
-GOS_STATIC	gos_lock_t 			queueLock;
+GOS_STATIC	gos_lockId_t 		queueLockId;
 
 /**
  * Queue full hook.
@@ -174,7 +174,7 @@ gos_result_t gos_queueInit (void_t)
 	}
 
 	// Create lock, register and suspend queue dump task.
-	if (gos_lockCreate(&queueLock) == GOS_SUCCESS &&
+	if (gos_lockCreate(&queueLockId) == GOS_SUCCESS &&
 		gos_kernelTaskRegister(&queueDumpTaskDesc, &queueDumpTaskId) == GOS_SUCCESS &&
 		gos_kernelTaskSuspend(queueDumpTaskId) == GOS_SUCCESS)
 	{
@@ -235,7 +235,7 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
 	/*
 	 * Function code.
 	 */
-	gos_lockWaitGet(queueLock);
+	gos_lockWaitGet(queueLockId);
 
 	if (queueId >= GOS_DEFAULT_QUEUE_ID &&
 		(queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
@@ -270,7 +270,7 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
 		}
 	}
 
-	gos_lockRelease(queueLock);
+	gos_lockRelease(queueLockId);
 	return queuePutResult;
 }
 
@@ -288,7 +288,7 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
 	/*
 	 * Function code.
 	 */
-	gos_lockWaitGet(queueLock);
+	gos_lockWaitGet(queueLockId);
 
 	if (queueId >= GOS_DEFAULT_QUEUE_ID &&
 		(queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
@@ -322,7 +322,7 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
 		}
 	}
 
-	gos_lockRelease(queueLock);
+	gos_lockRelease(queueLockId);
 	return queueGetResult;
 }
 
@@ -340,7 +340,7 @@ gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLeng
 	/*
 	 * Function code.
 	 */
-	gos_lockWaitGet(queueLock);
+	gos_lockWaitGet(queueLockId);
 
 	if (queueId >= GOS_DEFAULT_QUEUE_ID &&
 		(queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
@@ -358,7 +358,7 @@ gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLeng
 		}
 	}
 
-	gos_lockRelease(queueLock);
+	gos_lockRelease(queueLockId);
 	return queueGetResult;
 }
 
@@ -392,7 +392,7 @@ gos_result_t gos_queueRegisterEmptyHook (gos_queueEmptyHook emptyHook)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t 		queueRegisterEmptyHookResult	= GOS_ERROR;
+	gos_result_t queueRegisterEmptyHookResult = GOS_ERROR;
 
 	/*
 	 * Function code.
@@ -453,7 +453,8 @@ gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t*
 	 */
 	if (queueId >= GOS_DEFAULT_QUEUE_ID &&
 		(queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
-		queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID)
+		queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID &&
+		elementNumber != NULL)
 	{
 		queueIndex = (gos_queueIndex_t)(queueId - GOS_DEFAULT_QUEUE_ID);
 
@@ -545,6 +546,7 @@ GOS_STATIC void_t gos_queueDumpTask (void_t)
 		}
 		gos_logLogFormatted(DUMP_SEPARATOR"\n");
 		gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_QUEUE);
+		gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_LAST);
  		gos_kernelTaskSuspend(queueDumpTaskId);
 	}
 }

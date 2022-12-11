@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_queue.h
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.2
+//! @date		2022-12-11
+//! @version	1.3
 //!
 //! @brief		GOS queue service header.
 //! @details	Queue service is one of the inter-task communication solutions offered by the OS.
@@ -37,6 +37,7 @@
 // 1.2		2022-11-15	Gabor Repasi	+	Queue peek function added
 //										+	Service description added
 //										+	License added
+// 1.3		2022-12-11	Gabor Repasi	+	Function descriptions completed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -135,31 +136,34 @@ gos_tid_t queueDumpTaskId;
  */
 /**
  * @brief	This function initializes the queue service.
- * @details	TODO
+ * @details	Initializes the internal queue array, creates the queue lock, and
+ * 			registers the queue dump task in the kernel.
  *
  * @return	Result of initialization.
  *
  * @retval	GOS_SUCCESS : Initialization successful.
- * @retval	GOS_ERROR   : TODO
+ * @retval	GOS_ERROR   : Lock creation, task registration or task suspension error.
  */
 gos_result_t gos_queueInit (void_t);
 
 /**
  * @brief	This function creates a new queue.
- * @details	TODO
+ * @details	This function loops through the internal queue array and registers the
+ * 			new queue in the next free slot.
  *
  * @param	pQueueDescriptor	: Pointer to queue descriptor variable with queue data.
  *
  * @return	Result of queue creation.
  *
  * @retval	GOS_SUCCESS : Queue creation successful.
- * @retval	GOS_ERROR   : TODO
+ * @retval	GOS_ERROR   : Queue descriptor is NULL pointer or queue array is full.
  */
 gos_result_t gos_queueCreate (gos_queueDescriptor_t* pQueueDescriptor);
 
 /**
  * @brief	This function puts an element in the given queue.
- * @details	TODO
+ * @details	This function checks the queue state and places the given element in the
+ * 			next queue element.
  *
  * @param	queueId		: Queue ID.
  * @param	element		: Pointer to element.
@@ -168,13 +172,13 @@ gos_result_t gos_queueCreate (gos_queueDescriptor_t* pQueueDescriptor);
  * @return	Result of element putting.
  *
  * @retval	GOS_SUCCESS : Element successfully put in the queue.
- * @retval	GOS_ERROR   : TODO
+ * @retval	GOS_ERROR   : Invalid queue ID, invalid element size or queue is full.
  */
 gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLength_t elementSize);
 
 /**
  * @brief	This function gets the next element from the given queue.
- * @details	TODO
+ * @details	This function checks the queue state and gets the next element from the queue.
  *
  * @param	queueId		: Queue ID.
  * @param	target		: Pointer to target variable.
@@ -183,13 +187,14 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
  * @return	Result of element getting.
  *
  * @retval	GOS_SUCCESS : Element successfully moved from queue to target.
- * @retval	GOS_ERROR   : TODO
+ * @retval	GOS_ERROR   : Invalid queue ID, invalid target size or queue is empty.
  */
 gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLength_t targetSize);
 
 /**
  * @brief	This function gets the next element from the given queue without removing it.
- * @details	TODO
+ * @details	This function checks the queue state and returns the next element from the queue
+ * 			without modifying the queue counters.
  *
  * @param	queueId		: Queue ID.
  * @param	target		: Pointer to target variable.
@@ -198,13 +203,14 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
  * @return	Result of element getting.
  *
  * @retval	GOS_SUCCESS : Element successfully copied from queue to target.
- * @retval	GOS_ERROR   : TODO
+ * @retval	GOS_ERROR   : Invalid queue ID, invalid target size or queue is empty.
  */
 gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLength_t targetSize);
 
 /**
  * @brief	This function registers a queue full hook function.
- * @details	TODO
+ * @details	This function checks whether a hook has been already registered, and if not,
+ * 			it saves the given hook function.
  *
  * @param	fullHook	: Hook function.
  *
@@ -217,7 +223,8 @@ gos_result_t gos_queueRegisterFullHook (gos_queueFullHook fullHook);
 
 /**
  * @brief	This function registers a queue empty hook function.
- * @details	TODO
+ * @details	This function checks whether a hook has been already registered, and if not,
+ * 			it saves the given hook function.
  *
  * @param	emptyHook	: Hook function.
  *
@@ -230,7 +237,8 @@ gos_result_t gos_queueRegisterEmptyHook (gos_queueEmptyHook emptyHook);
 
 /**
  * @brief	This function gets the name of the given queue.
- * @details	TODO
+ * @details	This function copies the name of the queue belonging to the given ID to
+ * 			the given variable.
  *
  * @param 	queueId		: Queue ID.
  * @param 	queueName	: Queue name.
@@ -238,13 +246,14 @@ gos_result_t gos_queueRegisterEmptyHook (gos_queueEmptyHook emptyHook);
  * @return	Result of queue name getting.
  *
  * @retval	GOS_SUCCESS : Name getting successful.
- * @retval	GOS_ERROR   : TODO
+ * @retval	GOS_ERROR   : Invalid queue ID or queue name variable is NULL.
  */
 gos_result_t gos_queueGetName (gos_queueId_t queueId, gos_queueName_t queueName);
 
 /**
  * @brief	This function gets the number of elements in the given queue.
- * @details	TODO
+ * @details	This function copies the number of elements in the queue belonging to the given ID
+ * 			to the given variable.
  *
  * @param 	queueId			: Queue ID.
  * @param 	elementNumber	: Pointer to variable to store the element number in.
@@ -252,7 +261,7 @@ gos_result_t gos_queueGetName (gos_queueId_t queueId, gos_queueName_t queueName)
  * @return	Result of queue element number getting.
  *
  * @retval	GOS_SUCCESS : Element number getting successful.
- * @retval	GOS_ERROR   : TODO
+ * @retval	GOS_ERROR   : Invalid queue ID or element number variable is NULL.
  */
 gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t* elementNumber);
 
