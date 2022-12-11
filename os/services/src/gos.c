@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos.c
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.2
+//! @date		2022-12-11
+//! @version	1.3
 //!
 //! @brief		GOS source.
 //! @details	For a more detailed description of this service, please refer to @ref gos.h
@@ -27,6 +27,9 @@
 // 1.0		2022-10-31	Gabor Repasi	Initial version created.
 // 1.1		2022-11-14	Gabor Repasi	+	Init error flag setting modified.
 // 1.2		2022-11-15	Gabor Repasi	+	License added
+// 1.3		2022-12-11	Gabor Repasi	+	main function added here
+//										*	gos_Init and gos_Start made local static functions
+//										+	platform and user initializers added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -55,12 +58,89 @@
 /*
  * Static variables
  */
+/**
+ * Initialization error flag.
+ */
 GOS_STATIC bool_t initError;
 
 /*
- * Function: gos_Init
+ * Function prototypes
  */
-gos_result_t gos_Init (void_t)
+GOS_STATIC gos_result_t gos_Init	(void_t);
+GOS_STATIC gos_result_t gos_Start	(void_t);
+
+/*
+ * Main
+ */
+int main (void_t)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t platformDriverInitResult;
+
+	/*
+	 * Function code.
+	 */
+	// Initialize platform drivers.
+	platformDriverInitResult = gos_platformDriverInit();
+
+	// Print startup logo.
+	gos_printStartupLogo();
+
+	// Pre-initialize.
+	gos_traceInit("Platform driver initialization", platformDriverInitResult);
+
+	// Initialize OS.
+	gos_traceInit("OS initialization", gos_Init());
+
+	// Call user initializer.
+	gos_traceInit("User application initialization", gos_userApplicationInit());
+
+	// Start OS.
+	gos_Start();
+
+	gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Kernel could not be started.");
+
+	for(;;);
+}
+
+/*
+ * Function: gos_platformDriverInit
+ */
+__attribute__((weak)) gos_result_t gos_platformDriverInit (void_t)
+{
+	/*
+	 * Function code.
+	 */
+	GOS_NOP;
+	gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Platform driver initializer missing!");
+	return GOS_SUCCESS;
+}
+
+/*
+ * Function: gos_userApplicationInit
+ */
+__attribute__((weak)) gos_result_t gos_userApplicationInit (void_t)
+{
+	/*
+	 * Function code.
+	 */
+	GOS_NOP;
+	gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "User application initializer missing!");
+	return GOS_SUCCESS;
+}
+
+/**
+ * @brief	OS initializer function.
+ * @details	Calls the necessary driver and service initializer functions.
+ *
+ * @return	Result of OS initialization.
+ *
+ * @retval	GOS_SUCCESS	: OS initialization successful.
+ * @retval	GOS_ERROR	: At least one driver or service initialization failed.
+ */
+GOS_STATIC gos_result_t gos_Init (void_t)
 {
 	/*
 	 * Local variables.
@@ -70,23 +150,21 @@ gos_result_t gos_Init (void_t)
 	/*
 	 * Function code.
 	 */
-	// Initialize drivers and services.
-	if (
-		gos_timerSysTimerInit() != GOS_SUCCESS	||
-		gos_kernelInit()		!= GOS_SUCCESS	||
-	    gos_lockInit()			!= GOS_SUCCESS	||
-	    gos_queueInit() 		!= GOS_SUCCESS	||
-	    gos_logInit() 			!= GOS_SUCCESS	||
-		gos_signalInit() 		!= GOS_SUCCESS	||
+	initStatus &= gos_traceInit("Kernel initialization", gos_kernelInit());
+	initStatus &= gos_traceInit("Lock service initialization", gos_lockInit());
+	initStatus &= gos_traceInit("Queue service initialization", gos_queueInit());
+	initStatus &= gos_traceInit("Log service initialization", gos_logInit());
+	initStatus &= gos_traceInit("Signal service initialization", gos_signalInit());
 #if CFG_PROC_USE_SERVICE == 1
-		gos_procInit() 			!= GOS_SUCCESS	||
+    initStatus &= gos_traceInit("Process service initialization", gos_procInit());
 #endif
-		gos_timeInit() 			!= GOS_SUCCESS	||
+    initStatus &= gos_traceInit("Time service initialization", gos_timeInit());
 #if CFG_SHELL_USE_SERVICE == 1
-		gos_shellInit()			!= GOS_SUCCESS	||
+    initStatus &= gos_traceInit("Shell service initialization", gos_shellInit());
 #endif
-		gos_messageInit() 		!= GOS_SUCCESS
-	)
+    initStatus &= gos_traceInit("Message service initialization", gos_messageInit());
+
+    if (initStatus != GOS_SUCCESS)
 	{
 		initStatus = GOS_ERROR;
 		initError = GOS_TRUE;
@@ -96,13 +174,22 @@ gos_result_t gos_Init (void_t)
 		initError = GOS_FALSE;
 	}
 
-    return initStatus;
+	return initStatus;
 }
 
-/*
- * Function: gos_Start
+/**
+ * @brief	Starts the OS.
+ * @details	Checks whether the initializer function has set the error flag to GOS_FALSE,
+ * 			and if so, it starts the kernel (and thus the scheduling of tasks).
+ *
+ * @return	Result of OS starting.
+ *
+ * @retval	GOS_ERROR	: OS not started due to initialization error or kernel start error.
+ *
+ * @remark	This function should only return with error. If the initialization is successful,
+ * 			the function is not expected to return.
  */
-gos_result_t gos_Start (void_t)
+GOS_STATIC gos_result_t gos_Start (void_t)
 {
 	/*
 	 * Local variables.
