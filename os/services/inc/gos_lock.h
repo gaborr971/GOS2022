@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_lock.h
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @date		2022-12-11
+//! @version	1.2
 //!
 //! @brief		GOS lock service header.
 //! @details	Lock service is a way of protecting shared resources between different tasks and
@@ -34,6 +34,7 @@
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-10-22	Gabor Repasi	Initial version created.
 // 1.1		2022-11-15	Gabor Repasi	+	License added
+// 1.2		2022-12-11	Gabor Repasi	*	Lock replaced with lock ID.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -67,7 +68,7 @@
 /**
  * OS lock type.
  */
-typedef u8_t	gos_lock_t;
+typedef u16_t	gos_lockId_t;
 
 #if CFG_LOCK_MAX_NUMBER < 255
 typedef u8_t	gos_lockIndex_t;		//!< Lock index type.
@@ -81,26 +82,8 @@ typedef u8_t	gos_lockWaiterIndex_t;	//!< Lock waiter index type.
 typedef u16_t	gos_lockWaiterIndex_t;	//!< Lock waiter index type.
 #endif
 
-/**
- * Lock status type.
- */
-typedef enum
-{
-	GOS_LOCK_UNLOCKED	= 0b0101,	//!< Lock unclocked.
-	GOS_LOCK_LOCKED		= 0b1010	//!< Lock locked.
-}gos_lock_status_t;
-
-/**
- * Lock descriptor type.
- */
-typedef struct
-{
-	bool_t		inUse;				//!< Flag indicating that the given lock is in use.
-	gos_lock_t	lock;				//!< The lock instance.
-}gos_lock_descriptor_t;
-
 /*
- * Function prototypes.
+ * Function prototypes
  */
 /**
  * @brief	This function initializes the lock service.
@@ -117,12 +100,15 @@ gos_result_t gos_lockInit (void_t);
  * @brief	This function creates a new lock instance.
  * @details	Goes through the lock array and allocates the next free lock.
  *
+ * @param	pLockId	:	Pointer to the lock ID variable to store the assigned lock ID.
+ *
  * @return	Result of lock creation.
  *
  * @retval	GOS_SUCCESS : Lock created successfully.
  * @retval	GOS_ERROR   : Lock array is full.
  */
-gos_result_t gos_lockCreate (gos_lock_t* pLock);
+gos_result_t gos_lockCreate (gos_lockId_t* pLockId);
+
 
 /**
  * @brief	This function waits for a lock instance to
@@ -131,12 +117,14 @@ gos_result_t gos_lockCreate (gos_lock_t* pLock);
  * 			element of the waiter task array. The waiter task will be blocked
  * 			if the lock is not available.
  *
+ * @param	lockId	:	ID of the lock instance.
+ *
  * @return	Result of lock get.
  *
  * @retval	GOS_SUCCESS : Lock get successful.
  * @retval	GOS_ERROR   : Invalid or unused lock.
  */
-gos_result_t gos_lockWaitGet (gos_lock_t lock);
+gos_result_t gos_lockWaitGet (gos_lockId_t lockId);
 
 /**
  * @brief	This function releases a lock instance.
@@ -144,10 +132,13 @@ gos_result_t gos_lockWaitGet (gos_lock_t lock);
  * 			loops through the waiter array and unblocks the first waiter
  * 			task of the given lock (if there are any).
  *
+ * @param	lockId	:	ID of the lock instance.
+ *
  * @return	Result of lock release.
  *
  * @retval	GOS_SUCCESS : Lock released successfully.
  * @retval	GOS_ERROR   : Invalid or unused lock.
  */
-gos_result_t gos_lockRelease (gos_lock_t lock);
+gos_result_t gos_lockRelease (gos_lockId_t lockId);
+
 #endif
