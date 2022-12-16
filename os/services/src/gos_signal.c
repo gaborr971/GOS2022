@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_signal.c
 //! @author		Gabor Repasi
-//! @date		2022-12-04
-//! @version	1.2
+//! @date		2022-12-15
+//! @version	1.3
 //!
 //! @brief		GOS signal service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_signal.h
@@ -27,6 +27,8 @@
 // 1.0		2022-10-23	Gabor Repasi	Initial version created.
 // 1.1		2022-11-15	Gabor Repasi	+	License added
 // 1.2		2022-12-04	Gabor Repasi	+	Kernel dump ready signal handler added
+// 1.3		2022-12-15	Gabor Repasi	+	Initialization error logging added
+//										+	Privilege handling added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -51,8 +53,17 @@
  * Includes
  */
 #include <string.h>
+#include "gos_error.h"
 #include "gos_signal.h"
 #include "gos_queue.h"
+
+/*
+ * Macros
+ */
+/**
+ * Signal daemon poll time in [ms].
+ */
+#define GOS_SIGNAL_DAEMON_POLL_TIME_MS	( 50u )
 
 /*
  * Type definitions
@@ -121,10 +132,11 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t);
  */
 GOS_STATIC gos_taskDescriptor_t signalDaemonTaskDescriptor =
 {
-	.taskFunction 	= gos_signalDaemonTask,
-	.taskName		= "gos_signal_daemon",
-	.taskStackSize	= CFG_TASK_SIGNAL_DAEMON_STACK,
-	.taskPriority	= CFG_TASK_SIGNAL_DAEMON_PRIO
+	.taskFunction 		= gos_signalDaemonTask,
+	.taskName			= "gos_signal_daemon",
+	.taskStackSize		= CFG_TASK_SIGNAL_DAEMON_STACK,
+	.taskPriority		= CFG_TASK_SIGNAL_DAEMON_PRIO,
+	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -135,7 +147,7 @@ gos_result_t gos_signalInit (void_t)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t 		signalInitResult	= GOS_ERROR;
+	gos_result_t 		signalInitResult	= GOS_SUCCESS;
 	gos_signalIndex_t	signalIndex			= 0u;
 
 	/*
@@ -148,17 +160,54 @@ gos_result_t gos_signalInit (void_t)
 	}
 
 	// Create queue for signal invoking and register signal daemon task.
-	if (gos_queueCreate(&signalInvokeQueueDesc) == GOS_SUCCESS &&
-		gos_kernelTaskRegister(&signalDaemonTaskDescriptor, &signalDaemonTaskId) == GOS_SUCCESS &&
-		gos_signalCreate(&kernelDumpSignal) == GOS_SUCCESS &&
-		gos_signalCreate(&kernelDumpReadySignal) == GOS_SUCCESS &&
-		gos_signalCreate(&kernelTaskDeleteSignal) == GOS_SUCCESS &&
-		gos_signalSubscribe(kernelDumpSignal, gos_kernelDumpSignalHandler) == GOS_SUCCESS &&
-		gos_signalSubscribe(kernelDumpSignal, gos_procDumpSignalHandler) == GOS_SUCCESS &&
-		gos_signalSubscribe(kernelDumpSignal, gos_queueDumpSignalHandler) == GOS_SUCCESS)
+	if (gos_queueCreate(&signalInvokeQueueDesc) != GOS_SUCCESS)
 	{
-		signalInitResult = GOS_SUCCESS;
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Signal queue creation failed.");
+		signalInitResult = GOS_ERROR;
 	}
+
+	if (gos_kernelTaskRegister(&signalDaemonTaskDescriptor, &signalDaemonTaskId) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Signal daemon task registration failed.");
+		signalInitResult = GOS_ERROR;
+	}
+
+	if (gos_signalCreate(&kernelDumpSignal) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump signal creation failed.");
+		signalInitResult = GOS_ERROR;
+	}
+
+	if (gos_signalCreate(&kernelDumpReadySignal) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump ready signal creation failed.");
+		signalInitResult = GOS_ERROR;
+	}
+
+	if (gos_signalCreate(&kernelTaskDeleteSignal) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel task delete signal creation failed.");
+		signalInitResult = GOS_ERROR;
+	}
+
+	if (gos_signalSubscribe(kernelDumpSignal, gos_kernelDumpSignalHandler) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump signal subscription failed <kernel dump handler>.");
+		signalInitResult = GOS_ERROR;
+	}
+
+	if (gos_signalSubscribe(kernelDumpSignal, gos_procDumpSignalHandler) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump signal subscription failed <proc dump handler>.");
+		signalInitResult = GOS_ERROR;
+	}
+
+	if (gos_signalSubscribe(kernelDumpSignal, gos_queueDumpSignalHandler) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump signal subscription failed <queue dump handler>.");
+		signalInitResult = GOS_ERROR;
+	}
+
 	return signalInitResult;
 }
 
@@ -234,18 +283,28 @@ gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSenderId_t sen
 	 */
 	gos_result_t				signalInvokeResult 		= GOS_ERROR;
 	gos_signalInvokeDescriptor	signalInvokeDescriptor	= {0};
+	gos_tid_t					callerTaskId			= GOS_INVALID_TASK_ID;
+	gos_taskDescriptor_t		callerTaskDesc;
+	bool_t						isCallerIsr;
+	bool_t						isCallerPrivileged;
 
 	/*
 	 * Function code.
 	 */
-	if (signalId < CFG_SIGNAL_MAX_NUMBER && signalArray[signalId].inUse == GOS_TRUE)
+	GOS_IS_CALLER_ISR(isCallerIsr);
+	GOS_IS_ACCESS_PRIVILEGED(isCallerPrivileged);
+
+	if (signalId < CFG_SIGNAL_MAX_NUMBER && signalArray[signalId].inUse == GOS_TRUE &&
+		(isCallerIsr == GOS_TRUE || isCallerPrivileged == GOS_TRUE ||
+		(gos_kernelTaskGetCurrentId(&callerTaskId) == GOS_SUCCESS &&
+		gos_kernelTaskGetData(callerTaskId, &callerTaskDesc) == GOS_SUCCESS &&
+		(callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_SIGNALING) == GOS_PRIV_SIGNALING)))
 	{
+		GOS_UNPRIVILEGED_ACCESS
 		signalInvokeDescriptor.signalId = signalId;
 		signalInvokeDescriptor.senderId = senderId;
 
-		gos_queuePut(signalInvokeQueueDesc.queueId, (void_t*)&signalInvokeDescriptor, sizeof(signalInvokeDescriptor));
-
-		signalInvokeResult = GOS_SUCCESS;
+		signalInvokeResult = gos_queuePut(signalInvokeQueueDesc.queueId, (void_t*)&signalInvokeDescriptor, sizeof(signalInvokeDescriptor));
 	}
 
 	return signalInvokeResult;
@@ -286,6 +345,6 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
 				}
 			}
 		}
-		gos_kernelTaskSleep(50);
+		(void_t) gos_kernelTaskSleep(GOS_SIGNAL_DAEMON_POLL_TIME_MS);
 	}
 }
