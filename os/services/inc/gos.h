@@ -19,7 +19,7 @@
 //!
 //! @brief		GOS header.
 //! @details	This header is a wrapper for the inclusion of all OS services and drivers for
-//! 			GOS2022 v0.2
+//! 			GOS2022 v0.3
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
@@ -30,6 +30,7 @@
 //										+	Function descriptions added
 // 1.2		2022-11-15	Gabor Repasi	+	License added
 // 1.3		2022-12-11	Gabor Repasi	-	Function prototypes removed
+// 1.4		2022-12-15	Gabor Repasi	*	OS version number changed to v0.3
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
