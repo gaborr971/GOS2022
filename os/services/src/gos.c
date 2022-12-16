@@ -82,6 +82,7 @@ int main (void_t)
 	/*
 	 * Function code.
 	 */
+	GOS_DISABLE_SCHED
 	// Initialize platform drivers.
 	platformDriverInitResult = gos_platformDriverInit();
 
@@ -89,18 +90,19 @@ int main (void_t)
 	gos_printStartupLogo();
 
 	// Pre-initialize.
-	gos_traceInit("Platform driver initialization", platformDriverInitResult);
+	(void_t) gos_traceInit("Platform driver initialization", platformDriverInitResult);
 
 	// Initialize OS.
-	gos_traceInit("OS initialization", gos_Init());
+	(void_t) gos_traceInit("OS initialization", gos_Init());
+
 
 	// Call user initializer.
-	gos_traceInit("User application initialization", gos_userApplicationInit());
+	(void_t) gos_traceInit("User application initialization", gos_userApplicationInit());
 
 	// Start OS.
-	gos_Start();
+	(void_t) gos_Start();
 
-	gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Kernel could not be started.");
+	(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Kernel could not be started.");
 
 	for(;;);
 }
@@ -113,8 +115,7 @@ __attribute__((weak)) gos_result_t gos_platformDriverInit (void_t)
 	/*
 	 * Function code.
 	 */
-	GOS_NOP;
-	gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Platform driver initializer missing!");
+	(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Platform driver initializer missing!");
 	return GOS_SUCCESS;
 }
 
@@ -126,8 +127,7 @@ __attribute__((weak)) gos_result_t gos_userApplicationInit (void_t)
 	/*
 	 * Function code.
 	 */
-	GOS_NOP;
-	gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "User application initializer missing!");
+	(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "User application initializer missing!");
 	return GOS_SUCCESS;
 }
 
@@ -163,6 +163,8 @@ GOS_STATIC gos_result_t gos_Init (void_t)
     initStatus &= gos_traceInit("Shell service initialization", gos_shellInit());
 #endif
     initStatus &= gos_traceInit("Message service initialization", gos_messageInit());
+    //initStatus &= gos_traceInit("GCP service initialization", gos_gcpInit());
+    initStatus &= gos_gcpInit();
 
     if (initStatus != GOS_SUCCESS)
 	{
