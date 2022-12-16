@@ -125,10 +125,11 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t);
  */
 GOS_STATIC gos_taskDescriptor_t timeDaemonTaskDesc =
 {
-	.taskFunction 	= gos_timeDaemonTask,
-	.taskName		= "gos_time_daemon",
-	.taskStackSize	= CFG_TASK_TIME_STACK,
-	.taskPriority	= CFG_TASK_TIME_PRIO
+	.taskFunction 		= gos_timeDaemonTask,
+	.taskName			= "gos_time_daemon",
+	.taskStackSize		= CFG_TASK_TIME_DAEMON_STACK,
+	.taskPriority		= CFG_TASK_TIME_DAEMON_PRIO,
+	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -146,13 +147,13 @@ gos_result_t gos_timeInit (void_t)
 	 */
 	if (gos_signalCreate(&timeSignalId) != GOS_SUCCESS)
 	{
-		gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time signal registration failed.");
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time signal registration failed.");
 		timeInitResult = GOS_ERROR;
 	}
 
 	if (gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
 	{
-		gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time daemon task registration failed.");
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time daemon task registration failed.");
 		timeInitResult = GOS_ERROR;
 	}
 
@@ -412,52 +413,52 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
 	 * Function code.
 	 */
 	// Initialize previous time.
-	gos_timeGet(&previousTime);
+	(void_t) gos_timeGet(&previousTime);
 
 	for(;;)
 	{
 		// Increase time by 1 second.
-		gos_timeAddSeconds(&systemTime, 1);
+		(void_t) gos_timeAddSeconds(&systemTime, 1);
 
 		// Increase run-time by 1 second.
-		gos_runTimeAddSeconds(&systemRunTime, 1);
+		(void_t) gos_runTimeAddSeconds(&systemRunTime, 1);
 
 		// Invoke second elapsed signal.
 		if (systemTime.seconds > previousTime.seconds)
 		{
-			gos_signalInvoke(timeSignalId, GOS_TIME_SECOND_ELAPSED_SENDER_ID);
+			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_SECOND_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke minute elapsed signal.
 		if (systemTime.minutes > previousTime.minutes)
 		{
-			gos_signalInvoke(timeSignalId, GOS_TIME_MINUTE_ELAPSED_SENDER_ID);
+			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_MINUTE_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke hour elapsed signal.
 		if (systemTime.hours > previousTime.hours)
 		{
-			gos_signalInvoke(timeSignalId, GOS_TIME_HOUR_ELAPSED_SENDER_ID);
+			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_HOUR_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke day elapsed signal.
 		if (systemTime.days > previousTime.days)
 		{
-			gos_signalInvoke(timeSignalId, GOS_TIME_DAY_ELAPSED_SENDER_ID);
+			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_DAY_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke month elapsed signal.
 		if (systemTime.months > previousTime.months)
 		{
-			gos_signalInvoke(timeSignalId, GOS_TIME_MONTH_ELAPSED_SENDER_ID);
+			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_MONTH_ELAPSED_SENDER_ID);
 		}
 
 		// Invoke year elapsed signal.
 		if (systemTime.years > previousTime.years)
 		{
-			gos_signalInvoke(timeSignalId, GOS_TIME_YEAR_ELAPSED_SENDER_ID);
+			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_YEAR_ELAPSED_SENDER_ID);
 		}
 
-		gos_kernelTaskSleep(1000);
+		(void_t) gos_kernelTaskSleep(1000);
 	}
 }
