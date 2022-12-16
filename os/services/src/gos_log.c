@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_log.c
 //! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.4
+//! @date		2022-12-13
+//! @version	1.5
 //!
 //! @brief		GOS log service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_log.h
@@ -29,6 +29,8 @@
 // 1.2		2022-11-15	Gabor Repasi	+	License added
 // 1.3		2022-12-04	Gabor Repasi	+	Log daemon task added
 // 1.4		2022-12-11	Gabor Repasi	-	Log lock removed
+// 1.5		2022-12-13	Gabor Repasi	+	Privilege handling added
+//										+	Initialization error logging added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -55,10 +57,19 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include "gos_error.h"
 #include "gos_log.h"
 #include "gos_lock.h"
 #include "gos_queue.h"
 #include "gos_log_driver.h"
+
+/*
+ * Macros
+ */
+/**
+ * Log daemon poll time [ms].
+ */
+#define GOS_LOG_DAEMON_POLL_TIME_MS	( 20u )
 
 /*
  * Static variables
@@ -76,6 +87,11 @@ GOS_STATIC gos_queueDescriptor_t logQueue =
  */
 GOS_STATIC char_t logLine [CFG_LOG_MAX_LENGTH];
 
+/**
+ * Log formatted buffer for message formatting.
+ */
+GOS_STATIC char_t formattedBuffer [CFG_LOG_MAX_LENGTH];
+
 /*
  * Function prototypes
  */
@@ -86,10 +102,11 @@ GOS_STATIC void_t gos_logDaemonTask (void_t);
  */
 GOS_STATIC gos_taskDescriptor_t logDaemonTaskDesc =
 {
-	.taskFunction	= gos_logDaemonTask,
-	.taskName		= "gos_log_daemon",
-	.taskPriority	= CFG_TASK_LOG_DAEMON_PRIO,
-	.taskStackSize	= CFG_TASK_LOG_DAEMON_STACK
+	.taskFunction		= gos_logDaemonTask,
+	.taskName			= "gos_log_daemon",
+	.taskPriority		= CFG_TASK_LOG_DAEMON_PRIO,
+	.taskStackSize		= CFG_TASK_LOG_DAEMON_STACK,
+	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -100,15 +117,21 @@ gos_result_t gos_logInit (void_t)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t logInitResult = GOS_ERROR;
+	gos_result_t logInitResult = GOS_SUCCESS;
 
 	/*
 	 * Function code.
 	 */
-	if (gos_queueCreate(&logQueue) == GOS_SUCCESS &&
-		gos_kernelTaskRegister(&logDaemonTaskDesc, NULL) == GOS_SUCCESS)
+	if (gos_queueCreate(&logQueue) != GOS_SUCCESS)
 	{
-		logInitResult = GOS_SUCCESS;
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Log queue creation error.");
+		logInitResult = GOS_ERROR;
+	}
+
+	if (gos_kernelTaskRegister(&logDaemonTaskDesc, NULL) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Log daemon task registration error.");
+		logInitResult = GOS_ERROR;
 	}
 
 	return logInitResult;
@@ -122,12 +145,29 @@ GOS_INLINE gos_result_t gos_logLog (char_t* logMessage)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t logLogResult = GOS_ERROR;
+	gos_result_t			logLogResult	= GOS_ERROR;
+	gos_tid_t				callerTaskId	= GOS_INVALID_TASK_ID;
+	gos_taskDescriptor_t	callerTaskDesc;
+	bool_t					isCallerIsr;
+	bool_t					isCallerPrivileged;
 
 	/*
 	 * Function code.
 	 */
-	logLogResult = gos_queuePut(logQueue.queueId, (void_t*)logMessage, strlen(logMessage) + 1);
+	GOS_IS_CALLER_ISR(isCallerIsr);
+	GOS_IS_ACCESS_PRIVILEGED(isCallerPrivileged);
+
+	if (logMessage != NULL &&
+		(isCallerIsr == GOS_TRUE || isCallerPrivileged == GOS_TRUE ||
+		(gos_kernelTaskGetCurrentId(&callerTaskId) == GOS_SUCCESS &&
+		gos_kernelTaskGetData(callerTaskId, &callerTaskDesc) == GOS_SUCCESS &&
+		(callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_LOG) == GOS_PRIV_LOG)) &&
+		gos_queuePut(logQueue.queueId, (void_t*)logMessage, strlen(logMessage) + 1) == GOS_SUCCESS
+		)
+	{
+		GOS_UNPRIVILEGED_ACCESS
+		logLogResult = GOS_SUCCESS;
+	}
 
 	return logLogResult;
 }
@@ -140,18 +180,39 @@ gos_result_t gos_logLogFormatted (const char_t* logFormat, ...)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t logLogResult = GOS_ERROR;
-	GOS_STATIC char_t formattedMessage [CFG_LOG_MAX_LENGTH];
-	va_list args;
+	gos_result_t 			logLogResult 	= GOS_ERROR;
+	va_list					args;
+	gos_tid_t				callerTaskId	= GOS_INVALID_TASK_ID;
+	gos_taskDescriptor_t	callerTaskDesc;
+	bool_t					isCallerIsr;
+	bool_t					isCallerPrivileged;
 
 	/*
 	 * Function code.
 	 */
-	va_start(args, logFormat);
-	vsprintf(formattedMessage, logFormat, args);
-	va_end(args);
+	GOS_IS_CALLER_ISR(isCallerIsr);
+	GOS_IS_ACCESS_PRIVILEGED(isCallerPrivileged);
 
-	logLogResult = gos_queuePut(logQueue.queueId, (void_t*)formattedMessage, strlen(formattedMessage) + 1);
+	if (logFormat != NULL)
+	{
+		GOS_DISABLE_SCHED
+		va_start(args, logFormat);
+		(void_t) vsprintf(formattedBuffer, logFormat, args);
+		va_end(args);
+
+		if ((isCallerIsr == GOS_TRUE || isCallerPrivileged == GOS_TRUE ||
+			(gos_kernelTaskGetCurrentId(&callerTaskId) == GOS_SUCCESS &&
+			gos_kernelTaskGetData(callerTaskId, &callerTaskDesc) == GOS_SUCCESS &&
+			(callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_LOG) == GOS_PRIV_LOG)) &&
+			gos_queuePut(logQueue.queueId, (void_t*)formattedBuffer, strlen(formattedBuffer) + 1) == GOS_SUCCESS
+			)
+		{
+			GOS_UNPRIVILEGED_ACCESS
+			logLogResult = GOS_SUCCESS;
+		}
+		GOS_ENABLE_SCHED
+	}
+
 
 	return logLogResult;
 }
@@ -165,21 +226,23 @@ gos_result_t gos_logLogFormattedUnsafe (const char_t* logFormat, ...)
 	 * Local variables.
 	 */
 	gos_result_t logLogResult = GOS_ERROR;
-	GOS_STATIC char_t formattedMessage [CFG_LOG_MAX_LENGTH];
 	va_list args;
 
 	/*
 	 * Function code.
 	 */
-	GOS_ATOMIC_ENTER
-	va_start(args, logFormat);
-	vsprintf(formattedMessage, logFormat, args);
-	va_end(args);
+	if (logFormat != NULL)
+	{
+		GOS_DISABLE_SCHED
+		{
+			va_start(args, logFormat);
+			(void_t) vsprintf(formattedBuffer, logFormat, args);
+			va_end(args);
 
-	logLogResult = gos_logDriverTransmitString(formattedMessage);
-
-	gos_kernelDelayMs(10);
-	GOS_ATOMIC_EXIT
+			logLogResult = gos_logDriverTransmitString_Unsafe(formattedBuffer);
+		}
+		GOS_ENABLE_SCHED
+	}
 
 	return logLogResult;
 }
@@ -193,8 +256,8 @@ GOS_STATIC void_t gos_logDaemonTask (void_t)
 	{
 		while (gos_queueGet(logQueue.queueId, (void_t*)logLine, sizeof(logLine)) == GOS_SUCCESS)
 		{
-			gos_logDriverTransmitString(logLine);
+			(void_t) gos_logDriverTransmitString(logLine);
 		}
-		gos_kernelTaskSleep(20);
+		(void_t) gos_kernelTaskSleep(GOS_LOG_DAEMON_POLL_TIME_MS);
 	}
 }
