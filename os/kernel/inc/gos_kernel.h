@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_kernel.h
 //! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.6
+//! @date		2022-12-15
+//! @version	1.7
 //!
 //! @brief		GOS kernel header.
 //! @details	The GOS kernel is the core of the GOS system. It contains the basic type
@@ -42,6 +42,8 @@
 //										+	Task priority setter and getter functions added
 // 1.6		2022-12-11	Gabor Repasi	-	GOS_PARAM_IGNORE removed
 //										+	Interface descriptions added
+// 1.7		2022-12-15	Gabor Repasi	+	Task privilege levels and privilege control macros
+//											and functions added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -105,7 +107,9 @@
  */
 #define GOS_STATIC_INLINE           GOS_STATIC GOS_INLINE
 
-//! Extern macro.
+/**
+ * Extern macro.
+ */
 #define GOS_EXTERN					extern
 
 /**
@@ -129,20 +133,123 @@
 #define GOS_ASM						__asm volatile
 
 /**
- * Atomic operation enter - disable kernel rescheduling.
+ * Disable scheduling.
  */
-#define GOS_ATOMIC_ENTER			{											\
+#define GOS_DISABLE_SCHED			{											\
 										GOS_EXTERN bool_t schedulingDisabled;	\
 										schedulingDisabled = GOS_TRUE;			\
 									}
-
 /**
- * Atomic operation exit - enable kernel rescheduling.
+ * Enable scheduling.
  */
-#define GOS_ATOMIC_EXIT				{											\
+#define GOS_ENABLE_SCHED			{											\
 										GOS_EXTERN bool_t schedulingDisabled;	\
 										schedulingDisabled = GOS_FALSE;			\
 									}
+/**
+ * Request privileged access to next function.
+ */
+#define GOS_PRIVILEGED_ACCESS		{											\
+										GOS_EXTERN u8_t privilegedAccess;		\
+										privilegedAccess++;						\
+									}
+
+/**
+ * Decrease privileged access requests.
+ */
+#define GOS_UNPRIVILEGED_ACCESS		{											\
+										GOS_EXTERN u8_t privilegedAccess;		\
+										GOS_EXTERN u8_t inIsr;					\
+										if (privilegedAccess > 0 && inIsr == 0){\
+											privilegedAccess--;					\
+										}										\
+									}
+/**
+ * Interrupt Service Routine enter.
+ */
+#define GOS_ISR_ENTER				{											\
+										GOS_EXTERN u8_t inIsr;					\
+										if (inIsr == 0) { GOS_DISABLE_SCHED }	\
+										inIsr++;								\
+									}
+/**
+ * Interrupt service routine exit.
+ */
+#define GOS_ISR_EXIT				{											\
+										GOS_EXTERN u8_t inIsr;					\
+										if (inIsr > 0) { inIsr--; }				\
+										if (inIsr == 0) { GOS_ENABLE_SCHED }	\
+									}
+/**
+ * Determine if caller is an ISR.
+ */
+#define GOS_IS_CALLER_ISR(x)		{ 											\
+										GOS_EXTERN u8_t inIsr;					\
+										x = inIsr > 0 ? GOS_TRUE : GOS_FALSE;	\
+									}
+/**
+ * Determine if caller has privileged access.
+ */
+#define GOS_IS_ACCESS_PRIVILEGED(x)	{ 														\
+										GOS_EXTERN u8_t privilegedAccess;					\
+										x = privilegedAccess > 0 ? GOS_TRUE : GOS_FALSE;	\
+									}
+
+/**
+ * Atomic operation enter - disable interrupts and kernel rescheduling.
+ */
+#define GOS_ATOMIC_ENTER			{											\
+										GOS_ASM( " cpsid i " ::: "memory" );	\
+										GOS_ASM( "dsb" ::: "memory" );			\
+    									GOS_ASM( "isb" );						\
+									}
+
+/**
+ * Atomic operation exit - enable interrupts kernel rescheduling.
+ */
+#define GOS_ATOMIC_EXIT				{											\
+										GOS_ASM( " cpsie i " ::: "memory" );	\
+									}
+
+/**
+ * Task manipulation privilege flag.
+ */
+#define GOS_PRIV_TASK_MANIPULATE	( 1 << 15 )
+
+/**
+ * Task priority change privilege flag.
+ */
+#define GOS_PRIV_TASK_PRIO_CHANGE	( 1 << 14 )
+
+/**
+ * Logging privilege flag.
+ */
+#define GOS_PRIV_LOG				( 1 << 13 )
+
+/**
+ * Task privilege change privilege flag.
+ */
+#define GOS_PRIV_MODIFY				( 1 << 12 )
+
+/**
+ * Task signal invoking privilege flag.
+ */
+#define GOS_PRIV_SIGNALING			( 1 << 11 )
+
+/**
+ * Kernel reserved.
+ */
+#define GOS_PRIV_RESERVED_3			( 1 << 10 )
+
+/**
+ * Kernel reserved.
+ */
+#define GOS_PRIV_RESERVED_4			( 1 << 9 )
+
+/**
+ * Kernel reserved.
+ */
+#define GOS_PRIV_RESERVED_5			( 1 << 8 )
 
 /*
  * Type definitions
@@ -173,7 +280,7 @@ typedef char_t	gos_taskName_t [CFG_TASK_MAX_NAME_LENGTH];	//!< Task name type.
 typedef void_t  (*gos_task_t)(void_t);						//!< Task function type.
 typedef u8_t	gos_taskPrio_t;								//!< Task priority type.
 typedef u32_t	gos_taskSleepTick_t;						//!< Sleep tick type.
-typedef u32_t	gos_taskPsp_t;								//!< PSP type.
+typedef u32_t	gos_taskAddress_t;							//!< Memory address type.
 typedef u32_t	gos_taskRunCounter_t;						//!< Run counter type.
 typedef u64_t	gos_taskRunTime_t;							//!< Run-time type.
 typedef u32_t	gos_taskCSCounter_t;						//!< Context-switch counter type.
@@ -202,6 +309,17 @@ typedef enum
 	GOS_TASK_SUSPENDED	= 0b00101,	//!< Task is suspended (not to be scheduled), but can be resumed.
 	GOS_TASK_ZOMBIE		= 0b01101	//!< Task deleted (physically existing in memory, but cannot be resumed).
 }gos_taskState_t;
+
+/**
+ * Task privilege level enumerator.
+ */
+typedef enum
+{
+	GOS_TASK_PRIVILEGE_SUPERVISOR	= 0xFFFF,	//!< Task supervisor privilege level.
+	GOS_TASK_PRIVILEGE_KERNEL		= 0xFF00,	//!< Task kernel privilege level.
+	GOS_TASK_PRIVILEGE_USER			= 0x00FF,	//!< Task user privilege level.
+	GOS_TASK_PRIVILEGED_USER		= 0x20FF	//!< User with logging right.
+}gos_taskPrivilegeLevel_t;
 
 /*
  * Hook function type definitions.
@@ -245,21 +363,22 @@ typedef enum
  */
 typedef struct
 {
-	gos_task_t				taskFunction;			//!< Task function.
-	gos_taskState_t			taskState;				//!< Task state.
-	gos_taskState_t			taskPreviousState;		//!< Task previous state (for restoration).
-	gos_taskPrio_t			taskPriority;			//!< Task priority.
-	gos_taskPrio_t			taskOriginalPriority;	//!< Task original priority.
-	gos_taskName_t			taskName;				//!< Task name.
-	gos_tid_t				taskId;					//!< Task ID (internal).
-	gos_tid_t*				taskIdEx;				//!< Task ID (external).
-	gos_taskSleepTick_t		taskSleepTicks;			//!< Task sleep ticks.
-	gos_taskPsp_t			taskPsp;				//!< Task PSP.
-	gos_taskRunCounter_t	taskRunCounter;			//!< Task run counter.
-	gos_taskRunTime_t		taskRunTime;			//!< Task run-time.
-	gos_taskCSCounter_t		taskCsCounter;			//!< Task context-switch counter.
-	gos_taskStackSize_t		taskStackSize;			//!< Task stack size.
-	u16_t					taskCpuUsage;			//!< Task processor usage in [%].
+	gos_task_t					taskFunction;			//!< Task function.
+	gos_taskState_t				taskState;				//!< Task state.
+	gos_taskState_t				taskPreviousState;		//!< Task previous state (for restoration).
+	gos_taskPrio_t				taskPriority;			//!< Task priority.
+	gos_taskPrio_t				taskOriginalPriority;	//!< Task original priority.
+	gos_taskPrivilegeLevel_t	taskPrivilegeLevel;		//!< Task privilege level.
+	gos_taskName_t				taskName;				//!< Task name.
+	gos_tid_t					taskId;					//!< Task ID (internal).
+	gos_tid_t*					taskIdEx;				//!< Task ID (external).
+	gos_taskSleepTick_t			taskSleepTicks;			//!< Task sleep ticks.
+	gos_taskAddress_t			taskPsp;				//!< Task PSP.
+	gos_taskRunCounter_t		taskRunCounter;			//!< Task run counter.
+	gos_taskRunTime_t			taskRunTime;			//!< Task run-time.
+	gos_taskCSCounter_t			taskCsCounter;			//!< Task context-switch counter.
+	gos_taskStackSize_t			taskStackSize;			//!< Task stack size.
+	u16_t						taskCpuUsage;			//!< Task processor usage in [%].
 }gos_taskDescriptor_t;
 
 /**
@@ -487,6 +606,38 @@ gos_result_t gos_kernelTaskGetPriority (gos_tid_t taskId, gos_taskPrio_t* taskPr
  * @retval	GOS_ERROR	:	Invalid task ID or priority variable is NULL.
  */
 gos_result_t gos_kernelTaskGetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t* taskPriority);
+
+/**
+ * @brief	Adds the given privileges to the given task.
+ * @details	Checks the caller task if it has the privilege to modify task privileges and
+ * 			if so, it adds the given privileges to the given task.
+ *
+ * @param	taskId		:	ID of the task to give the privileges to.
+ * @param 	privileges	:	Privileges to be added.
+ *
+ * @return	Result of privilege adding.
+ *
+ * @retval	GOS_SUCCESS	:	Privileges added successfully.
+ * @retval	GOS_ERROR	:	Invalid task ID or caller does not have the privilege to modify task
+ * 							privileges.
+ */
+gos_result_t gos_kernelTaskAddPrivilege (gos_tid_t taskId, gos_taskPrivilegeLevel_t privileges);
+
+/**
+ * @brief	Removes the given privileges from the given task.
+ * @details	Checks the caller task if it has the privilege to modify task privileges and
+ * 			if so, it removes the given privileges from the given task.
+ *
+ * @param	taskId		:	ID of the task to remove the privileges from.
+ * @param 	privileges	:	Privileges to be removed.
+ *
+ * @return	Result of privilege removing.
+ *
+ * @retval	GOS_SUCCESS	:	Privileges removed successfully.
+ * @retval	GOS_ERROR	:	Invalid task ID or caller does not have the privilege to modify task
+ * 							privileges.
+ */
+gos_result_t gos_kernelTaskRemovePrivilege (gos_tid_t taskId, gos_taskPrivilegeLevel_t privileges);
 
 /**
  * @brief	Gets the task name of the task with the given ID.
