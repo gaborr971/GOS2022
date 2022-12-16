@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_queue.c
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.2
+//! @date		2022-12-13
+//! @version	1.3
 //!
 //! @brief		GOS queue service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_queue.h
@@ -30,6 +30,7 @@
 //										+	Formatted log used in dump
 // 1.2		2022-11-15	Gabor Repasi	+	Queue peek function added
 //										+	License added
+// 1.3		2022-12-13	Gabor Repasi	+	Initialization error logging added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -55,6 +56,7 @@
  */
 #include <string.h>
 #include <stdio.h>
+#include "gos_error.h"
 #include "gos_lock.h"
 #include "gos_log.h"
 #include "gos_process.h"
@@ -139,10 +141,11 @@ GOS_STATIC void_t 	gos_queueDumpTask			(void_t);
  */
 GOS_STATIC gos_taskDescriptor_t queueDumpTaskDesc =
 {
-	.taskFunction 	= gos_queueDumpTask,
-	.taskName		= "gos_queue_dump_task",
-	.taskPriority	= CFG_TASK_QUEUE_DUMP_PRIO,
-	.taskStackSize	= CFG_TASK_QUEUE_DUMP_STACK
+	.taskFunction 		= gos_queueDumpTask,
+	.taskName			= "gos_queue_dump_task",
+	.taskPriority		= CFG_TASK_QUEUE_DUMP_PRIO,
+	.taskStackSize		= CFG_TASK_QUEUE_DUMP_STACK,
+	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -153,7 +156,7 @@ gos_result_t gos_queueInit (void_t)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t		queueInitResult		= GOS_ERROR;
+	gos_result_t		queueInitResult		= GOS_SUCCESS;
 	gos_queueIndex_t	queueIndex			= 0u;
 	gos_queueIndex_t	queueElementIndex	= 0u;
 
@@ -174,12 +177,24 @@ gos_result_t gos_queueInit (void_t)
 	}
 
 	// Create lock, register and suspend queue dump task.
-	if (gos_lockCreate(&queueLockId) == GOS_SUCCESS &&
-		gos_kernelTaskRegister(&queueDumpTaskDesc, &queueDumpTaskId) == GOS_SUCCESS &&
-		gos_kernelTaskSuspend(queueDumpTaskId) == GOS_SUCCESS)
+	if (gos_lockCreate(&queueLockId) != GOS_SUCCESS)
 	{
-		queueInitResult = GOS_SUCCESS;
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Queue lock creation failed.");
+		queueInitResult = GOS_ERROR;
 	}
+
+	if (gos_kernelTaskRegister(&queueDumpTaskDesc, &queueDumpTaskId)!= GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Queue dump task registration failed.");
+		queueInitResult = GOS_ERROR;
+	}
+
+	if (gos_kernelTaskSuspend(queueDumpTaskId) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Queue dump task suspension failed.");
+		queueInitResult = GOS_ERROR;
+	}
+
 	return queueInitResult;
 }
 
@@ -209,7 +224,7 @@ gos_result_t gos_queueCreate (gos_queueDescriptor_t* pQueueDescriptor)
 				if (pQueueDescriptor->queueName != NULL &&
 					strlen(pQueueDescriptor->queueName) <= CFG_QUEUE_MAX_NAME_LENGTH)
 				{
-					strcpy(queues[queueIndex].queueName, pQueueDescriptor->queueName);
+					(void_t) strcpy(queues[queueIndex].queueName, pQueueDescriptor->queueName);
 				}
 #endif
 				queueCreateResult = GOS_SUCCESS;
@@ -235,9 +250,8 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
 	/*
 	 * Function code.
 	 */
-	gos_lockWaitGet(queueLockId);
-
-	if (queueId >= GOS_DEFAULT_QUEUE_ID &&
+	if (gos_lockWaitGet(queueLockId) == GOS_SUCCESS &&
+		queueId >= GOS_DEFAULT_QUEUE_ID &&
 		(queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
 		element != NULL &&
 		elementSize <= CFG_QUEUE_MAX_LENGTH &&
@@ -249,7 +263,7 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
 		if ((readCounters[queueIndex] > 0 && writeCounters[queueIndex] != (readCounters[queueIndex] - 1)) ||
 			((readCounters[queueIndex] == 0) && writeCounters[queueIndex] != CFG_QUEUE_MAX_ELEMENTS - 1))
 		{
-			memcpy(queues[queueIndex].queueElements[writeCounters[queueIndex]].queueElementBytes, element, elementSize);
+			(void_t) memcpy(queues[queueIndex].queueElements[writeCounters[queueIndex]].queueElementBytes, element, elementSize);
 			queues[queueIndex].queueElements[writeCounters[queueIndex]].elementLength = elementSize;
 			writeCounters[queueIndex]++;
 			queues[queueIndex].actualElementNumber++;
@@ -270,7 +284,8 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
 		}
 	}
 
-	gos_lockRelease(queueLockId);
+	(void_t) gos_lockRelease(queueLockId);
+
 	return queuePutResult;
 }
 
@@ -288,9 +303,8 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
 	/*
 	 * Function code.
 	 */
-	gos_lockWaitGet(queueLockId);
-
-	if (queueId >= GOS_DEFAULT_QUEUE_ID &&
+	if (gos_lockWaitGet(queueLockId) == GOS_SUCCESS &&
+		queueId >= GOS_DEFAULT_QUEUE_ID &&
 		(queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
 		target != NULL &&
 		queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID &&
@@ -301,7 +315,7 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
 		// Check if queue is empty.
 		if (readCounters[queueIndex] != writeCounters[queueIndex])
 		{
-			memcpy(target, queues[queueIndex].queueElements[readCounters[queueIndex]].queueElementBytes, queues[queueIndex].queueElements[readCounters[queueIndex]].elementLength);
+			(void_t) memcpy(target, queues[queueIndex].queueElements[readCounters[queueIndex]].queueElementBytes, queues[queueIndex].queueElements[readCounters[queueIndex]].elementLength);
 			queues[queueIndex].queueElements[readCounters[queueIndex]].elementLength = 0u;
 			readCounters[queueIndex]++;
 			queues[queueIndex].actualElementNumber--;
@@ -322,7 +336,8 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
 		}
 	}
 
-	gos_lockRelease(queueLockId);
+	(void_t) gos_lockRelease(queueLockId);
+
 	return queueGetResult;
 }
 
@@ -340,9 +355,8 @@ gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLeng
 	/*
 	 * Function code.
 	 */
-	gos_lockWaitGet(queueLockId);
-
-	if (queueId >= GOS_DEFAULT_QUEUE_ID &&
+	if (gos_lockWaitGet(queueLockId) == GOS_SUCCESS &&
+		queueId >= GOS_DEFAULT_QUEUE_ID &&
 		(queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
 		target != NULL &&
 		queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID &&
@@ -353,12 +367,13 @@ gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLeng
 		// Check if queue is empty.
 		if (readCounters[queueIndex] != writeCounters[queueIndex])
 		{
-			memcpy(target, queues[queueIndex].queueElements[readCounters[queueIndex]].queueElementBytes, queues[queueIndex].queueElements[readCounters[queueIndex]].elementLength);
+			(void_t) memcpy(target, queues[queueIndex].queueElements[readCounters[queueIndex]].queueElementBytes, queues[queueIndex].queueElements[readCounters[queueIndex]].elementLength);
 			queueGetResult = GOS_SUCCESS;
 		}
 	}
 
-	gos_lockRelease(queueLockId);
+	(void_t) gos_lockRelease(queueLockId);
+
 	return queueGetResult;
 }
 
@@ -428,7 +443,7 @@ gos_result_t gos_queueGetName (gos_queueId_t queueId, gos_queueName_t queueName)
 
 		if (queueName != NULL)
 		{
-			strcpy(queueName, queues[queueIndex].queueName);
+			(void_t) strcpy(queueName, queues[queueIndex].queueName);
 			queueGetNameResult = GOS_SUCCESS;
 		}
 	}
@@ -480,7 +495,7 @@ void_t gos_queueDumpSignalHandler (gos_signalSenderId_t senderId)
 	 */
 	if (senderId == GOS_DUMP_SENDER_PROC)
 	{
-		gos_kernelTaskResume(queueDumpTaskId);
+		(void_t) gos_kernelTaskResume(queueDumpTaskId);
 	}
 }
 
@@ -504,24 +519,24 @@ GOS_STATIC void_t gos_queueDumpTask (void_t)
 	 */
 	for(;;)
 	{
-		gos_logLogFormatted("Queue dump:\r\n");
-		gos_logLogFormatted(DUMP_SEPARATOR);
+		(void_t) gos_logLogFormatted("Queue dump:\r\n");
+		(void_t) gos_logLogFormatted(DUMP_SEPARATOR);
 
 #if CFG_QUEUE_USE_NAME == 1
-		gos_logLogFormatted(
+		(void_t) gos_logLogFormatted(
 				"| %6s | %25s | %10s |\r\n",
 				"qid",
 				"queue name",
 				"elements"
 				);
 #else
-		gos_logLogFormatted(
+		(void_t) gos_logLogFormatted(
 				"| %6s | %10s |\r\n",
 				"qid",
 				"elements"
 				);
 #endif
-		gos_logLogFormatted(DUMP_SEPARATOR);
+		(void_t) gos_logLogFormatted(DUMP_SEPARATOR);
 
 		for (queueIndex = 0u; queueIndex < CFG_QUEUE_MAX_NUMBER; queueIndex++)
 		{
@@ -530,23 +545,23 @@ GOS_STATIC void_t gos_queueDumpTask (void_t)
 				break;
 			}
 #if CFG_QUEUE_USE_NAME == 1
-			gos_logLogFormatted(
+			(void_t) gos_logLogFormatted(
 					"| 0x%04X | %25s | %10d |\r\n",
 					queues[queueIndex].queueId,
 					queues[queueIndex].queueName,
 					queues[queueIndex].actualElementNumber
 					);
 #else
-			gos_logLogFormatted(
+			(void_t) gos_logLogFormatted(
 					"| 0x%04X | %10d |\r\n",
 					queues[queueIndex].queueId,
 					queues[queueIndex].actualElementNumber
 					);
 #endif
 		}
-		gos_logLogFormatted(DUMP_SEPARATOR"\n");
-		gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_QUEUE);
-		gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_LAST);
- 		gos_kernelTaskSuspend(queueDumpTaskId);
+		(void_t) gos_logLogFormatted(DUMP_SEPARATOR"\n");
+		(void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_QUEUE);
+		(void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_LAST);
+ 		(void_t) gos_kernelTaskSuspend(queueDumpTaskId);
 	}
 }
