@@ -70,6 +70,10 @@
  */
 #define DUMP_SEPARATOR	"+--------+------------------------------+---------------+-------------+---------+-----------+\r\n"
 
+/**
+ * Process daemon poll time [ms].
+ */
+#define PROC_DAEMON_POLL_TIME	( 10u )
 /*
  * Type definitions
  */
@@ -173,10 +177,11 @@ GOS_STATIC gos_procDescriptor_t	procDescriptors [CFG_PROC_MAX_NUMBER] = {
  */
 GOS_STATIC gos_taskDescriptor_t procDumpTaskDesc =
 {
-	.taskFunction 	= gos_procDumpTask,
-	.taskName		= "gos_proc_dump_task",
-	.taskPriority	= CFG_TASK_PROC_DUMP_PRIO,
-	.taskStackSize	= CFG_TASK_PROC_DUMP_STACK
+	.taskFunction 		= gos_procDumpTask,
+	.taskName			= "gos_proc_dump_task",
+	.taskPriority		= CFG_TASK_PROC_DUMP_PRIO,
+	.taskStackSize		= CFG_TASK_PROC_DUMP_STACK,
+	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /**
@@ -184,10 +189,11 @@ GOS_STATIC gos_taskDescriptor_t procDumpTaskDesc =
  */
 GOS_STATIC gos_taskDescriptor_t	processDaemonTaskDesc =
 {
-	.taskFunction 	= gos_procDaemonTask,
-	.taskName		= "gos_process_daemon",
-	.taskStackSize	= CFG_TASK_PROC_DAEMON_STACK,
-	.taskPriority	= CFG_TASK_PROC_DAEMON_PRIO
+	.taskFunction 		= gos_procDaemonTask,
+	.taskName			= "gos_process_daemon",
+	.taskStackSize		= CFG_TASK_PROC_DAEMON_STACK,
+	.taskPriority		= CFG_TASK_PROC_DAEMON_PRIO,
+	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_USER
 };
 
 /*
@@ -270,7 +276,7 @@ gos_result_t gos_procRegister (gos_procDescriptor_t* procDescriptor, gos_pid_t* 
 			if (procDescriptor->procName != NULL &&
 				strlen(procDescriptor->procName) <= CFG_PROC_MAX_NAME_LENGTH)
 			{
-				strcpy(procDescriptors[procIndex].procName, procDescriptor->procName);
+				(void_t) strcpy(procDescriptors[procIndex].procName, procDescriptor->procName);
 			}
 
 			// Set process ID.
@@ -300,7 +306,7 @@ gos_result_t gos_procSleep (gos_procSleepTick_t sleepTicks)
 	 */
 	if (currentProcIndex > 0u)
 	{
-		GOS_ATOMIC_ENTER
+		GOS_DISABLE_SCHED
 		{
 			if (procDescriptors[currentProcIndex].procState	== GOS_PROC_READY)
 			{
@@ -309,7 +315,7 @@ gos_result_t gos_procSleep (gos_procSleepTick_t sleepTicks)
 				procSleepResult = GOS_SUCCESS;
 			}
 		}
-		GOS_ATOMIC_EXIT
+		GOS_ENABLE_SCHED
 
 		// Call hook.
 		if (procSleepResult == GOS_SUCCESS && procSleepHookFunction != NULL)
@@ -338,7 +344,7 @@ gos_result_t gos_procWakeup (gos_pid_t procId)
 	{
 		procIndex = (u32_t)(procId - GOS_DEFAULT_PROC_ID);
 
-		GOS_ATOMIC_ENTER
+		GOS_DISABLE_SCHED
 		{
 			if (procDescriptors[procIndex].procState == GOS_PROC_SLEEPING)
 			{
@@ -346,7 +352,7 @@ gos_result_t gos_procWakeup (gos_pid_t procId)
 				procWakeupResult = GOS_SUCCESS;
 			}
 		}
-		GOS_ATOMIC_EXIT
+		GOS_ENABLE_SCHED
 
 		// Call hook.
 		if (procWakeupResult == GOS_SUCCESS && procWakeupHookFunction != NULL)
@@ -375,7 +381,7 @@ gos_result_t gos_procSuspend (gos_pid_t procId)
 	{
 		procIndex = (u32_t)(procId - GOS_DEFAULT_PROC_ID);
 
-		GOS_ATOMIC_ENTER
+		GOS_DISABLE_SCHED
 		{
 			if (procDescriptors[procIndex].procState == GOS_PROC_READY ||
 				procDescriptors[procIndex].procState == GOS_PROC_SLEEPING)
@@ -384,7 +390,7 @@ gos_result_t gos_procSuspend (gos_pid_t procId)
 				procSuspendResult = GOS_SUCCESS;
 			}
 		}
-		GOS_ATOMIC_EXIT
+		GOS_ENABLE_SCHED
 
 		// Call hook.
 		if (procSuspendResult == GOS_SUCCESS && procSuspendHookFunction != NULL)
@@ -414,7 +420,7 @@ gos_result_t gos_procResume (gos_pid_t procId)
 	{
 		procIndex = (u32_t)(procId - GOS_DEFAULT_PROC_ID);
 
-		GOS_ATOMIC_ENTER
+		GOS_DISABLE_SCHED
 		{
 			if (procDescriptors[procIndex].procState == GOS_PROC_SUSPENDED)
 			{
@@ -422,7 +428,7 @@ gos_result_t gos_procResume (gos_pid_t procId)
 				procResumeResult = GOS_SUCCESS;
 			}
 		}
-		GOS_ATOMIC_EXIT
+		GOS_ENABLE_SCHED
 
 		// Call hook.
 		if (procResumeResult == GOS_SUCCESS && procResumeHookFunction != NULL)
@@ -453,7 +459,7 @@ gos_result_t gos_procGetName (gos_pid_t procId, gos_procName_t procName)
 	{
 		procIndex = (u32_t)(procId - GOS_DEFAULT_PROC_ID);
 
-		strcpy(procName, procDescriptors[procIndex].procName);
+		(void_t) strcpy(procName, procDescriptors[procIndex].procName);
 
 		procGetNameResult = GOS_SUCCESS;
 	}
@@ -507,7 +513,7 @@ gos_result_t gos_procGetData (gos_pid_t procId, gos_procDescriptor_t* procData)
 	{
 		procIndex = (u32_t)(procId - GOS_DEFAULT_PROC_ID);
 
-		memcpy((void*)procData, (void*)&procDescriptors[procIndex], sizeof(*procData));
+		(void_t) memcpy((void*)procData, (void*)&procDescriptors[procIndex], sizeof(*procData));
 
 		procGetDataResult = GOS_SUCCESS;
 	}
@@ -659,13 +665,13 @@ void_t gos_procDumpSignalHandler (gos_signalSenderId_t senderId)
 #if CFG_PROC_USE_SERVICE == 1
 	if (senderId == GOS_DUMP_SENDER_KERNEL)
 	{
-		gos_kernelTaskResume(procDumpTaskId);
+		(void_t) gos_kernelTaskResume(procDumpTaskId);
 	}
 #else
 	if (senderId == GOS_DUMP_SENDER_KERNEL)
 	{
 		GOS_EXTERN gos_signalId_t kernelDumpSignal;
-		gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_PROC);
+		(void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_PROC);
 	}
 #endif
 }
@@ -799,7 +805,7 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
 		procDescriptors[currentProcIndex].procRunTime += currentRunTime;
 		totalProcRunTime += currentRunTime;
 
-		gos_kernelTaskSleep(1);
+		(void_t) gos_kernelTaskSleep(PROC_DAEMON_POLL_TIME);
 	}
 }
 
@@ -857,9 +863,9 @@ GOS_STATIC void_t gos_procDumpTask (void_t)
 	 */
 	for (;;)
 	{
-		gos_logLogFormatted("Process dump:\r\n");
-		gos_logLogFormatted(DUMP_SEPARATOR);
-		gos_logLogFormatted(
+		(void_t) gos_logLogFormatted("Process dump:\r\n");
+		(void_t) gos_logLogFormatted(DUMP_SEPARATOR);
+		(void_t) gos_logLogFormatted(
 				"| %6s | %28s | %13s | %11s | %7s | %9s |\r\n",
 				"pid",
 				"name",
@@ -868,7 +874,8 @@ GOS_STATIC void_t gos_procDumpTask (void_t)
 				"[%]",
 				"state"
 			);
-		gos_logLogFormatted(DUMP_SEPARATOR);
+
+		(void_t) gos_logLogFormatted(DUMP_SEPARATOR);
 
 		for (procIndex = 0u; procIndex < CFG_PROC_MAX_NUMBER; procIndex++)
 		{
@@ -876,7 +883,8 @@ GOS_STATIC void_t gos_procDumpTask (void_t)
 			{
 				break;
 			}
-			gos_logLogFormatted(
+
+			(void_t) gos_logLogFormatted(
 					"| 0x%04X | %28s | %13d | %11lu | %7d | %9s "LOG_FORMAT_RESET"|\r\n",
 					procDescriptors[procIndex].procId,
 					procDescriptors[procIndex].procName,
@@ -886,9 +894,9 @@ GOS_STATIC void_t gos_procDumpTask (void_t)
 					gos_procGetProcStateString(procDescriptors[procIndex].procState)
 					);
 		}
-		gos_logLogFormatted(DUMP_SEPARATOR"\n");
-		gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_PROC);
-		gos_kernelTaskSuspend(procDumpTaskId);
+		(void_t) gos_logLogFormatted(DUMP_SEPARATOR"\n");
+		(void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_PROC);
+		(void_t) gos_kernelTaskSuspend(procDumpTaskId);
 	}
 }
 #endif
