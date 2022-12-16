@@ -55,6 +55,12 @@
 /*
  * Type definitions
  */
+#if CFG_GCP_CHANNELS_MAX_NUMBER < 255
+typedef	u8_t	gos_gcpChannelNumber_t;	//!< GCP channel number.
+#else
+typedef	u16_t	gos_gcpChannelNumber_t;	//!< GCP channel number.
+#endif
+
 /**
  * GCP physical layer transmit function type.
  */
@@ -80,9 +86,17 @@ typedef struct
  * Function prototypes
  */
 /**
+ * TODO
+ * @param
+ * @return
+ */
+gos_result_t gos_gcpInit (void_t);
+
+/**
  * @brief	Registers the physical-layer transmit and receive driver functions.
  * @details	Registers the physical-layer transmit and receive driver functions.
  *
+ * @param	channel				:	GCP channel.
  * @param 	transmitFunction	:	Transmit function to register.
  * @param 	receiveFunction		:	Receive function to register.
  *
@@ -91,7 +105,8 @@ typedef struct
  * @retval	GOS_SUCCESS	:	Physical driver registration successful.
  * @retval	GOS_ERROR	:	Transmit or receive function is NULL.
  */
-gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpTransmitFunction_t transmitFunction,
+gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpChannelNumber_t channel,
+											gos_gcpTransmitFunction_t transmitFunction,
 											gos_gcpReceiveFunction_t receiveFunction);
 
 /**
@@ -108,15 +123,16 @@ gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpTransmitFunction_t transmitFu
  * @retval	GOS_ERROR	:	Message header, message payload or transmit function is NULL pointer or
  * 							frame transmission error occurred.
  */
-gos_result_t gos_gcpTransmitMessage (gos_gcpMessageHeader_t* pMessageHeader, void_t* pMessagePayload);
+gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel, gos_gcpMessageHeader_t* pMessageHeader, void_t* pMessagePayload);
 
 /**
  * @brief	Receives the given message via the GCP protocol.
  * @details	Receives the header frames and based on that, it receives the payload frames. Finally,
  * 			it checks the payload CRC.
  *
- * @param	pTargetMessageHeader
- * @param	pPayloadTarget
+ * @param	channel					:	GCP channel.
+ * @param	pTargetMessageHeader	:	Pointer to the message header describing the message parameters.
+ * @param	pPayloadTarget			:	Pointer to the payload target buffer.
  *
  * @return	Result of message reception.
  *
@@ -124,5 +140,5 @@ gos_result_t gos_gcpTransmitMessage (gos_gcpMessageHeader_t* pMessageHeader, voi
  * @retval	GOS_ERROR	:	Message header target, payload target or receive function is NULL pointer or
  * 							frame reception error occurred.
  */
-gos_result_t gos_gcpReceiveMessage (gos_gcpMessageHeader_t* pTargetMessageHeader, void_t* pPayloadTarget);
+gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel, gos_gcpMessageHeader_t* pTargetMessageHeader, void_t* pPayloadTarget);
 #endif
