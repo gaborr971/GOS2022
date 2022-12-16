@@ -59,15 +59,15 @@
 //! Maximum task stack size.
 #define CFG_TASK_MAX_STACK_SIZE			( 0x4000 )
 //! Idle task stack size.
-#define CFG_IDLE_TASK_STACK_SIZE		( 0x200 )
+#define CFG_IDLE_TASK_STACK_SIZE		( 0x300 )
 //! Signal daemon task stack size.
 #define CFG_TASK_SIGNAL_DAEMON_STACK	( 0x300 )
 //! Process daemon task stack size.
-#define CFG_TASK_PROC_DAEMON_STACK		( 0x400 )
-//! Time task stack size.
-#define CFG_TASK_TIME_STACK				( 0x200 )
+#define CFG_TASK_PROC_DAEMON_STACK		( 0x300 )
+//! Time daemon task stack size.
+#define CFG_TASK_TIME_DAEMON_STACK		( 0x300 )
 //! Kernel dump stack size.
-#define CFG_TASK_KERNEL_DUMP_STACK		( 0x400 )
+#define CFG_TASK_KERNEL_DUMP_STACK		( 0x300 )
 //! Process dump stack size.
 #define CFG_TASK_PROC_DUMP_STACK		( 0x300 )
 //! Queue dump stack size.
@@ -80,23 +80,23 @@
 #define CFG_TASK_LOG_DAEMON_STACK		( 0x400 )
 
 //! Log daemon task priority.
-#define CFG_TASK_LOG_DAEMON_PRIO		( CFG_TASK_IDLE_PRIO - 9 )
+#define CFG_TASK_LOG_DAEMON_PRIO		( 194 )
 //! Message daemon task priority.
-#define CFG_TASK_MESSAGE_DAEMON_PRIO	( CFG_TASK_IDLE_PRIO - 8 )
+#define CFG_TASK_MESSAGE_DAEMON_PRIO	( 198 )
 //! Signal daemon task priority.
-#define CFG_TASK_SIGNAL_DAEMON_PRIO		( CFG_TASK_IDLE_PRIO - 7 )
+#define CFG_TASK_SIGNAL_DAEMON_PRIO		( 197 )
 //! Process daemon task priority.
-#define CFG_TASK_PROC_DAEMON_PRIO		( CFG_TASK_IDLE_PRIO - 6 )
+#define CFG_TASK_PROC_DAEMON_PRIO		( 195 )
 //! Shell daemon task priority.
-#define CFG_TASK_SHELL_DAEMON_PRIO		( CFG_TASK_IDLE_PRIO - 5 )
-//! Time task priority.
-#define CFG_TASK_TIME_PRIO				( CFG_TASK_IDLE_PRIO - 4 )
+#define CFG_TASK_SHELL_DAEMON_PRIO		( 199 )
+//! Time daemon task priority.
+#define CFG_TASK_TIME_DAEMON_PRIO		( 196 )
 //! Kernel dump priority.
-#define CFG_TASK_KERNEL_DUMP_PRIO		( CFG_TASK_IDLE_PRIO - 3 )
+#define CFG_TASK_KERNEL_DUMP_PRIO		( 200 )
 //! Queue dump priority.
-#define CFG_TASK_QUEUE_DUMP_PRIO		( CFG_TASK_IDLE_PRIO - 2 )
+#define CFG_TASK_QUEUE_DUMP_PRIO		( 200 )
 //! Process dump priority.
-#define CFG_TASK_PROC_DUMP_PRIO			( CFG_TASK_IDLE_PRIO - 1 )
+#define CFG_TASK_PROC_DUMP_PRIO			( 200 )
 
 //! Process service use flag.
 #define CFG_PROC_USE_SERVICE			( 1 )
@@ -111,7 +111,7 @@
 
 
 //! Maximum number of locks.
-#define CFG_LOCK_MAX_NUMBER				( 16 )
+#define CFG_LOCK_MAX_NUMBER				( 8 )
 //! Maximum number of lock waiters.
 #define CFG_LOCK_MAX_WAITERS			( 32 )
 
@@ -121,7 +121,7 @@
 //! Maximum number of queue elements.
 #define CFG_QUEUE_MAX_ELEMENTS			( 72 )
 //! Maximum queue length.
-#define CFG_QUEUE_MAX_LENGTH			( 128 )
+#define CFG_QUEUE_MAX_LENGTH			( 200 )
 //! Queue use name flag.
 #define CFG_QUEUE_USE_NAME				( 1 )
 //! Maximum queue name length.
@@ -135,13 +135,13 @@
 
 
 //! Maximum number of messages handled at once.
-#define CFG_MESSAGE_MAX_NUMBER			( 8 )
+#define CFG_MESSAGE_MAX_NUMBER			( 12 )
 //! Maximum length of a message in bytes.
-#define CFG_MESSAGE_MAX_LENGTH			( 100 )
+#define CFG_MESSAGE_MAX_LENGTH			( 80 )
 //! Maximum number of message waiters.
-#define CFG_MESSAGE_MAX_WAITERS			( CFG_TASK_MAX_NUMBER )
+#define CFG_MESSAGE_MAX_WAITERS			( 10 )
 //! Maximum number of message IDs a task can wait for (includes the terminating 0).
-#define CFG_MESSAGE_MAX_WAITER_IDS		( 4 )
+#define CFG_MESSAGE_MAX_WAITER_IDS		( 8 )
 
 
 //! Shell service use flag.
@@ -152,11 +152,14 @@
 #define CFG_SHELL_MAX_COMMAND_LENGTH	( 24 )
 
 
+//! GCP maximum number of channels.
+#define CFG_GCP_CHANNELS_MAX_NUMBER		( 2 )
+
 //! Kernel dump configuration flag.
 #define CFG_KERNEL_DUMP_CONFIG			( 0 )
 
 //! Log maximum (line) length.
-#define CFG_LOG_MAX_LENGTH				( 128 )
+#define CFG_LOG_MAX_LENGTH				( 200 )
 
 /**
 * DRV_UART1 : 0
