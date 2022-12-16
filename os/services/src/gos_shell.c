@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_shell.c
 //! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.3
+//! @date		2022-12-13
+//! @version	1.4
 //!
 //! @brief		GOS shell service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_shell.h
@@ -30,6 +30,7 @@
 //										*	Actual command and command parameter buffers
 //											made modul global instead of task local
 // 1.3		2022-12-11	Gabor Repasi	+	Built-in shell commands (dump and reset) added
+// 1.4		2022-12-13	Gabor Repasi	+	Privilege handling added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -58,6 +59,14 @@
 #include "gos_log.h"
 #include "gos_shell.h"
 #include "gos_shell_driver.h"
+
+/*
+ * Macros
+ */
+/**
+ * Shell daemon poll time [ms].
+ */
+#define GOS_SHELL_DAEMON_POLL_TIME_MS	( 50u )
 
 /*
  * Static variables
@@ -100,18 +109,19 @@ GOS_STATIC char_t				commandParams	[CFG_SHELL_MAX_COMMAND_LENGTH];
 /*
  * Function prototypes
  */
-GOS_STATIC void_t gos_shellDaemonTask (void_t);
-GOS_STATIC void_t gos_shellCommandHandler (char_t* params);
+GOS_STATIC void_t gos_shellDaemonTask		(void_t);
+GOS_STATIC void_t gos_shellCommandHandler	(char_t* params);
 
 /**
  * Shell daemon task descriptor.
  */
 GOS_STATIC gos_taskDescriptor_t shellDaemonTaskDesc =
 {
-	.taskFunction 	= gos_shellDaemonTask,
-	.taskName		= "gos_shell_task",
-	.taskPriority	= CFG_TASK_SHELL_DAEMON_PRIO,
-	.taskStackSize	= CFG_TASK_SHELL_DAEMON_STACK
+	.taskFunction 		= gos_shellDaemonTask,
+	.taskName			= "gos_shell_daemon",
+	.taskPriority		= CFG_TASK_SHELL_DAEMON_PRIO,
+	.taskStackSize		= CFG_TASK_SHELL_DAEMON_STACK,
+	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_USER
 };
 
 /**
@@ -209,7 +219,7 @@ gos_result_t gos_shellRegisterCommand (gos_shellCommand_t* command)
 			if (shellCommands[index].commandHandler == NULL)
 			{
 				shellCommands[index].commandHandler = command->commandHandler;
-				strcpy(shellCommands[index].command, command->command);
+				(void_t) strcpy(shellCommands[index].command, command->command);
 				shellRegisterCommandResult = GOS_SUCCESS;
 				break;
 			}
@@ -231,6 +241,7 @@ gos_result_t gos_shellSuspend (void_t)
 	/*
 	 * Function code.
 	 */
+	GOS_PRIVILEGED_ACCESS
 	shellSuspendResult = gos_kernelTaskSuspend(shellDaemonTaskId);
 
 	return shellSuspendResult;
@@ -249,6 +260,7 @@ gos_result_t gos_shellResume (void_t)
 	/*
 	 * Function code.
 	 */
+	GOS_PRIVILEGED_ACCESS
 	shellResumeResult = gos_kernelTaskResume(shellDaemonTaskId);
 
 	return shellResumeResult;
@@ -318,7 +330,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 		{
 			if (useEcho == GOS_TRUE)
 			{
-				gos_shellDriverTransmitString(&commandBuffer[commandBufferIndex]);
+				(void_t) gos_shellDriverTransmitString(&commandBuffer[commandBufferIndex]);
 			}
 
 			/*
@@ -337,7 +349,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 			{
 				if (useEcho == GOS_TRUE)
 				{
-					gos_shellDriverTransmitString("\n");
+					(void_t) gos_shellDriverTransmitString("\n");
 				}
 
 				commandBuffer[commandBufferIndex] = '\0';
@@ -375,10 +387,10 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 				// If command not found.
 				if (index == CFG_SHELL_MAX_COMMAND_NUMBER)
 				{
-					gos_shellDriverTransmitString("Unrecognized command!\r\n");
+					(void_t) gos_shellDriverTransmitString("Unrecognized command!\r\n");
 				}
 
-				memset((void_t*)commandBuffer, '\0', (CFG_SHELL_MAX_COMMAND_LENGTH + 1) * sizeof(char_t));
+				(void_t) memset((void_t*)commandBuffer, '\0', (CFG_SHELL_MAX_COMMAND_LENGTH + 1) * sizeof(char_t));
 				commandBufferIndex = 0u;
 			}
 			else
@@ -386,7 +398,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
 				commandBufferIndex++;
 			}
 		}
-		gos_kernelTaskSleep(50);
+		(void_t) gos_kernelTaskSleep(GOS_SHELL_DAEMON_POLL_TIME_MS);
 	}
 }
 
@@ -403,10 +415,11 @@ GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
 	 */
 	if (strcmp(params, "dump") == 0)
 	{
-		gos_kernelDump();
+		GOS_PRIVILEGED_ACCESS
+		(void_t) gos_kernelDump();
 	}
 	else if (strcmp(params, "reset") == 0)
 	{
-		gos_kernelReset();
+		(void_t) gos_kernelReset();
 	}
 }
