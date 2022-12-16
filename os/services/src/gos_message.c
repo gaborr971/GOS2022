@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_message.c
 //! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.2
+//! @date		2022-12-15
+//! @version	1.4
 //!
 //! @brief		GOS message service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_message.h
@@ -31,6 +31,9 @@
 //										*	Buffer emptying is not FIFO yet in case there was a
 //											buffer overflow!
 // 1.2		2022-11-15	Gabor Repasi	+	License added
+// 1.3		2022-12-13	Gabor Repasi	+	Privilege handling added
+//										+	Initialization error logging added
+// 1.4		2022-12-15	Gabor Repasi	*	Waiter array handling bugfix
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -55,6 +58,7 @@
  * Includes
  */
 #include <string.h>
+#include "gos_error.h"
 #include "gos_lock.h"
 #include "gos_message.h"
 #include "gos_queue.h"
@@ -125,10 +129,11 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t);
  */
 GOS_STATIC gos_taskDescriptor_t messageDaemonTaskDesc =
 {
-	.taskFunction	= gos_messageDaemonTask,
-	.taskName		= "gos_message_daemon",
-	.taskPriority	= CFG_TASK_MESSAGE_DAEMON_PRIO,
-	.taskStackSize	= CFG_TASK_MESSAGE_DAEMON_STACK
+	.taskFunction		= gos_messageDaemonTask,
+	.taskName			= "gos_message_daemon",
+	.taskPriority		= CFG_TASK_MESSAGE_DAEMON_PRIO,
+	.taskStackSize		= CFG_TASK_MESSAGE_DAEMON_STACK,
+	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -139,7 +144,7 @@ gos_result_t gos_messageInit (void_t)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t 				messageInitResult 	= GOS_ERROR;
+	gos_result_t 				messageInitResult 	= GOS_SUCCESS;
 	gos_messageIndex_t			messageIndex		= 0u;
 	gos_messageWaiterIndex_t	messageWaiterIndex 	= 0u;
 
@@ -160,10 +165,16 @@ gos_result_t gos_messageInit (void_t)
 		messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
 	}
 
-	if (gos_kernelTaskRegister(&messageDaemonTaskDesc, &messageDaemonTaskId) == GOS_SUCCESS &&
-		gos_lockCreate(&messageLockId) == GOS_SUCCESS)
+	if (gos_kernelTaskRegister(&messageDaemonTaskDesc, &messageDaemonTaskId) != GOS_SUCCESS)
 	{
-		messageInitResult = GOS_SUCCESS;
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Message daemon task registration failed.");
+		messageInitResult = GOS_ERROR;
+	}
+
+	if (gos_lockCreate(&messageLockId) != GOS_SUCCESS)
+	{
+		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Message lock creation failed.");
+		messageInitResult = GOS_ERROR;
 	}
 
 	return messageInitResult;
@@ -180,20 +191,18 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
 	gos_result_t				messageRxResult		= GOS_ERROR;
 	gos_tid_t					currentTaskId		= GOS_INVALID_TASK_ID;
 	gos_messageWaiterIndex_t	messageWaiterIndex 	= 0u;
+	gos_messageWaiterIndex_t	index				= 0u;
 	gos_messageIdIndex_t		messageIdIndex 		= 0u;
 
 	/*
 	 * Function code.
 	 */
-	if (target != NULL && messageIdArray != NULL)
+	if (target != NULL && messageIdArray != NULL && gos_lockWaitGet(messageLockId) == GOS_SUCCESS)
 	{
-		if (messageWaiterArray[nextWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID)
+		if (messageWaiterArray[nextWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID &&
+			gos_kernelTaskGetCurrentId(&currentTaskId) == GOS_SUCCESS)
 		{
-			// Get message lock.
-			gos_lockWaitGet(messageLockId);
-
 			// Add waiter to array.
-			gos_kernelTaskGetCurrentId(&currentTaskId);
 			messageWaiterArray[nextWaiterIndex].waiterTaskId 	= currentTaskId;
 			messageWaiterArray[nextWaiterIndex].waitTmo			= tmo;
 			messageWaiterArray[nextWaiterIndex].waitTmoCounter	= 0u;
@@ -212,16 +221,25 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
 
 			messageWaiterIndex = nextWaiterIndex;
 
-			if (++nextWaiterIndex == CFG_MESSAGE_MAX_WAITERS)
+			for (index = 0u; index < CFG_MESSAGE_MAX_WAITERS; index++)
 			{
-				nextWaiterIndex = 0u;
+				if (++nextWaiterIndex == CFG_MESSAGE_MAX_WAITERS)
+				{
+					nextWaiterIndex = 0u;
+				}
+
+				if (messageWaiterArray[nextWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID)
+				{
+					break;
+				}
 			}
 
 			// Release message lock.
-			gos_lockRelease(messageLockId);
+			(void_t) gos_lockRelease(messageLockId);
 
 			// Block task (to be unblocked by daemon).
-			gos_kernelTaskBlock(currentTaskId);
+			GOS_PRIVILEGED_ACCESS
+			(void_t) gos_kernelTaskBlock(currentTaskId);
 
 			// Task unblocked, check TMO.
 			if (messageWaiterArray[messageWaiterIndex].waitTmoCounter < messageWaiterArray[messageWaiterIndex].waitTmo)
@@ -229,8 +247,16 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
 				// Message received successfully.
 				messageRxResult = GOS_SUCCESS;
 			}
+			else
+			{
+				// Remove waiter.
+				messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
+			}
 		}
 	}
+
+	// Release message lock.
+	(void_t) gos_lockRelease(messageLockId);
 
 	return messageRxResult;
 }
@@ -243,32 +269,39 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
 	/*
 	 * Local variables.
 	 */
-	gos_result_t messageTxResult = GOS_ERROR;
+	gos_result_t		messageTxResult	= GOS_ERROR;
+	gos_messageIndex_t	msgIndex		= 0u;
 
 	/**
 	 * Function code.
 	 */
 	if (message != NULL &&
-		message->messageSize > 0 &&
 		message->messageId != GOS_MESSAGE_INVALID_ID &&
-		message->messageSize < CFG_MESSAGE_MAX_LENGTH)
+		message->messageSize < CFG_MESSAGE_MAX_LENGTH &&
+		gos_lockWaitGet(messageLockId) == GOS_SUCCESS)
 	{
 		if (messageArray[nextMessageIndex].messageId == GOS_MESSAGE_INVALID_ID)
 		{
-			// Get message lock.
-			gos_lockWaitGet(messageLockId);
-
 			memcpy((void_t*)&messageArray[nextMessageIndex], (void_t*)message, sizeof(*message));
 			messageTxResult = GOS_SUCCESS;
-			if (++nextMessageIndex == CFG_MESSAGE_MAX_NUMBER)
-			{
-				nextMessageIndex = 0u;
-			}
 
-			// Release message lock.
-			gos_lockRelease(messageLockId);
+			for (msgIndex = 0u; msgIndex < CFG_MESSAGE_MAX_NUMBER; msgIndex++)
+			{
+				if (++nextMessageIndex == CFG_MESSAGE_MAX_NUMBER)
+				{
+					nextMessageIndex = 0u;
+				}
+
+				if (messageArray[nextMessageIndex].messageId == GOS_MESSAGE_INVALID_ID)
+				{
+					break;
+				}
+			}
 		}
 	}
+
+	// Release message lock.
+	(void_t) gos_lockRelease(messageLockId);
 
 	return messageTxResult;
 }
@@ -297,6 +330,7 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
 	 */
 	for(;;)
 	{
+		(void_t) gos_lockWaitGet(messageLockId);
 		for (messageIndex = 0u; messageIndex < CFG_MESSAGE_MAX_NUMBER; messageIndex++)
 		{
 			for (messageWaiterIndex = 0u; messageWaiterIndex < CFG_MESSAGE_MAX_WAITERS; messageWaiterIndex++)
@@ -309,43 +343,37 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
 						if (messageWaiterArray[messageWaiterIndex].messageIdArray[messageIdIndex] ==
 							messageArray[messageIndex].messageId)
 						{
-							// Get message lock.
-							gos_lockWaitGet(messageLockId);
-
-							// ID match found. Copy message to target and delete waiter and message.
 							memcpy(messageWaiterArray[messageWaiterIndex].target->messageBytes,
 								  (void_t*)messageArray[messageIndex].messageBytes,
 								  messageArray[messageIndex].messageSize);
 							messageWaiterArray[messageWaiterIndex].target->messageSize	= messageArray[messageIndex].messageSize;
 							messageWaiterArray[messageWaiterIndex].target->messageId	= messageArray[messageIndex].messageId;
 
-							gos_kernelTaskUnblock(messageWaiterArray[messageWaiterIndex].waiterTaskId);
+							(void_t) gos_kernelTaskUnblock(messageWaiterArray[messageWaiterIndex].waiterTaskId);
 
 							messageArray[messageIndex].messageId = GOS_MESSAGE_INVALID_ID;
 							messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
 							waiterServed = GOS_TRUE;
 
-							// Release message lock.
-							gos_lockRelease(messageLockId);
-
 							break;
 						}
 					}
 
-					if (waiterServed == GOS_FALSE)
+					if (waiterServed == GOS_FALSE && messageWaiterArray[messageWaiterIndex].waitTmo != GOS_MESSGAGE_ENDLESS_TMO)
 					{
 						messageWaiterArray[messageWaiterIndex].waitTmoCounter++;
 
 						if (messageWaiterArray[messageWaiterIndex].waitTmoCounter > (messageWaiterArray[messageWaiterIndex].waitTmo * GOS_MESSAGE_DAEMON_POLL_TIME_MS))
 						{
 							// Timeout. Delete waiter, unblock task.
-							gos_kernelTaskUnblock(messageWaiterArray[messageWaiterIndex].waiterTaskId);
+							(void_t) gos_kernelTaskUnblock(messageWaiterArray[messageWaiterIndex].waiterTaskId);
 							messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
 						}
 					}
 				}
 			}
 		}
-		gos_kernelTaskSleep(GOS_MESSAGE_DAEMON_POLL_TIME_MS);
+		(void_t) gos_lockRelease(messageLockId);
+		(void_t) gos_kernelTaskSleep(GOS_MESSAGE_DAEMON_POLL_TIME_MS);
 	}
 }
