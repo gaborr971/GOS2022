@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_error.c
 //! @author		Gabor Repasi
-//! @date		2022-12-10
-//! @version	1.0
+//! @date		2022-12-13
+//! @version	1.1
 //!
 //! @brief		GOS error handler service source.
 //! @details	For a more detailed description of this service, please refer to @ref gos_error.h
@@ -25,6 +25,7 @@
 // Version	Date		Author			Description
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-12-10	Gabor Repasi	Initial version created.
+// 1.1		2022-12-13	Gabor Repasi	*	Continuous scheduling disabling added to error handler
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -77,20 +78,20 @@ void_t gos_printStartupLogo (void_t)
 	/*
 	 * Function code.
 	 */
-	gos_logLogFormattedUnsafe("**************************************************************************\r\n");
-	gos_logLogFormattedUnsafe("\r\n");
-	gos_logLogFormattedUnsafe("                 #####             #####             #####                \r\n");
-	gos_logLogFormattedUnsafe("               #########         #########         #########              \r\n");
-	gos_logLogFormattedUnsafe("              ##                ##       ##       ##                      \r\n");
-	gos_logLogFormattedUnsafe("             ##                ##         ##        #####                 \r\n");
-	gos_logLogFormattedUnsafe("             ##     #####      ##         ##           #####              \r\n");
-	gos_logLogFormattedUnsafe("              ##       ##       ##       ##                ##             \r\n");
-	gos_logLogFormattedUnsafe("               #########         #########         #########              \r\n");
-	gos_logLogFormattedUnsafe("                 #####             #####             #####                \r\n");
-	gos_logLogFormattedUnsafe("                                                                          \r\n");
-	gos_logLogFormattedUnsafe("                           (c) Gabor Repasi, 2022                         \r\n");
-	gos_logLogFormattedUnsafe("\r\n");
-	gos_logLogFormattedUnsafe("**************************************************************************\r\n");
+	(void_t) gos_logLogFormattedUnsafe("**************************************************************************\r\n");
+	(void_t) gos_logLogFormattedUnsafe("\r\n");
+	(void_t) gos_logLogFormattedUnsafe("                 #####             #####             #####                \r\n");
+	(void_t) gos_logLogFormattedUnsafe("               #########         #########         #########              \r\n");
+	(void_t) gos_logLogFormattedUnsafe("              ##                ##       ##       ##                      \r\n");
+	(void_t) gos_logLogFormattedUnsafe("             ##                ##         ##        #####                 \r\n");
+	(void_t) gos_logLogFormattedUnsafe("             ##     #####      ##         ##           #####              \r\n");
+	(void_t) gos_logLogFormattedUnsafe("              ##       ##       ##       ##                ##             \r\n");
+	(void_t) gos_logLogFormattedUnsafe("               #########         #########         #########              \r\n");
+	(void_t) gos_logLogFormattedUnsafe("                 #####             #####             #####                \r\n");
+	(void_t) gos_logLogFormattedUnsafe("                                                                          \r\n");
+	(void_t) gos_logLogFormattedUnsafe("                           (c) Gabor Repasi, 2022                         \r\n");
+	(void_t) gos_logLogFormattedUnsafe("\r\n");
+	(void_t) gos_logLogFormattedUnsafe("**************************************************************************\r\n");
 }
 
 /*
@@ -106,11 +107,11 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 	/*
 	 * Function code.
 	 */
-	gos_logLogFormattedUnsafe(SEPARATOR_LINE);
+	(void_t) gos_logLogFormattedUnsafe(SEPARATOR_LINE);
 
 	if (errorLevel == GOS_ERROR_LEVEL_OS_FATAL)
 	{
-		gos_logLogFormattedUnsafe(
+		(void_t) gos_logLogFormattedUnsafe(
 				LOG_FG_RED_START
 				"OS-level error - system stopped.\r\n"
 				LOG_FORMAT_RESET
@@ -118,7 +119,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 	}
 	else if (errorLevel == GOS_ERROR_LEVEL_OS_WARNING)
 	{
-		gos_logLogFormattedUnsafe(
+		(void_t) gos_logLogFormattedUnsafe(
 				LOG_FG_YELLOW_START
 				"OS-level error - warning.\r\n"
 				LOG_FORMAT_RESET
@@ -126,7 +127,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 	}
 	else if (errorLevel == GOS_ERROR_LEVEL_USER_FATAL)
 	{
-		gos_logLogFormattedUnsafe(
+		(void_t) gos_logLogFormattedUnsafe(
 				LOG_FG_RED_START
 				"User-level error - system stopped.\r\n"
 				LOG_FORMAT_RESET
@@ -134,7 +135,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 	}
 	else if (errorLevel == GOS_ERROR_LEVEL_USER_WARNING)
 	{
-		gos_logLogFormattedUnsafe(
+		(void_t) gos_logLogFormattedUnsafe(
 				LOG_FG_YELLOW_START
 				"User-level error - warning.\r\n"
 				LOG_FORMAT_RESET
@@ -143,7 +144,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 
 	if (function != NULL)
 	{
-		gos_logLogFormattedUnsafe("Function: <"
+		(void_t) gos_logLogFormattedUnsafe("Function: <"
 								  LOG_FG_YELLOW_START
 								  "%s"
 								  LOG_FORMAT_RESET
@@ -151,7 +152,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 	}
 	else
 	{
-		gos_logLogFormattedUnsafe("Function: <"
+		(void_t) gos_logLogFormattedUnsafe("Function: <"
 								  LOG_FG_YELLOW_START
 								  "unknown"
 								  LOG_FORMAT_RESET
@@ -161,18 +162,20 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 	if (errorMessage != NULL)
 	{
 		va_start(args, errorMessage);
-		vsprintf(errorBuffer, errorMessage, args);
+		(void_t) vsprintf(errorBuffer, errorMessage, args);
 		va_end(args);
 
-		gos_logLogFormattedUnsafe("%s\r\n", errorBuffer);
+		(void_t) gos_logLogFormattedUnsafe("%s\r\n", errorBuffer);
 	}
-	gos_logLogFormattedUnsafe(SEPARATOR_LINE);
+
+	(void_t) gos_logLogFormattedUnsafe(SEPARATOR_LINE);
 
 	if (errorLevel == GOS_ERROR_LEVEL_OS_FATAL || errorLevel == GOS_ERROR_LEVEL_USER_FATAL)
 	{
-		GOS_ATOMIC_ENTER
-
-		for(;;);
+		for(;;)
+		{
+			GOS_DISABLE_SCHED
+		}
 	}
 }
 
@@ -188,7 +191,7 @@ gos_result_t gos_traceInit (const char_t* initDescription, gos_result_t initResu
 	{
 		case GOS_SUCCESS:
 		{
-			gos_logLogFormattedUnsafe("[%-10d]\t%-48s [ "
+			(void_t) gos_logLogFormattedUnsafe("[%-10d]\t%-48s [ "
 					LOG_FG_GREEN_START
 					" OK  "
 					LOG_FORMAT_RESET
@@ -199,7 +202,7 @@ gos_result_t gos_traceInit (const char_t* initDescription, gos_result_t initResu
 		}
 		case GOS_ERROR:
 		{
-			gos_logLogFormattedUnsafe("[%-10d]\t%-48s [ "
+			(void_t) gos_logLogFormattedUnsafe("[%-10d]\t%-48s [ "
 					LOG_FG_RED_START
 					"ERROR"
 					LOG_FORMAT_RESET
