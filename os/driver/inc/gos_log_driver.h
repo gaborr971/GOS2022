@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_log_driver.h
 //! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.0
+//! @date		2022-12-13
+//! @version	1.1
 //!
 //! @brief		GOS LOG driver header.
 //! @details	This driver provides a skeleton for the driver for the log service.
@@ -25,6 +25,7 @@
 // Version	Date		Author			Description
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-12-11	Gabor Repasi	Initial version created.
+// 1.1		2022-12-13	Gabor Repasi	+	Unsafe transmit string function added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -60,6 +61,11 @@
  */
 typedef gos_result_t (*gos_logDriverTransmitString_t)	(char_t*);
 
+/**
+ * Log driver unsafe transmit string function type.
+ */
+typedef gos_result_t (*gos_logDriverTransmitString_Unsafe_t)	(char_t*);
+
 /*
  * Function prototypes
  */
@@ -75,5 +81,18 @@ typedef gos_result_t (*gos_logDriverTransmitString_t)	(char_t*);
  * @retval	GOS_ERROR	: According to user implementation / function not registered.
  */
 gos_result_t gos_logDriverTransmitString (char_t* pString);
+
+/**
+ * @brief	Log driver unsafe transmit string function skeleton.
+ * @details	If registered, it calls the custom unsafe transmit function.
+ *
+ * @param	pString	:	String to log.
+ *
+ * @return	Result of string transmission.
+ *
+ * @retval	GOS_SUCCESS	: According to user implementation.
+ * @retval	GOS_ERROR	: According to user implementation / function not registered.
+ */
+gos_result_t gos_logDriverTransmitString_Unsafe (char_t* pString);
 
 #endif

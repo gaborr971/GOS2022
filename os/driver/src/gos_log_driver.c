@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_log_driver.c
 //! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.0
+//! @date		2022-12-13
+//! @version	1.1
 //!
 //! @brief		GOS LOG driver source.
 //! @details	For a more detailed description of this driver, please refer to
@@ -26,6 +26,7 @@
 // Version	Date		Author			Description
 // ------------------------------------------------------------------------------------------------
 // 1.0		2022-12-11	Gabor Repasi	Initial version created.
+// 1.1		2022-12-13	Gabor Repasi	+	Unsafe transmit string function added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -73,6 +74,27 @@ gos_result_t gos_logDriverTransmitString (char_t* pString)
 	if (driverFunctions.logDriverTransmitString != NULL)
 	{
 		logDriverTransmitResult = driverFunctions.logDriverTransmitString(pString);
+	}
+
+	return logDriverTransmitResult;
+}
+
+/*
+ * Function: gos_logDriverTransmitString_Unsafe
+ */
+gos_result_t gos_logDriverTransmitString_Unsafe (char_t* pString)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t logDriverTransmitResult = GOS_ERROR;
+
+	/*
+	 * Function code.
+	 */
+	if (driverFunctions.logDriverTransmitStringUnsafe != NULL)
+	{
+		logDriverTransmitResult = driverFunctions.logDriverTransmitStringUnsafe(pString);
 	}
 
 	return logDriverTransmitResult;
