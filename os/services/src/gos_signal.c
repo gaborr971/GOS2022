@@ -294,17 +294,25 @@ gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSenderId_t sen
 	GOS_IS_CALLER_ISR(isCallerIsr);
 	GOS_IS_ACCESS_PRIVILEGED(isCallerPrivileged);
 
-	if (signalId < CFG_SIGNAL_MAX_NUMBER && signalArray[signalId].inUse == GOS_TRUE &&
-		(isCallerIsr == GOS_TRUE || isCallerPrivileged == GOS_TRUE ||
-		(gos_kernelTaskGetCurrentId(&callerTaskId) == GOS_SUCCESS &&
-		gos_kernelTaskGetData(callerTaskId, &callerTaskDesc) == GOS_SUCCESS &&
-		(callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_SIGNALING) == GOS_PRIV_SIGNALING)))
+	if (signalId < CFG_SIGNAL_MAX_NUMBER && signalArray[signalId].inUse == GOS_TRUE)
 	{
-		GOS_UNPRIVILEGED_ACCESS
-		signalInvokeDescriptor.signalId = signalId;
-		signalInvokeDescriptor.senderId = senderId;
+		if ((isCallerIsr == GOS_TRUE || isCallerPrivileged == GOS_TRUE ||
+			(gos_kernelTaskGetCurrentId(&callerTaskId) == GOS_SUCCESS &&
+			gos_kernelTaskGetData(callerTaskId, &callerTaskDesc) == GOS_SUCCESS &&
+			(callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_SIGNALING) == GOS_PRIV_SIGNALING)))
+		{
+			GOS_UNPRIVILEGED_ACCESS
+			signalInvokeDescriptor.signalId = signalId;
+			signalInvokeDescriptor.senderId = senderId;
 
-		signalInvokeResult = gos_queuePut(signalInvokeQueueDesc.queueId, (void_t*)&signalInvokeDescriptor, sizeof(signalInvokeDescriptor));
+			signalInvokeResult = gos_queuePut(signalInvokeQueueDesc.queueId, (void_t*)&signalInvokeDescriptor, sizeof(signalInvokeDescriptor));
+		}
+		else
+		{
+			gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "<%s> has no privilege to invoke signals!",
+				taskDescriptors[callerTaskId].taskName
+			);
+		}
 	}
 
 	return signalInvokeResult;
