@@ -3,7 +3,7 @@ This repository contains the source code of GOS2022
 
 # Description
 GOS2022 is an open-source, simple embedded operating system project.
-It under development, thus can be considered unsafe and can contain bugs.
+It is under development, therefore can be considered unsafe and can contain bugs.
 It is being tested during the development on a Nucleo F446 board with
 a custom test environment.
 
@@ -13,8 +13,8 @@ Only the source code of the OS is published at the moment. The test project
 will be published later.
 
 The OS, besides the task scheduler and basic functionalities, contains
-several kinds of synchronization solutions and services. The API documentation
-is not complete yet, but is in an advanced status.
+several kinds of synchronization solutions and services. Documentation of the OS
+will be published later.
 
 # Remarks
 Contribution to this project is encouraged and appriciated.
