@@ -93,6 +93,16 @@
 #define GOS_INVALID_TASK_ID			( (gos_tid_t)0x0100 )
 
 /**
+ * Maximum task priority levels.
+ */
+#define GOS_TASK_MAX_PRIO_LEVELS	( UINT8_MAX )
+
+/**
+ * Idle task priority.
+ */
+#define GOS_TASK_IDLE_PRIO			( GOS_TASK_MAX_PRIO_LEVELS )
+
+/**
  * Static macro.
  */
 #define GOS_STATIC					static
