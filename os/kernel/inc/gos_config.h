@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file		gos_config.h
 //! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.2
+//! @date		2022-12-15
+//! @version	1.3
 //!
 //! @brief		GOS configuration header.
 //! @details	This header contains the kernel and service configurations of the operating system.
@@ -28,6 +28,8 @@
 // 1.1		2022-12-03	Gabor Repasi	+	CFG_SCHED_COOPERATIVE added
 // 1.2		2022-12-11	Gabor Repasi	+	CFG_USE_PRIO_INHERITANCE added
 //										-	CFG_LOG_PORT removed
+// 1.3		2022-12-15	Gabor Repasi	-	Max priority level and idle task priority macros moved
+//											to gos_kernel.h
 //*************************************************************************************************
 #ifndef GOS_CONFIG_H
 #define GOS_CONFIG_H
@@ -44,10 +46,6 @@
 //! Priority inheritance flag for lock.
 #define CFG_USE_PRIO_INHERITANCE		( 0 )
 
-//! Maximum task priority levels.
-#define CFG_TASK_MAX_PRIO_LEVELS		( UINT8_MAX )
-//! Idle task priority.
-#define CFG_TASK_IDLE_PRIO				( CFG_TASK_MAX_PRIO_LEVELS )
 //! Maximum task name length.
 #define CFG_TASK_MAX_NAME_LENGTH		( 32 )
 //! Maximum number of tasks.
