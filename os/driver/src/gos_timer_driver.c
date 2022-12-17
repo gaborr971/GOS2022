@@ -12,21 +12,21 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_tmr.c
-//! @author		Gabor Repasi
-//! @date		2022-11-15
-//! @version	1.1
+//! @file       gos_tmr.c
+//! @author     Gabor Repasi
+//! @date       2022-11-15
+//! @version    1.1
 //!
-//! @brief		GOS timer driver source.
-//! @details	For a more detailed description of this driver, please refer to
-//! 			@ref gos_timer_driver.h
+//! @brief      GOS timer driver source.
+//! @details    For a more detailed description of this driver, please refer to
+//!             @ref gos_timer_driver.h
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-11-10	Gabor Repasi	Initial version created.
-// 1.1		2022-11-15	Gabor Repasi	+	License added
+// 1.0        2022-11-10    Gabor Repasi    Initial version created.
+// 1.1        2022-11-15    Gabor Repasi    +    License added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -63,18 +63,18 @@ GOS_EXTERN gos_driver_functions_t driverFunctions;
  */
 u32_t gos_timerDriverSysTimerGet (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u32_t timerDriverSysTimerValue = 0u;
+    /*
+     * Local variables.
+     */
+    u32_t timerDriverSysTimerValue = 0u;
 
-	/*
-	 * Function code.
-	 */
-	if (driverFunctions.timerDriverSysTimerGetValue != NULL)
-	{
-		timerDriverSysTimerValue = driverFunctions.timerDriverSysTimerGetValue();
-	}
+    /*
+     * Function code.
+     */
+    if (driverFunctions.timerDriverSysTimerGetValue != NULL)
+    {
+        timerDriverSysTimerValue = driverFunctions.timerDriverSysTimerGetValue();
+    }
 
-	return timerDriverSysTimerValue;
+    return timerDriverSysTimerValue;
 }

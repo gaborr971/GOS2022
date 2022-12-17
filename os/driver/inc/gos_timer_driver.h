@@ -12,21 +12,21 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_timer_driver.h
-//! @author		Gabor Repasi
-//! @date		2022-12-09
-//! @version	1.0
+//! @file       gos_timer_driver.h
+//! @author     Gabor Repasi
+//! @date       2022-12-09
+//! @version    1.0
 //!
-//! @brief		GOS timer driver header.
-//! @details	This is the timer driver skeleton. It contains the required interface functions for
-//! 			the OS. These functions shall be implemented by the user in order to be able to use
-//! 			microsecond delay and task run-time monitoring.
+//! @brief      GOS timer driver header.
+//! @details    This is the timer driver skeleton. It contains the required interface functions for
+//!             the OS. These functions shall be implemented by the user in order to be able to use
+//!             microsecond delay and task run-time monitoring.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-12-09	Gabor Repasi	Initial version created.
+// 1.0        2022-12-09    Gabor Repasi    Initial version created.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -60,19 +60,19 @@
 /**
  * System timer value get function type.
  */
-typedef u32_t	(*gos_timerDriverSysTimerGetVal_t	)(void_t);
+typedef u32_t (*gos_timerDriverSysTimerGetVal_t)(void_t);
 
 /*
  * Function prototypes
  */
 /**
- * @brief	System timer value getter skeleton.
- * @details	If registered, it calls the custom system timer getter function.
+ * @brief   System timer value getter skeleton.
+ * @details If registered, it calls the custom system timer getter function.
  *
- * @return	Result of system timer value getting.
+ * @return  Result of system timer value getting.
  *
- * @retval	GOS_SUCCESS	: According to user implementation.
- * @retval	GOS_ERROR	: According to user implementation / function not registered.
+ * @retval  GOS_SUCCESS : According to user implementation.
+ * @retval  GOS_ERROR   : According to user implementation / function not registered.
  */
 u32_t gos_timerDriverSysTimerGet (void_t);
 #endif

@@ -12,20 +12,20 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_error.h
-//! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.0
+//! @file       gos_error.h
+//! @author     Gabor Repasi
+//! @date       2022-12-11
+//! @version    1.0
 //!
-//! @brief		GOS error handler header.
-//! @details	This service is used for tracing error and initialization messages on the log
-//! 			output.
+//! @brief      GOS error handler header.
+//! @details    This service is used for tracing error and initialization messages on the log
+//!             output.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-12-11	Gabor Repasi	Initial version created.
+// 1.0        2022-12-11    Gabor Repasi    Initial version created.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -63,10 +63,10 @@
  */
 typedef enum
 {
-	GOS_ERROR_LEVEL_OS_FATAL		= 0b110100,	//!< OS-level fatal error causing the system to stop.
-	GOS_ERROR_LEVEL_OS_WARNING		= 0b101110,	//!< OS-level warning message will be logged, but system will not be stopped.
-	GOS_ERROR_LEVEL_USER_FATAL 		= 0b011010,	//!< User-level fatal error causing system stop.
-	GOS_ERROR_LEVEL_USER_WARNING	= 0b111010 	//!< User-level warning.
+    GOS_ERROR_LEVEL_OS_FATAL     = 0b110100,    //!< OS-level fatal error causing the system to stop.
+    GOS_ERROR_LEVEL_OS_WARNING   = 0b101110,    //!< OS-level warning message will be logged, but system will not be stopped.
+    GOS_ERROR_LEVEL_USER_FATAL   = 0b011010,    //!< User-level fatal error causing system stop.
+    GOS_ERROR_LEVEL_USER_WARNING = 0b111010     //!< User-level warning.
 }gos_errorLevel_t;
 
 /*
@@ -74,44 +74,44 @@ typedef enum
  */
 
 /**
- * @brief	Prints the startup logo on the log output.
- * @details	Prints the GOS logo (similar to the ones used in the file headers) on the log output.
+ * @brief   Prints the startup logo on the log output.
+ * @details Prints the GOS logo (similar to the ones used in the file headers) on the log output.
  *
- * @return	-
+ * @return    -
  */
 void_t gos_printStartupLogo (void_t);
 
 /**
- * @brief	Handles the given error.
- * @details	Prints the formatted error message on the log output, and based on the error
- * 			level, it returns or stays in an infinite loop and disables scheduling.
+ * @brief   Handles the given error.
+ * @details Prints the formatted error message on the log output, and based on the error
+ *          level, it returns or stays in an infinite loop and disables scheduling.
  *
- * @param 	errorLevel		: Level of error (OS/user, warning/fatal).
- * @param 	function		: Function name.
- * @param 	line			: Line number.
- * @param 	errorMessage	: Error message.
+ * @param   errorLevel   : Level of error (OS/user, warning/fatal).
+ * @param   function     : Function name.
+ * @param   line         : Line number.
+ * @param   errorMessage : Error message.
  *
- * @return	-
+ * @return  -
  */
 void_t gos_errorHandler (
-		gos_errorLevel_t errorLevel,
-		const char_t* function,
-		u32_t line,
-		const char_t* errorMessage,
-		...);
+        gos_errorLevel_t errorLevel,
+        const char_t* function,
+        u32_t line,
+        const char_t* errorMessage,
+        ...);
 
 /**
- * @brief	Traces an initialization message.
- * @details	Writes the formatted initialization message on the log output.
+ * @brief   Traces an initialization message.
+ * @details Writes the formatted initialization message on the log output.
  *
- * @param 	initDescription	: Message to describe the initialization step.
- * @param 	initResult		: Result of initialization.
+ * @param   initDescription : Message to describe the initialization step.
+ * @param   initResult      : Result of initialization.
  *
- * @return	-
+ * @return  -
  */
 gos_result_t gos_traceInit (
-		const char_t* initDescription,
-		gos_result_t initResult
-		);
+        const char_t* initDescription,
+        gos_result_t initResult
+        );
 
 #endif

@@ -12,19 +12,19 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_crc_driver.h
-//! @author		Gabor Repasi
-//! @date		2022-12-10
-//! @version	1.0
+//! @file       gos_crc_driver.h
+//! @author     Gabor Repasi
+//! @date       2022-12-10
+//! @version    1.0
 //!
-//! @brief		GOS Cyclic Redundancy Check driver header.
-//! @details	This driver provides a simple 32-bit CRC calculator algorithm.
+//! @brief      GOS Cyclic Redundancy Check driver header.
+//! @details    This driver provides a simple 32-bit CRC calculator algorithm.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-12-10	Gabor Repasi	Initial version created.
+// 1.0        2022-12-10    Gabor Repasi    Initial version created.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -56,13 +56,13 @@
  * Function prototypes
  */
 /**
- * @brief	Calculates the 32-bit CRC value of the given data buffer.
- * @details	Calculates the 32-bit CRC value of the given data buffer.
+ * @brief   Calculates the 32-bit CRC value of the given data buffer.
+ * @details Calculates the 32-bit CRC value of the given data buffer.
  *
- * @param	pData		:	Pointer to the data buffer.
- * @param	dataSize	:	Size of the data buffer in bytes.
+ * @param   pData    : Pointer to the data buffer.
+ * @param   dataSize : Size of the data buffer in bytes.
  *
- * @return	32-bit CRC value.
+ * @return  32-bit CRC value.
  */
 u32_t gos_crcDriverGetCrc (u8_t* pData, u32_t dataSize);
 

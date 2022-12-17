@@ -12,23 +12,23 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_time.c
-//! @author		Gabor Repasi
-//! @date		2022-12-08
-//! @version	1.2
+//! @file       gos_time.c
+//! @author     Gabor Repasi
+//! @date       2022-12-08
+//! @version    1.2
 //!
-//! @brief		GOS time service source.
-//! @details	For a more detailed description of this service, please refer to @ref gos_time.h
+//! @brief      GOS time service source.
+//! @details    For a more detailed description of this service, please refer to @ref gos_time.h
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-10-24	Gabor Repasi	Initial version created.
-// 1.1		2022-11-15	Gabor Repasi	+	License added
-//										-	Elapsed sender ID getter API functions removed
-//										+	New elapsed sender ID enumerators are used
-// 1.2		2022-12-08	Gabor Repasi	+	Run-time handling added
+// 1.0        2022-10-24    Gabor Repasi    Initial version created.
+// 1.1        2022-11-15    Gabor Repasi    +    License added
+//                                          -    Elapsed sender ID getter API functions removed
+//                                          +    New elapsed sender ID enumerators are used
+// 1.2        2022-12-08    Gabor Repasi    +    Run-time handling added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -61,17 +61,17 @@
 /**
  * Default year.
  */
-#define TIME_DEFAULT_YEAR	( 2022 )
+#define TIME_DEFAULT_YEAR     ( 2022 )
 
 /**
  * Default month.
  */
-#define TIME_DEFAULT_MONTH	( GOS_TIME_JANUARY )
+#define TIME_DEFAULT_MONTH    ( GOS_TIME_JANUARY )
 
 /**
  * Default day.
  */
-#define TIME_DEFAULT_DAY	( 1 )
+#define TIME_DEFAULT_DAY      ( 1 )
 
 /*
  * Static variables
@@ -81,9 +81,9 @@
  */
 GOS_STATIC gos_time_t systemTime =
 {
-	.years 	= TIME_DEFAULT_YEAR,
-	.months	= TIME_DEFAULT_MONTH,
-	.days	= TIME_DEFAULT_DAY
+    .years   = TIME_DEFAULT_YEAR,
+    .months  = TIME_DEFAULT_MONTH,
+    .days    = TIME_DEFAULT_DAY
 };
 
 /**
@@ -96,18 +96,18 @@ GOS_STATIC gos_runtime_t systemRunTime;
  */
 GOS_STATIC const gos_day_t dayLookupTable [GOS_TIME_NUMBER_OF_MONTHS] =
 {
-		[GOS_TIME_JANUARY	- 1]	= 31,
-		[GOS_TIME_FEBRUARY	- 1]	= 28,
-		[GOS_TIME_MARCH 	- 1]	= 31,
-		[GOS_TIME_APRIL 	- 1]	= 30,
-		[GOS_TIME_MAY 		- 1]	= 31,
-		[GOS_TIME_JUNE 		- 1]	= 30,
-		[GOS_TIME_JULY 		- 1]	= 31,
-		[GOS_TIME_AUGUST 	- 1]	= 31,
-		[GOS_TIME_SEPTEMBER	- 1]	= 30,
-		[GOS_TIME_OCTOBER 	- 1]	= 31,
-		[GOS_TIME_NOVEMBER 	- 1]	= 30,
-		[GOS_TIME_DECEMBER 	- 1]	= 31
+        [GOS_TIME_JANUARY   - 1]    = 31,
+        [GOS_TIME_FEBRUARY  - 1]    = 28,
+        [GOS_TIME_MARCH     - 1]    = 31,
+        [GOS_TIME_APRIL     - 1]    = 30,
+        [GOS_TIME_MAY       - 1]    = 31,
+        [GOS_TIME_JUNE      - 1]    = 30,
+        [GOS_TIME_JULY      - 1]    = 31,
+        [GOS_TIME_AUGUST    - 1]    = 31,
+        [GOS_TIME_SEPTEMBER - 1]    = 30,
+        [GOS_TIME_OCTOBER   - 1]    = 31,
+        [GOS_TIME_NOVEMBER  - 1]    = 30,
+        [GOS_TIME_DECEMBER  - 1]    = 31
 };
 
 /**
@@ -125,11 +125,11 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t);
  */
 GOS_STATIC gos_taskDescriptor_t timeDaemonTaskDesc =
 {
-	.taskFunction 		= gos_timeDaemonTask,
-	.taskName			= "gos_time_daemon",
-	.taskStackSize		= CFG_TASK_TIME_DAEMON_STACK,
-	.taskPriority		= CFG_TASK_TIME_DAEMON_PRIO,
-	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_KERNEL
+    .taskFunction         = gos_timeDaemonTask,
+    .taskName             = "gos_time_daemon",
+    .taskStackSize        = CFG_TASK_TIME_DAEMON_STACK,
+    .taskPriority         = CFG_TASK_TIME_DAEMON_PRIO,
+    .taskPrivilegeLevel   = GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -137,27 +137,27 @@ GOS_STATIC gos_taskDescriptor_t timeDaemonTaskDesc =
  */
 gos_result_t gos_timeInit (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t timeInitResult = GOS_SUCCESS;
+    /*
+     * Local variables.
+     */
+    gos_result_t timeInitResult = GOS_SUCCESS;
 
-	/*
-	 * Function code.
-	 */
-	if (gos_signalCreate(&timeSignalId) != GOS_SUCCESS)
-	{
-		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time signal registration failed.");
-		timeInitResult = GOS_ERROR;
-	}
+    /*
+     * Function code.
+     */
+    if (gos_signalCreate(&timeSignalId) != GOS_SUCCESS)
+    {
+        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time signal registration failed.");
+        timeInitResult = GOS_ERROR;
+    }
 
-	if (gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
-	{
-		(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time daemon task registration failed.");
-		timeInitResult = GOS_ERROR;
-	}
+    if (gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
+    {
+        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time daemon task registration failed.");
+        timeInitResult = GOS_ERROR;
+    }
 
-	return timeInitResult;
+    return timeInitResult;
 }
 
 /*
@@ -165,27 +165,27 @@ gos_result_t gos_timeInit (void_t)
  */
 gos_result_t gos_timeGet (gos_time_t* pTime)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t timeGetResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t timeGetResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (pTime != NULL)
-	{
-		pTime->seconds 	= systemTime.seconds;
-		pTime->minutes 	= systemTime.minutes;
-		pTime->hours	= systemTime.hours;
-		pTime->days		= systemTime.days;
-		pTime->months	= systemTime.months;
-		pTime->years	= systemTime.years;
+    /*
+     * Function code.
+     */
+    if (pTime != NULL)
+    {
+        pTime->seconds  = systemTime.seconds;
+        pTime->minutes  = systemTime.minutes;
+        pTime->hours    = systemTime.hours;
+        pTime->days     = systemTime.days;
+        pTime->months   = systemTime.months;
+        pTime->years    = systemTime.years;
 
-		timeGetResult = GOS_SUCCESS;
-	}
+        timeGetResult = GOS_SUCCESS;
+    }
 
-	return timeGetResult;
+    return timeGetResult;
 }
 
 /*
@@ -193,27 +193,27 @@ gos_result_t gos_timeGet (gos_time_t* pTime)
  */
 gos_result_t gos_timeSet (gos_time_t* pTime)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t timeSetResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t timeSetResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (pTime != NULL)
-	{
-		systemTime.seconds 	= pTime->seconds;
-		systemTime.minutes 	= pTime->minutes;
-		systemTime.hours	= pTime->hours;
-		systemTime.days		= pTime->days;
-		systemTime.months	= pTime->months;
-		systemTime.years	= pTime->years;
+    /*
+     * Function code.
+     */
+    if (pTime != NULL)
+    {
+        systemTime.seconds  = pTime->seconds;
+        systemTime.minutes  = pTime->minutes;
+        systemTime.hours    = pTime->hours;
+        systemTime.days     = pTime->days;
+        systemTime.months   = pTime->months;
+        systemTime.years    = pTime->years;
 
-		timeSetResult = GOS_SUCCESS;
-	}
+        timeSetResult = GOS_SUCCESS;
+    }
 
-	return timeSetResult;
+    return timeSetResult;
 }
 
 /*
@@ -221,25 +221,25 @@ gos_result_t gos_timeSet (gos_time_t* pTime)
  */
 gos_result_t gos_runTimeGet (gos_runtime_t* pRunTime)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t runtimeGetResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t runtimeGetResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (pRunTime != NULL)
-	{
-		pRunTime->seconds 	= systemRunTime.seconds;
-		pRunTime->minutes 	= systemRunTime.minutes;
-		pRunTime->hours		= systemRunTime.hours;
-		pRunTime->days		= systemRunTime.days;
+    /*
+     * Function code.
+     */
+    if (pRunTime != NULL)
+    {
+        pRunTime->seconds = systemRunTime.seconds;
+        pRunTime->minutes = systemRunTime.minutes;
+        pRunTime->hours   = systemRunTime.hours;
+        pRunTime->days    = systemRunTime.days;
 
-		runtimeGetResult = GOS_SUCCESS;
-	}
+        runtimeGetResult = GOS_SUCCESS;
+    }
 
-	return runtimeGetResult;
+    return runtimeGetResult;
 }
 
 /*
@@ -247,39 +247,39 @@ gos_result_t gos_runTimeGet (gos_runtime_t* pRunTime)
  */
 gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeComprareResult_t* result)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t timeCompareResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t timeCompareResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (pTime1 != NULL && pTime2 != NULL && result != NULL)
-	{
-		if (pTime1->hours	== pTime2->hours 	&&
-			pTime1->minutes == pTime2->minutes 	&&
-			pTime1->seconds == pTime2->seconds)
-		{
-			*result = GOS_TIME_EQUAL;
-		}
-		else if (pTime1->hours < pTime2->hours || (
-			pTime1->hours == pTime2->hours &&
-			pTime1->minutes < pTime2->minutes) || (
-			pTime1->hours == pTime2->hours &&
-			pTime1->minutes == pTime2->minutes &&
-			pTime1->seconds < pTime2->seconds))
-		{
-			*result = GOS_TIME_EARLIER;
-		}
-		else
-		{
-			*result = GOS_TIME_LATER;
-		}
-		timeCompareResult = GOS_SUCCESS;
-	}
+    /*
+     * Function code.
+     */
+    if (pTime1 != NULL && pTime2 != NULL && result != NULL)
+    {
+        if (pTime1->hours   == pTime2->hours   &&
+            pTime1->minutes == pTime2->minutes &&
+            pTime1->seconds == pTime2->seconds)
+        {
+            *result = GOS_TIME_EQUAL;
+        }
+        else if (pTime1->hours < pTime2->hours || (
+            pTime1->hours == pTime2->hours &&
+            pTime1->minutes < pTime2->minutes) || (
+            pTime1->hours == pTime2->hours &&
+            pTime1->minutes == pTime2->minutes &&
+            pTime1->seconds < pTime2->seconds))
+        {
+            *result = GOS_TIME_EARLIER;
+        }
+        else
+        {
+            *result = GOS_TIME_LATER;
+        }
+        timeCompareResult = GOS_SUCCESS;
+    }
 
-	return timeCompareResult;
+    return timeCompareResult;
 }
 
 /*
@@ -287,67 +287,67 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
  */
 gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t	timeAddSecondsResult	= GOS_ERROR;
-	gos_second_t	secondCounter			= 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t timeAddSecondsResult = GOS_ERROR;
+    gos_second_t secondCounter        = 0u;
 
-	/*
-	 * Function code.
-	 */
-	if (pTime != NULL)
-	{
-		while (secondCounter++ < seconds)
-		{
-			pTime->seconds++;
-			if (pTime->seconds >= 60)
-			{
-				pTime->seconds = 0U;
-				pTime->minutes++;
+    /*
+     * Function code.
+     */
+    if (pTime != NULL)
+    {
+        while (secondCounter++ < seconds)
+        {
+            pTime->seconds++;
+            if (pTime->seconds >= 60)
+            {
+                pTime->seconds = 0U;
+                pTime->minutes++;
 
-				// Check minutes.
-				if (pTime->minutes >= 60)
-				{
-					pTime->minutes = 0U;
-					pTime->hours++;
+                // Check minutes.
+                if (pTime->minutes >= 60)
+                {
+                    pTime->minutes = 0U;
+                    pTime->hours++;
 
-					// Check hours.
-					if (pTime->hours >= 24)
-					{
-						pTime->hours = 0U;
-						pTime->days++;
+                    // Check hours.
+                    if (pTime->hours >= 24)
+                    {
+                        pTime->hours = 0U;
+                        pTime->days++;
 
-						// Check days.
-						if (pTime->years % 4 == 0  && pTime->months == GOS_TIME_FEBRUARY && pTime->days >= 30)
-						{
-							pTime->days = 1U;
-							pTime->months++;
-						}
-						else if (pTime->years % 4 == 0 && pTime->months == GOS_TIME_FEBRUARY)
-						{
-							// Wait.
-						}
-						else if (pTime->days >= (dayLookupTable[pTime->months - 1] + 1))
-						{
-							pTime->days = 1U;
-							pTime->months++;
-						}
+                        // Check days.
+                        if (pTime->years % 4 == 0  && pTime->months == GOS_TIME_FEBRUARY && pTime->days >= 30)
+                        {
+                            pTime->days = 1U;
+                            pTime->months++;
+                        }
+                        else if (pTime->years % 4 == 0 && pTime->months == GOS_TIME_FEBRUARY)
+                        {
+                            // Wait.
+                        }
+                        else if (pTime->days >= (dayLookupTable[pTime->months - 1] + 1))
+                        {
+                            pTime->days = 1U;
+                            pTime->months++;
+                        }
 
-						// Check months.
-						if (pTime->months == 13)
-						{
-							pTime->months = 1;
-							pTime->years++;
-						}
-					}
-				}
-			}
-		}
-		timeAddSecondsResult = GOS_SUCCESS;
-	}
+                        // Check months.
+                        if (pTime->months == 13)
+                        {
+                            pTime->months = 1;
+                            pTime->years++;
+                        }
+                    }
+                }
+            }
+        }
+        timeAddSecondsResult = GOS_SUCCESS;
+    }
 
-	return timeAddSecondsResult;
+    return timeAddSecondsResult;
 }
 
 /*
@@ -355,110 +355,110 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds)
  */
 gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, gos_second_t seconds)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t	runtimeAddSecondsResult	= GOS_ERROR;
-	gos_second_t	secondCounter			= 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t runtimeAddSecondsResult = GOS_ERROR;
+    gos_second_t secondCounter           = 0u;
 
-	/*
-	 * Function code.
-	 */
-	if (pRunTime != NULL)
-	{
-		while (secondCounter++ < seconds)
-		{
-			pRunTime->seconds++;
-			if (pRunTime->seconds >= 60)
-			{
-				pRunTime->seconds = 0U;
-				pRunTime->minutes++;
+    /*
+     * Function code.
+     */
+    if (pRunTime != NULL)
+    {
+        while (secondCounter++ < seconds)
+        {
+            pRunTime->seconds++;
+            if (pRunTime->seconds >= 60)
+            {
+                pRunTime->seconds = 0U;
+                pRunTime->minutes++;
 
-				// Check minutes.
-				if (pRunTime->minutes >= 60)
-				{
-					pRunTime->minutes = 0U;
-					pRunTime->hours++;
+                // Check minutes.
+                if (pRunTime->minutes >= 60)
+                {
+                    pRunTime->minutes = 0U;
+                    pRunTime->hours++;
 
-					// Check hours.
-					if (pRunTime->hours >= 24)
-					{
-						pRunTime->hours = 0U;
-						pRunTime->days++;
-					}
-				}
-			}
-		}
-		runtimeAddSecondsResult = GOS_SUCCESS;
-	}
+                    // Check hours.
+                    if (pRunTime->hours >= 24)
+                    {
+                        pRunTime->hours = 0U;
+                        pRunTime->days++;
+                    }
+                }
+            }
+        }
+        runtimeAddSecondsResult = GOS_SUCCESS;
+    }
 
-	return runtimeAddSecondsResult;
+    return runtimeAddSecondsResult;
 }
 
 /**
- * @brief	Time daemon task.
- * @details	Increases the system time approximately every second and invokes the
- * 			elapsed signals.
+ * @brief   Time daemon task.
+ * @details Increases the system time approximately every second and invokes the
+ *          elapsed signals.
  *
- * @return	-
+ * @return    -
  */
 GOS_STATIC void_t gos_timeDaemonTask (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_time_t previousTime = {0};
+    /*
+     * Local variables.
+     */
+    gos_time_t previousTime = {0};
 
-	/*
-	 * Function code.
-	 */
-	// Initialize previous time.
-	(void_t) gos_timeGet(&previousTime);
+    /*
+     * Function code.
+     */
+    // Initialize previous time.
+    (void_t) gos_timeGet(&previousTime);
 
-	for(;;)
-	{
-		// Increase time by 1 second.
-		(void_t) gos_timeAddSeconds(&systemTime, 1);
+    for(;;)
+    {
+        // Increase time by 1 second.
+        (void_t) gos_timeAddSeconds(&systemTime, 1);
 
-		// Increase run-time by 1 second.
-		(void_t) gos_runTimeAddSeconds(&systemRunTime, 1);
+        // Increase run-time by 1 second.
+        (void_t) gos_runTimeAddSeconds(&systemRunTime, 1);
 
-		// Invoke second elapsed signal.
-		if (systemTime.seconds > previousTime.seconds)
-		{
-			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_SECOND_ELAPSED_SENDER_ID);
-		}
+        // Invoke second elapsed signal.
+        if (systemTime.seconds > previousTime.seconds)
+        {
+            (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_SECOND_ELAPSED_SENDER_ID);
+        }
 
-		// Invoke minute elapsed signal.
-		if (systemTime.minutes > previousTime.minutes)
-		{
-			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_MINUTE_ELAPSED_SENDER_ID);
-		}
+        // Invoke minute elapsed signal.
+        if (systemTime.minutes > previousTime.minutes)
+        {
+            (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_MINUTE_ELAPSED_SENDER_ID);
+        }
 
-		// Invoke hour elapsed signal.
-		if (systemTime.hours > previousTime.hours)
-		{
-			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_HOUR_ELAPSED_SENDER_ID);
-		}
+        // Invoke hour elapsed signal.
+        if (systemTime.hours > previousTime.hours)
+        {
+            (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_HOUR_ELAPSED_SENDER_ID);
+        }
 
-		// Invoke day elapsed signal.
-		if (systemTime.days > previousTime.days)
-		{
-			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_DAY_ELAPSED_SENDER_ID);
-		}
+        // Invoke day elapsed signal.
+        if (systemTime.days > previousTime.days)
+        {
+            (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_DAY_ELAPSED_SENDER_ID);
+        }
 
-		// Invoke month elapsed signal.
-		if (systemTime.months > previousTime.months)
-		{
-			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_MONTH_ELAPSED_SENDER_ID);
-		}
+        // Invoke month elapsed signal.
+        if (systemTime.months > previousTime.months)
+        {
+            (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_MONTH_ELAPSED_SENDER_ID);
+        }
 
-		// Invoke year elapsed signal.
-		if (systemTime.years > previousTime.years)
-		{
-			(void_t) gos_signalInvoke(timeSignalId, GOS_TIME_YEAR_ELAPSED_SENDER_ID);
-		}
+        // Invoke year elapsed signal.
+        if (systemTime.years > previousTime.years)
+        {
+            (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_YEAR_ELAPSED_SENDER_ID);
+        }
 
-		(void_t) gos_kernelTaskSleep(1000);
-	}
+        (void_t) gos_kernelTaskSleep(1000);
+    }
 }

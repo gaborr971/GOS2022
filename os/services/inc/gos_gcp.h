@@ -12,19 +12,19 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_gcp.h
-//! @author		Gabor Repasi
-//! @date		2022-12-10
-//! @version	1.0
+//! @file       gos_gcp.h
+//! @author     Gabor Repasi
+//! @date       2022-12-10
+//! @version    1.0
 //!
-//! @brief		GOS General Communication Protocol header.
-//! @details	This driver implements the GCP frame and message layers.
+//! @brief      GOS General Communication Protocol header.
+//! @details    This driver implements the GCP frame and message layers.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-12-10	Gabor Repasi	Initial version created.
+// 1.0        2022-12-10    Gabor Repasi    Initial version created.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -56,9 +56,9 @@
  * Type definitions
  */
 #if CFG_GCP_CHANNELS_MAX_NUMBER < 255
-typedef	u8_t	gos_gcpChannelNumber_t;	//!< GCP channel number.
+typedef u8_t  gos_gcpChannelNumber_t;    //!< GCP channel number.
 #else
-typedef	u16_t	gos_gcpChannelNumber_t;	//!< GCP channel number.
+typedef u16_t gos_gcpChannelNumber_t;    //!< GCP channel number.
 #endif
 
 /**
@@ -76,69 +76,73 @@ typedef gos_result_t (*gos_gcpReceiveFunction_t) (u8_t*, u16_t);
  */
 typedef struct
 {
-	u16_t	protocolVersion;	//!< Message protocol version.
-	u16_t	messageId;			//!< Message ID.
-	u16_t	payloadSize;		//!< Payload size.
-	u32_t	payloadCrc;			//!< Payload CRC.
+    u16_t protocolVersion; //!< Message protocol version.
+    u16_t messageId;       //!< Message ID.
+    u16_t payloadSize;     //!< Payload size.
+    u32_t payloadCrc;      //!< Payload CRC.
 }gos_gcpMessageHeader_t;
 
 /*
  * Function prototypes
  */
 /**
- * TODO
- * @param
- * @return
+ * @brief   Initializes the GCP service.
+ * @details Creates the GCP lock.
+ *
+ * @return  Result of initialization.
+ *
+ * @retval  GOS_SUCCESS : GCP service initialized successfully.
+ * @retval  GOS_ERROR   : Lock creation error.
  */
 gos_result_t gos_gcpInit (void_t);
 
 /**
- * @brief	Registers the physical-layer transmit and receive driver functions.
- * @details	Registers the physical-layer transmit and receive driver functions.
+ * @brief   Registers the physical-layer transmit and receive driver functions.
+ * @details Registers the physical-layer transmit and receive driver functions.
  *
- * @param	channel				:	GCP channel.
- * @param 	transmitFunction	:	Transmit function to register.
- * @param 	receiveFunction		:	Receive function to register.
+ * @param   channel          : GCP channel.
+ * @param   transmitFunction : Transmit function to register.
+ * @param   receiveFunction  : Receive function to register.
  *
- * @return	Result of physical driver registration.
+ * @return  Result of physical driver registration.
  *
- * @retval	GOS_SUCCESS	:	Physical driver registration successful.
- * @retval	GOS_ERROR	:	Transmit or receive function is NULL.
+ * @retval  GOS_SUCCESS      : Physical driver registration successful.
+ * @retval  GOS_ERROR        : Transmit or receive function is NULL.
  */
 gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpChannelNumber_t channel,
-											gos_gcpTransmitFunction_t transmitFunction,
-											gos_gcpReceiveFunction_t receiveFunction);
+                                            gos_gcpTransmitFunction_t transmitFunction,
+                                            gos_gcpReceiveFunction_t receiveFunction);
 
 /**
- * @brief	Transmits the given message via the GCP protocol.
- * @details	Calculates the payload CRC (if previously calculated in the header, it overwrites it!),
- * 			transmits the header frames, and then transmits the payload frames.
+ * @brief   Transmits the given message via the GCP protocol.
+ * @details Calculates the payload CRC (if previously calculated in the header, it overwrites it!),
+ *          transmits the header frames, and then transmits the payload frames.
  *
- * @param	pMessageHeader	:	Pointer to the message header describing the message parameters.
- * @param	pMessagePayload	:	Pointer to the message payload.
+ * @param   pMessageHeader  : Pointer to the message header describing the message parameters.
+ * @param   pMessagePayload : Pointer to the message payload.
  *
- * @return	Result of message transmission.
+ * @return  Result of message transmission.
  *
- * @retval	GOS_SUCCESS	:	Message transmitted successfully.
- * @retval	GOS_ERROR	:	Message header, message payload or transmit function is NULL pointer or
- * 							frame transmission error occurred.
+ * @retval  GOS_SUCCESS     : Message transmitted successfully.
+ * @retval  GOS_ERROR       : Message header, message payload or transmit function is NULL pointer or
+ *                            frame transmission error occurred.
  */
 gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel, gos_gcpMessageHeader_t* pMessageHeader, void_t* pMessagePayload);
 
 /**
- * @brief	Receives the given message via the GCP protocol.
- * @details	Receives the header frames and based on that, it receives the payload frames. Finally,
- * 			it checks the payload CRC.
+ * @brief   Receives the given message via the GCP protocol.
+ * @details Receives the header frames and based on that, it receives the payload frames. Finally,
+ *          it checks the payload CRC.
  *
- * @param	channel					:	GCP channel.
- * @param	pTargetMessageHeader	:	Pointer to the message header describing the message parameters.
- * @param	pPayloadTarget			:	Pointer to the payload target buffer.
+ * @param   channel              : GCP channel.
+ * @param   pTargetMessageHeader : Pointer to the message header describing the message parameters.
+ * @param   pPayloadTarget       : Pointer to the payload target buffer.
  *
- * @return	Result of message reception.
+ * @return  Result of message reception.
  *
- * @retval	GOS_SUCCESS	:	Message received successfully.
- * @retval	GOS_ERROR	:	Message header target, payload target or receive function is NULL pointer or
- * 							frame reception error occurred.
+ * @retval  GOS_SUCCESS          : Message received successfully.
+ * @retval  GOS_ERROR            : Message header target, payload target or receive function is NULL pointer or
+ *                                 frame reception error occurred.
  */
 gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel, gos_gcpMessageHeader_t* pTargetMessageHeader, void_t* pPayloadTarget);
 #endif

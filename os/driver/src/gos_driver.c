@@ -12,20 +12,20 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_driver.c
-//! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.0
+//! @file       gos_driver.c
+//! @author     Gabor Repasi
+//! @date       2022-12-11
+//! @version    1.0
 //!
-//! @brief		GOS driver source.
-//! @details	For a more detailed description of this driver, please refer to
-//! 			@ref gos_driver.h
+//! @brief      GOS driver source.
+//! @details    For a more detailed description of this driver, please refer to
+//!             @ref gos_driver.h
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-12-11	Gabor Repasi	Initial version created.
+// 1.0        2022-12-11    Gabor Repasi    Initial version created.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -62,19 +62,19 @@ gos_driver_functions_t driverFunctions = { NULL, NULL };
  */
 gos_result_t gos_driverInit (gos_driver_functions_t* pDriverFunctions)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t driverInitResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t driverInitResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (pDriverFunctions != NULL)
-	{
-		memcpy((void_t*)&driverFunctions, (void_t*)pDriverFunctions, sizeof(gos_driver_functions_t));
-		driverInitResult = GOS_SUCCESS;
-	}
+    /*
+     * Function code.
+     */
+    if (pDriverFunctions != NULL)
+    {
+        memcpy((void_t*)&driverFunctions, (void_t*)pDriverFunctions, sizeof(gos_driver_functions_t));
+        driverInitResult = GOS_SUCCESS;
+    }
 
-	return driverInitResult;
+    return driverInitResult;
 }

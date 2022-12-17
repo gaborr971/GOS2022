@@ -12,29 +12,29 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_lock.h
-//! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.2
+//! @file       gos_lock.h
+//! @author     Gabor Repasi
+//! @date       2022-12-11
+//! @version    1.2
 //!
-//! @brief		GOS lock service header.
-//! @details	Lock service is a way of protecting shared resources between different tasks and
-//! 			thus synchronizing the operation of tasks in the operating system. Locks can be
-//! 			created, locked and released. The locking of a lock instance can happen in two
-//! 			ways: either the caller task tries to get the lock and if it fails the API simply
-//! 			returns with an error or the locking can be forced: in this scenario if the lock is
-//! 			currently used by another task, the caller task will go to blocked state and put in
-//! 			a waiting array. When the lock is released, the next waiter in the array will be
-//! 			unblocked and can access the lock. When using this approach, the programmer shall
-//! 			be aware of the risk of causing deadlocks in the system!
+//! @brief      GOS lock service header.
+//! @details    Lock service is a way of protecting shared resources between different tasks and
+//!             thus synchronizing the operation of tasks in the operating system. Locks can be
+//!             created, locked and released. The locking of a lock instance can happen in two
+//!             ways: either the caller task tries to get the lock and if it fails the API simply
+//!             returns with an error or the locking can be forced: in this scenario if the lock is
+//!             currently used by another task, the caller task will go to blocked state and put in
+//!             a waiting array. When the lock is released, the next waiter in the array will be
+//!             unblocked and can access the lock. When using this approach, the programmer shall
+//!             be aware of the risk of causing deadlocks in the system!
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-10-22	Gabor Repasi	Initial version created.
-// 1.1		2022-11-15	Gabor Repasi	+	License added
-// 1.2		2022-12-11	Gabor Repasi	*	Lock replaced with lock ID.
+// 1.0        2022-10-22    Gabor Repasi    Initial version created.
+// 1.1        2022-11-15    Gabor Repasi    +    License added
+// 1.2        2022-12-11    Gabor Repasi    *    Lock replaced with lock ID.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -68,76 +68,76 @@
 /**
  * OS lock type.
  */
-typedef u16_t	gos_lockId_t;
+typedef u16_t gos_lockId_t;
 
 #if CFG_LOCK_MAX_NUMBER < 255
-typedef u8_t	gos_lockIndex_t;		//!< Lock index type.
+typedef u8_t  gos_lockIndex_t;        //!< Lock index type.
 #else
-typedef	u16_t	gos_lockIndex_t;		//!< Lock index type.
+typedef u16_t gos_lockIndex_t;        //!< Lock index type.
 #endif
 
 #if CFG_LOCK_MAX_WAITERS < 255
-typedef u8_t	gos_lockWaiterIndex_t;	//!< Lock waiter index type.
+typedef u8_t  gos_lockWaiterIndex_t;  //!< Lock waiter index type.
 #else
-typedef u16_t	gos_lockWaiterIndex_t;	//!< Lock waiter index type.
+typedef u16_t gos_lockWaiterIndex_t;  //!< Lock waiter index type.
 #endif
 
 /*
  * Function prototypes
  */
 /**
- * @brief	This function initializes the lock service.
- * @details	This function sets the locks to unused and unlocked, and fills the waiter task
- * 			array with invalid task IDs.
+ * @brief   This function initializes the lock service.
+ * @details This function sets the locks to unused and unlocked, and fills the waiter task
+ *          array with invalid task IDs.
  *
- * @return	Result of initialization.
+ * @return  Result of initialization.
  *
- * @retval	GOS_SUCCESS : Initialization successful.
+ * @retval  GOS_SUCCESS : Initialization successful.
  */
 gos_result_t gos_lockInit (void_t);
 
 /**
- * @brief	This function creates a new lock instance.
- * @details	Goes through the lock array and allocates the next free lock.
+ * @brief   This function creates a new lock instance.
+ * @details Goes through the lock array and allocates the next free lock.
  *
- * @param	pLockId	:	Pointer to the lock ID variable to store the assigned lock ID.
+ * @param   pLockId     : Pointer to the lock ID variable to store the assigned lock ID.
  *
- * @return	Result of lock creation.
+ * @return  Result of lock creation.
  *
- * @retval	GOS_SUCCESS : Lock created successfully.
- * @retval	GOS_ERROR   : Lock array is full.
+ * @retval  GOS_SUCCESS : Lock created successfully.
+ * @retval  GOS_ERROR   : Lock array is full.
  */
 gos_result_t gos_lockCreate (gos_lockId_t* pLockId);
 
 
 /**
- * @brief	This function waits for a lock instance to
- * 			be available and gets it.
- * @details	Checks the lock ID and registers the waiter in the next free
- * 			element of the waiter task array. The waiter task will be blocked
- * 			if the lock is not available.
+ * @brief   This function waits for a lock instance to
+ *          be available and gets it.
+ * @details Checks the lock ID and registers the waiter in the next free
+ *          element of the waiter task array. The waiter task will be blocked
+ *          if the lock is not available.
  *
- * @param	lockId	:	ID of the lock instance.
+ * @param   lockId      : ID of the lock instance.
  *
- * @return	Result of lock get.
+ * @return  Result of lock get.
  *
- * @retval	GOS_SUCCESS : Lock get successful.
- * @retval	GOS_ERROR   : Invalid or unused lock.
+ * @retval  GOS_SUCCESS : Lock get successful.
+ * @retval  GOS_ERROR   : Invalid or unused lock.
  */
 gos_result_t gos_lockWaitGet (gos_lockId_t lockId);
 
 /**
- * @brief	This function releases a lock instance.
- * @details	Sets the state of the given lock instance to unlocked and
- * 			loops through the waiter array and unblocks the first waiter
- * 			task of the given lock (if there are any).
+ * @brief   This function releases a lock instance.
+ * @details Sets the state of the given lock instance to unlocked and
+ *          loops through the waiter array and unblocks the first waiter
+ *          task of the given lock (if there are any).
  *
- * @param	lockId	:	ID of the lock instance.
+ * @param   lockId      : ID of the lock instance.
  *
- * @return	Result of lock release.
+ * @return  Result of lock release.
  *
- * @retval	GOS_SUCCESS : Lock released successfully.
- * @retval	GOS_ERROR   : Invalid or unused lock.
+ * @retval  GOS_SUCCESS : Lock released successfully.
+ * @retval  GOS_ERROR   : Invalid or unused lock.
  */
 gos_result_t gos_lockRelease (gos_lockId_t lockId);
 

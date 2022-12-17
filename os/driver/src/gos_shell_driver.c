@@ -12,20 +12,20 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_shell_driver.c
-//! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.0
+//! @file       gos_shell_driver.c
+//! @author     Gabor Repasi
+//! @date       2022-12-11
+//! @version    1.0
 //!
-//! @brief		GOS SHELL driver source.
-//! @details	For a more detailed description of this driver, please refer to
-//! 			@ref gos_shell_driver.h
+//! @brief      GOS SHELL driver source.
+//! @details    For a more detailed description of this driver, please refer to
+//!             @ref gos_shell_driver.h
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-12-11	Gabor Repasi	Initial version created.
+// 1.0        2022-12-11    Gabor Repasi    Initial version created.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -62,20 +62,20 @@ GOS_EXTERN gos_driver_functions_t driverFunctions;
  */
 gos_result_t gos_shellDriverReceiveChar (char_t* pChar)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t shellDriverReceiveResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t shellDriverReceiveResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (driverFunctions.shellDriverReceiveChar != NULL)
-	{
-		shellDriverReceiveResult = driverFunctions.shellDriverReceiveChar(pChar);
-	}
+    /*
+     * Function code.
+     */
+    if (driverFunctions.shellDriverReceiveChar != NULL)
+    {
+        shellDriverReceiveResult = driverFunctions.shellDriverReceiveChar(pChar);
+    }
 
-	return shellDriverReceiveResult;
+    return shellDriverReceiveResult;
 }
 
 /*
@@ -83,18 +83,18 @@ gos_result_t gos_shellDriverReceiveChar (char_t* pChar)
  */
 gos_result_t gos_shellDriverTransmitString (char_t* pString)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t shellDriverTransmitResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t shellDriverTransmitResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (driverFunctions.shellDriverTransmitString != NULL)
-	{
-		shellDriverTransmitResult = driverFunctions.shellDriverTransmitString(pString);
-	}
+    /*
+     * Function code.
+     */
+    if (driverFunctions.shellDriverTransmitString != NULL)
+    {
+        shellDriverTransmitResult = driverFunctions.shellDriverTransmitString(pString);
+    }
 
-	return shellDriverTransmitResult;
+    return shellDriverTransmitResult;
 }

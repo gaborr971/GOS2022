@@ -12,19 +12,19 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_shell_driver.h
-//! @author		Gabor Repasi
-//! @date		2022-12-11
-//! @version	1.0
+//! @file       gos_shell_driver.h
+//! @author     Gabor Repasi
+//! @date       2022-12-11
+//! @version    1.0
 //!
-//! @brief		GOS SHELL driver header.
-//! @details	This driver provides a skeleton for the driver for the shell service.
+//! @brief      GOS SHELL driver header.
+//! @details    This driver provides a skeleton for the driver for the shell service.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-12-11	Gabor Repasi	Initial version created.
+// 1.0        2022-12-11    Gabor Repasi    Initial version created.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -58,39 +58,39 @@
 /**
  * Shell driver receive character function type.
  */
-typedef gos_result_t (*gos_shellDriverReceiveChar_t)	(char_t*);
+typedef gos_result_t (*gos_shellDriverReceiveChar_t)(char_t*);
 
 /**
  * Shell driver transmit string function type.
  */
-typedef gos_result_t (*gos_shellDriverTransmitString_t)	(char_t*);
+typedef gos_result_t (*gos_shellDriverTransmitString_t)(char_t*);
 
 /*
  * Function prototypes
  */
 /**
- * @brief	Receives a character.
- * @details	If registered, it calls the custom character receiver function.
+ * @brief   Receives a character.
+ * @details If registered, it calls the custom character receiver function.
  *
- * @param	pChar	: Pointer to a character variable to store the received character in.
+ * @param   pChar       : Pointer to a character variable to store the received character in.
  *
- * @return	Result of character reception.
+ * @return  Result of character reception.
  *
- * @retval	GOS_SUCCESS	: According to user implementation.
- * @retval	GOS_ERROR	: According to user implementation / function not registered.
+ * @retval  GOS_SUCCESS : According to user implementation.
+ * @retval  GOS_ERROR   : According to user implementation / function not registered.
  */
 gos_result_t gos_shellDriverReceiveChar (char_t* pChar);
 
 /**
- * @brief	Transmits a string.
- * @details	If registered, it calls the custom string transmitter function.
+ * @brief   Transmits a string.
+ * @details If registered, it calls the custom string transmitter function.
  *
- * @param	pString	: Pointer to the string to be transmitted.
+ * @param   pString     : Pointer to the string to be transmitted.
  *
- * @return	Result of string transmission.
+ * @return  Result of string transmission.
  *
- * @retval	GOS_SUCCESS	: According to user implementation.
- * @retval	GOS_ERROR	: According to user implementation / function not registered.
+ * @retval  GOS_SUCCESS : According to user implementation.
+ * @retval  GOS_ERROR   : According to user implementation / function not registered.
  */
 gos_result_t gos_shellDriverTransmitString (char_t* pString);
 

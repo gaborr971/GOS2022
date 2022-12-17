@@ -12,25 +12,25 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_shell.c
-//! @author		Gabor Repasi
-//! @date		2022-12-13
-//! @version	1.4
+//! @file       gos_shell.c
+//! @author     Gabor Repasi
+//! @date       2022-12-13
+//! @version    1.4
 //!
-//! @brief		GOS shell service source.
-//! @details	For a more detailed description of this service, please refer to @ref gos_shell.h
+//! @brief      GOS shell service source.
+//! @details    For a more detailed description of this service, please refer to @ref gos_shell.h
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-11-04	Gabor Repasi	Initial version created.
-// 1.1		2022-11-15	Gabor Repasi	+	License added
-// 1.2		2022-12-03	Gabor Repasi	+	gos_shellRegisterCommands added
-//										*	Actual command and command parameter buffers
-//											made modul global instead of task local
-// 1.3		2022-12-11	Gabor Repasi	+	Built-in shell commands (dump and reset) added
-// 1.4		2022-12-13	Gabor Repasi	+	Privilege handling added
+// 1.0        2022-11-04    Gabor Repasi    Initial version created.
+// 1.1        2022-11-15    Gabor Repasi    +    License added
+// 1.2        2022-12-03    Gabor Repasi    +    gos_shellRegisterCommands added
+//                                          *    Actual command and command parameter buffers
+//                                               made modul global instead of task local
+// 1.3        2022-12-11    Gabor Repasi    +    Built-in shell commands (dump and reset) added
+// 1.4        2022-12-13    Gabor Repasi    +    Privilege handling added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -66,7 +66,7 @@
 /**
  * Shell daemon poll time [ms].
  */
-#define GOS_SHELL_DAEMON_POLL_TIME_MS	( 50u )
+#define GOS_SHELL_DAEMON_POLL_TIME_MS    ( 50u )
 
 /*
  * Static variables
@@ -74,54 +74,54 @@
 /**
  * Shell command array.
  */
-GOS_STATIC gos_shellCommand_t	shellCommands		[CFG_SHELL_MAX_COMMAND_NUMBER];
+GOS_STATIC gos_shellCommand_t shellCommands        [CFG_SHELL_MAX_COMMAND_NUMBER];
 
 /**
  * Shell daemon task ID.
  */
-GOS_STATIC gos_tid_t			shellDaemonTaskId;
+GOS_STATIC gos_tid_t          shellDaemonTaskId;
 
 /**
  * Command buffer.
  */
-GOS_STATIC char_t				commandBuffer		[CFG_SHELL_MAX_COMMAND_LENGTH + 1];
+GOS_STATIC char_t             commandBuffer        [CFG_SHELL_MAX_COMMAND_LENGTH + 1];
 
 /**
  * Command buffer index.
  */
-GOS_STATIC u16_t				commandBufferIndex;
+GOS_STATIC u16_t              commandBufferIndex;
 
 /**
  * Shell echo flag.
  */
-GOS_STATIC bool_t				useEcho;
+GOS_STATIC bool_t             useEcho;
 
 /**
  * Actual command buffer.
  */
-GOS_STATIC char_t				actualCommand	[CFG_SHELL_MAX_COMMAND_LENGTH];
+GOS_STATIC char_t             actualCommand        [CFG_SHELL_MAX_COMMAND_LENGTH];
 
 /**
  * Command parameters buffer.
  */
-GOS_STATIC char_t				commandParams	[CFG_SHELL_MAX_COMMAND_LENGTH];
+GOS_STATIC char_t             commandParams        [CFG_SHELL_MAX_COMMAND_LENGTH];
 
 /*
  * Function prototypes
  */
-GOS_STATIC void_t gos_shellDaemonTask		(void_t);
-GOS_STATIC void_t gos_shellCommandHandler	(char_t* params);
+GOS_STATIC void_t gos_shellDaemonTask     (void_t);
+GOS_STATIC void_t gos_shellCommandHandler (char_t* params);
 
 /**
  * Shell daemon task descriptor.
  */
 GOS_STATIC gos_taskDescriptor_t shellDaemonTaskDesc =
 {
-	.taskFunction 		= gos_shellDaemonTask,
-	.taskName			= "gos_shell_daemon",
-	.taskPriority		= CFG_TASK_SHELL_DAEMON_PRIO,
-	.taskStackSize		= CFG_TASK_SHELL_DAEMON_STACK,
-	.taskPrivilegeLevel	= GOS_TASK_PRIVILEGE_USER
+    .taskFunction        = gos_shellDaemonTask,
+    .taskName            = "gos_shell_daemon",
+    .taskPriority        = CFG_TASK_SHELL_DAEMON_PRIO,
+    .taskStackSize       = CFG_TASK_SHELL_DAEMON_STACK,
+    .taskPrivilegeLevel  = GOS_TASK_PRIVILEGE_USER
 };
 
 /**
@@ -129,8 +129,8 @@ GOS_STATIC gos_taskDescriptor_t shellDaemonTaskDesc =
  */
 GOS_STATIC gos_shellCommand_t shellCommand =
 {
-	.command = "shell",
-	.commandHandler = gos_shellCommandHandler
+    .command        = "shell",
+    .commandHandler = gos_shellCommandHandler
 };
 
 /*
@@ -138,28 +138,28 @@ GOS_STATIC gos_shellCommand_t shellCommand =
  */
 gos_result_t gos_shellInit (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t 			shellInitResult	= GOS_ERROR;
-	gos_shellCommandIndex_t	index			= 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t            shellInitResult = GOS_ERROR;
+    gos_shellCommandIndex_t index           = 0u;
 
-	/*
-	 * Function code.
-	 */
-	useEcho = GOS_TRUE;
+    /*
+     * Function code.
+     */
+    useEcho = GOS_TRUE;
 
-	for (index = 0u; index < CFG_SHELL_MAX_COMMAND_NUMBER; index++)
-	{
-		shellCommands[index].commandHandler = NULL;
-	}
+    for (index = 0u; index < CFG_SHELL_MAX_COMMAND_NUMBER; index++)
+    {
+        shellCommands[index].commandHandler = NULL;
+    }
 
-	if (gos_kernelTaskRegister(&shellDaemonTaskDesc, &shellDaemonTaskId) == GOS_SUCCESS &&
-		gos_shellRegisterCommand(&shellCommand) == GOS_SUCCESS)
-	{
-		shellInitResult = GOS_SUCCESS;
-	}
-	return shellInitResult;
+    if (gos_kernelTaskRegister(&shellDaemonTaskDesc, &shellDaemonTaskId) == GOS_SUCCESS &&
+        gos_shellRegisterCommand(&shellCommand) == GOS_SUCCESS)
+    {
+        shellInitResult = GOS_SUCCESS;
+    }
+    return shellInitResult;
 }
 
 /*
@@ -167,35 +167,35 @@ gos_result_t gos_shellInit (void_t)
  */
 gos_result_t gos_shellRegisterCommands (gos_shellCommand_t* commands, u16_t arraySize)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t registerResult = GOS_ERROR;
-	u16_t numberOfCommands = 0u;
-	u16_t index = 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t registerResult   = GOS_ERROR;
+    u16_t        numberOfCommands = 0u;
+    u16_t        index            = 0u;
 
-	/*
-	 * Function code.
-	 */
-	if (commands != NULL)
-	{
-		numberOfCommands = arraySize / sizeof(commands[0]);
+    /*
+     * Function code.
+     */
+    if (commands != NULL)
+    {
+        numberOfCommands = arraySize / sizeof(commands[0]);
 
-		for (index = 0u; index < numberOfCommands; index++)
-		{
-			if (gos_shellRegisterCommand(&commands[index]) != GOS_SUCCESS)
-			{
-				break;
-			}
-		}
+        for (index = 0u; index < numberOfCommands; index++)
+        {
+            if (gos_shellRegisterCommand(&commands[index]) != GOS_SUCCESS)
+            {
+                break;
+            }
+        }
 
-		if (index == numberOfCommands)
-		{
-			registerResult = GOS_SUCCESS;
-		}
-	}
+        if (index == numberOfCommands)
+        {
+            registerResult = GOS_SUCCESS;
+        }
+    }
 
-	return registerResult;
+    return registerResult;
 }
 
 /*
@@ -203,29 +203,29 @@ gos_result_t gos_shellRegisterCommands (gos_shellCommand_t* commands, u16_t arra
  */
 gos_result_t gos_shellRegisterCommand (gos_shellCommand_t* command)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t 			shellRegisterCommandResult	= GOS_ERROR;
-	gos_shellCommandIndex_t	index						= 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t            shellRegisterCommandResult = GOS_ERROR;
+    gos_shellCommandIndex_t index                      = 0u;
 
-	/*
-	 * Function code.
-	 */
-	if (command->commandHandler != NULL && command->command != NULL)
-	{
-		for (index = 0u; index < CFG_SHELL_MAX_COMMAND_NUMBER; index++)
-		{
-			if (shellCommands[index].commandHandler == NULL)
-			{
-				shellCommands[index].commandHandler = command->commandHandler;
-				(void_t) strcpy(shellCommands[index].command, command->command);
-				shellRegisterCommandResult = GOS_SUCCESS;
-				break;
-			}
-		}
-	}
-	return shellRegisterCommandResult;
+    /*
+     * Function code.
+     */
+    if (command->commandHandler != NULL && command->command != NULL)
+    {
+        for (index = 0u; index < CFG_SHELL_MAX_COMMAND_NUMBER; index++)
+        {
+            if (shellCommands[index].commandHandler == NULL)
+            {
+                shellCommands[index].commandHandler = command->commandHandler;
+                (void_t) strcpy(shellCommands[index].command, command->command);
+                shellRegisterCommandResult = GOS_SUCCESS;
+                break;
+            }
+        }
+    }
+    return shellRegisterCommandResult;
 }
 
 /*
@@ -233,18 +233,18 @@ gos_result_t gos_shellRegisterCommand (gos_shellCommand_t* command)
  */
 gos_result_t gos_shellSuspend (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t shellSuspendResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t shellSuspendResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	GOS_PRIVILEGED_ACCESS
-	shellSuspendResult = gos_kernelTaskSuspend(shellDaemonTaskId);
+    /*
+     * Function code.
+     */
+    GOS_PRIVILEGED_ACCESS
+    shellSuspendResult = gos_kernelTaskSuspend(shellDaemonTaskId);
 
-	return shellSuspendResult;
+    return shellSuspendResult;
 }
 
 /*
@@ -252,18 +252,18 @@ gos_result_t gos_shellSuspend (void_t)
  */
 gos_result_t gos_shellResume (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t shellResumeResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t shellResumeResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	GOS_PRIVILEGED_ACCESS
-	shellResumeResult = gos_kernelTaskResume(shellDaemonTaskId);
+    /*
+     * Function code.
+     */
+    GOS_PRIVILEGED_ACCESS
+    shellResumeResult = gos_kernelTaskResume(shellDaemonTaskId);
 
-	return shellResumeResult;
+    return shellResumeResult;
 }
 
 /*
@@ -271,17 +271,17 @@ gos_result_t gos_shellResume (void_t)
  */
 gos_result_t gos_shellEchoOn (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t shellEchoOnResult = GOS_SUCCESS;
+    /*
+     * Local variables.
+     */
+    gos_result_t shellEchoOnResult = GOS_SUCCESS;
 
-	/*
-	 * Function code.
-	 */
-	useEcho = GOS_TRUE;
+    /*
+     * Function code.
+     */
+    useEcho = GOS_TRUE;
 
-	return shellEchoOnResult;
+    return shellEchoOnResult;
 }
 
 /*
@@ -289,137 +289,137 @@ gos_result_t gos_shellEchoOn (void_t)
  */
 gos_result_t gos_shellEchoOff (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t shellEchoOffResult = GOS_SUCCESS;
+    /*
+     * Local variables.
+     */
+    gos_result_t shellEchoOffResult = GOS_SUCCESS;
 
-	/*
-	 * Function code.
-	 */
-	useEcho = GOS_FALSE;
+    /*
+     * Function code.
+     */
+    useEcho = GOS_FALSE;
 
-	return shellEchoOffResult;
+    return shellEchoOffResult;
 }
 
 /**
- * @brief	Shell daemon task.
- * @details	Receives a character from the log serial line, if the echoing is on, then
- * 			sends the same character back. When an enter key is received, it processes
- * 			the command typed in, and loops through the command array. When the command
- * 			is found, it calls the command handler function with the parameter list as
- * 			a string.
+ * @brief   Shell daemon task.
+ * @details Receives a character from the log serial line, if the echoing is on, then
+ *          sends the same character back. When an enter key is received, it processes
+ *          the command typed in, and loops through the command array. When the command
+ *          is found, it calls the command handler function with the parameter list as
+ *          a string.
  *
- * @return	-
+ * @return    -
  */
 GOS_STATIC void_t gos_shellDaemonTask (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_shellCommandIndex_t index = 0u;
-	u16_t					actualCommandIndex;
-	u16_t					paramIndex;
+    /*
+     * Local variables.
+     */
+    gos_shellCommandIndex_t index              = 0u;
+    u16_t                   actualCommandIndex = 0u;
+    u16_t                   paramIndex         = 0u;
 
-	/*
-	 * Function code.
-	 */
-	for(;;)
-	{
-		if (gos_shellDriverReceiveChar(&commandBuffer[commandBufferIndex]) == GOS_SUCCESS)
-		{
-			if (useEcho == GOS_TRUE)
-			{
-				(void_t) gos_shellDriverTransmitString(&commandBuffer[commandBufferIndex]);
-			}
+    /*
+     * Function code.
+     */
+    for(;;)
+    {
+        if (gos_shellDriverReceiveChar(&commandBuffer[commandBufferIndex]) == GOS_SUCCESS)
+        {
+            if (useEcho == GOS_TRUE)
+            {
+                (void_t) gos_shellDriverTransmitString(&commandBuffer[commandBufferIndex]);
+            }
 
-			/*
-			 * Backspace character check
-			 */
-			if (commandBuffer[commandBufferIndex] == '\177')
-			{
-				commandBuffer[commandBufferIndex] = '\0';
-				commandBufferIndex--;
-			}
+            /*
+             * Backspace character check
+             */
+            if (commandBuffer[commandBufferIndex] == '\177')
+            {
+                commandBuffer[commandBufferIndex] = '\0';
+                commandBufferIndex--;
+            }
 
-			/*
-			 * Enter character check
-			 */
-			else if (commandBuffer[commandBufferIndex] == '\r')
-			{
-				if (useEcho == GOS_TRUE)
-				{
-					(void_t) gos_shellDriverTransmitString("\n");
-				}
+            /*
+             * Enter character check
+             */
+            else if (commandBuffer[commandBufferIndex] == '\r')
+            {
+                if (useEcho == GOS_TRUE)
+                {
+                    (void_t) gos_shellDriverTransmitString("\n");
+                }
 
-				commandBuffer[commandBufferIndex] = '\0';
-				actualCommandIndex = 0u;
-				paramIndex = 0u;
+                commandBuffer[commandBufferIndex] = '\0';
+                actualCommandIndex = 0u;
+                paramIndex = 0u;
 
-				// Get command.
-				while (commandBuffer[actualCommandIndex] != ' ' && commandBuffer[actualCommandIndex] != '\0')
-				{
-					actualCommand[actualCommandIndex] = commandBuffer[actualCommandIndex];
-					actualCommandIndex++;
-				}
-				actualCommand[actualCommandIndex] = '\0';
-				actualCommandIndex++;
+                // Get command.
+                while (commandBuffer[actualCommandIndex] != ' ' && commandBuffer[actualCommandIndex] != '\0')
+                {
+                    actualCommand[actualCommandIndex] = commandBuffer[actualCommandIndex];
+                    actualCommandIndex++;
+                }
+                actualCommand[actualCommandIndex] = '\0';
+                actualCommandIndex++;
 
-				// Get parameters.
-				while (commandBuffer[actualCommandIndex] != '\0')
-				{
-					commandParams[paramIndex++] = commandBuffer[actualCommandIndex++];
-				}
-				commandParams[paramIndex] = '\0';
+                // Get parameters.
+                while (commandBuffer[actualCommandIndex] != '\0')
+                {
+                    commandParams[paramIndex++] = commandBuffer[actualCommandIndex++];
+                }
+                commandParams[paramIndex] = '\0';
 
-				for (index = 0u; index < CFG_SHELL_MAX_COMMAND_NUMBER; index++)
-				{
-					if (strcmp(shellCommands[index].command, actualCommand) == 0)
-					{
-						if (shellCommands[index].commandHandler != NULL)
-						{
-							shellCommands[index].commandHandler(commandParams);
-						}
-						break;
-					}
-				}
+                for (index = 0u; index < CFG_SHELL_MAX_COMMAND_NUMBER; index++)
+                {
+                    if (strcmp(shellCommands[index].command, actualCommand) == 0)
+                    {
+                        if (shellCommands[index].commandHandler != NULL)
+                        {
+                            shellCommands[index].commandHandler(commandParams);
+                        }
+                        break;
+                    }
+                }
 
-				// If command not found.
-				if (index == CFG_SHELL_MAX_COMMAND_NUMBER)
-				{
-					(void_t) gos_shellDriverTransmitString("Unrecognized command!\r\n");
-				}
+                // If command not found.
+                if (index == CFG_SHELL_MAX_COMMAND_NUMBER)
+                {
+                    (void_t) gos_shellDriverTransmitString("Unrecognized command!\r\n");
+                }
 
-				(void_t) memset((void_t*)commandBuffer, '\0', (CFG_SHELL_MAX_COMMAND_LENGTH + 1) * sizeof(char_t));
-				commandBufferIndex = 0u;
-			}
-			else
-			{
-				commandBufferIndex++;
-			}
-		}
-		(void_t) gos_kernelTaskSleep(GOS_SHELL_DAEMON_POLL_TIME_MS);
-	}
+                (void_t) memset((void_t*)commandBuffer, '\0', (CFG_SHELL_MAX_COMMAND_LENGTH + 1) * sizeof(char_t));
+                commandBufferIndex = 0u;
+            }
+            else
+            {
+                commandBufferIndex++;
+            }
+        }
+        (void_t) gos_kernelTaskSleep(GOS_SHELL_DAEMON_POLL_TIME_MS);
+    }
 }
 
 /**
- * @brief	Shell command handler.
+ * @brief   Shell command handler.
  * @details Handles the built-in shell command.
  *
- * @return	-
+ * @return    -
  */
 GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
 {
-	/*
-	 * Function code.
-	 */
-	if (strcmp(params, "dump") == 0)
-	{
-		GOS_PRIVILEGED_ACCESS
-		(void_t) gos_kernelDump();
-	}
-	else if (strcmp(params, "reset") == 0)
-	{
-		(void_t) gos_kernelReset();
-	}
+    /*
+     * Function code.
+     */
+    if (strcmp(params, "dump") == 0)
+    {
+        GOS_PRIVILEGED_ACCESS
+        (void_t) gos_kernelDump();
+    }
+    else if (strcmp(params, "reset") == 0)
+    {
+        (void_t) gos_kernelReset();
+    }
 }

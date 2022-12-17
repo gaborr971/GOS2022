@@ -12,20 +12,20 @@
 //                                      (c) Gabor Repasi, 2022
 //
 //*************************************************************************************************
-//! @file		gos_crc_driver.c
-//! @author		Gabor Repasi
-//! @date		2022-12-10
-//! @version	1.0
+//! @file       gos_crc_driver.c
+//! @author     Gabor Repasi
+//! @date       2022-12-10
+//! @version    1.0
 //!
-//! @brief		GOS Cyclic Redundancy Check driver source.
-//! @details	For a more detailed description of this driver, please refer to
-//! 			@ref gos_crc_driver.h
+//! @brief      GOS Cyclic Redundancy Check driver source.
+//! @details    For a more detailed description of this driver, please refer to
+//!             @ref gos_crc_driver.h
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
-// Version	Date		Author			Description
+// Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0		2022-12-10	Gabor Repasi	Initial version created.
+// 1.0        2022-12-10    Gabor Repasi    Initial version created.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -57,39 +57,39 @@
 /**
  * CRC initializer value.
  */
-#define CRC_INITIAL_VALUE		( 0xFFFFFFFF )
+#define CRC_INITIAL_VALUE       ( 0xFFFFFFFF )
 
 /**
  * CRC polynomial value.
  */
-#define CRC_POLYNOMIAL_VALUE	( 0xEDB88320 )
+#define CRC_POLYNOMIAL_VALUE    ( 0xEDB88320 )
 
 /*
  * Function: gos_crcDriverGetCrc
  */
 u32_t gos_crcDriverGetCrc (u8_t* pData, u32_t dataSize)
 {
-	/*
-	 * Local variables.
-	 */
-	u32_t	crcValue 	= CRC_INITIAL_VALUE;
-	u32_t	index		= 0u;
-	u32_t	mask		= 0u;
-	u8_t	bitCounter	= 0u;
+    /*
+     * Local variables.
+     */
+    u32_t   crcValue   = CRC_INITIAL_VALUE;
+    u32_t   index      = 0u;
+    u32_t   mask       = 0u;
+    u8_t    bitCounter = 0u;
 
-	/*
-	 * Function code.
-	 */
-	for (index = 0u; index < dataSize; index++)
-	{
-		crcValue ^= pData[index];
+    /*
+     * Function code.
+     */
+    for (index = 0u; index < dataSize; index++)
+    {
+        crcValue ^= pData[index];
 
-		for (bitCounter = 8u; bitCounter > 0u; bitCounter--)
-		{
-			mask = -(crcValue & 1);
-			crcValue = (crcValue) ^ (CRC_POLYNOMIAL_VALUE & mask);
-		}
-	}
+        for (bitCounter = 8u; bitCounter > 0u; bitCounter--)
+        {
+            mask = -(crcValue & 1);
+            crcValue = (crcValue) ^ (CRC_POLYNOMIAL_VALUE & mask);
+        }
+    }
 
-	return ~crcValue;
+    return ~crcValue;
 }
