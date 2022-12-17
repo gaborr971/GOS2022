@@ -299,7 +299,7 @@ GOS_STATIC gos_taskDescriptor_t	taskDescriptors [CFG_TASK_MAX_NUMBER] =
 		{
 			.taskFunction 		= gos_kernelIdleTask,
 			.taskId 			= GOS_DEFAULT_TASK_ID,
-			.taskPriority 		= CFG_TASK_IDLE_PRIO,
+			.taskPriority 		= GOS_TASK_IDLE_PRIO,
 			.taskName			= "gos_idle_task",
 			.taskState 			= GOS_TASK_READY,
 			.taskStackSize		= CFG_IDLE_TASK_STACK_SIZE,
@@ -337,8 +337,8 @@ gos_result_t gos_kernelInit (void_t)
     for (taskIndex = 1u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
     {
     	taskDescriptors[taskIndex].taskFunction			= NULL;
-    	taskDescriptors[taskIndex].taskPriority			= CFG_TASK_MAX_PRIO_LEVELS;
-    	taskDescriptors[taskIndex].taskOriginalPriority	= CFG_TASK_MAX_PRIO_LEVELS;
+    	taskDescriptors[taskIndex].taskPriority			= GOS_TASK_MAX_PRIO_LEVELS;
+    	taskDescriptors[taskIndex].taskOriginalPriority	= GOS_TASK_MAX_PRIO_LEVELS;
     	taskDescriptors[taskIndex].taskState			= GOS_TASK_SUSPENDED;
     	taskDescriptors[taskIndex].taskId				= GOS_INVALID_TASK_ID;
     }
@@ -874,6 +874,7 @@ GOS_INLINE gos_result_t gos_kernelTaskDelete (gos_tid_t taskId)
 				taskDescriptors[taskIndex].taskState = GOS_TASK_ZOMBIE;
 				taskDeletekResult = GOS_SUCCESS;
 				// Invoke signal.
+				GOS_PRIVILEGED_ACCESS
 				gos_signalInvoke(kernelTaskDeleteSignal, taskId);
 			}
 		}
@@ -911,7 +912,7 @@ gos_result_t gos_kernelTaskSetPriority (gos_tid_t taskId, gos_taskPrio_t taskPri
 	 */
 	GOS_DISABLE_SCHED
 	if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
-		taskPriority < CFG_TASK_MAX_PRIO_LEVELS)
+		taskPriority < GOS_TASK_MAX_PRIO_LEVELS)
 	{
 		taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
 
@@ -952,7 +953,7 @@ gos_result_t gos_kernelTaskSetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t
 	 */
 	GOS_DISABLE_SCHED
 	if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
-		taskPriority < CFG_TASK_MAX_PRIO_LEVELS)
+		taskPriority < GOS_TASK_MAX_PRIO_LEVELS)
 	{
 		taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
 
@@ -1559,7 +1560,7 @@ GOS_STATIC gos_result_t gos_kernelCheckTaskDescriptor (gos_taskDescriptor_t* tas
      */
 	if (taskDescriptor->taskFunction == NULL 					||
 		taskDescriptor->taskPrivilegeLevel == 0					||
-		taskDescriptor->taskPriority > CFG_TASK_MAX_PRIO_LEVELS	||
+		taskDescriptor->taskPriority > GOS_TASK_MAX_PRIO_LEVELS	||
 		taskDescriptor->taskFunction == gos_kernelIdleTask		||
 		taskDescriptor->taskStackSize > CFG_TASK_MAX_STACK_SIZE ||
 		taskDescriptor->taskStackSize < CFG_TASK_MIN_STACK_SIZE	||
@@ -1643,7 +1644,7 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
 	 * Local variables.
 	 */
 	u16_t			taskIndex			= 0u;
-	gos_taskPrio_t	lowestPrio			= CFG_TASK_IDLE_PRIO;
+	gos_taskPrio_t	lowestPrio			= GOS_TASK_IDLE_PRIO;
 	u16_t			nextTask			= 0u;
 	u64_t			currentRunTime		= 0u;
 
