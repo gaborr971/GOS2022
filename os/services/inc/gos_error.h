@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_error.h
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.0
+//! @date       2022-12-20
+//! @version    1.1
 //!
 //! @brief      GOS error handler header.
 //! @details    This service is used for tracing error and initialization messages on the log
@@ -26,6 +26,7 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2022-12-11    Gabor Repasi    Initial version created.
+// 1.1        2022-12-20    Gabor Repasi    * Function descriptions modified.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -72,7 +73,6 @@ typedef enum
 /*
  * Function prototypes
  */
-
 /**
  * @brief   Prints the startup logo on the log output.
  * @details Prints the GOS logo (similar to the ones used in the file headers) on the log output.
@@ -90,6 +90,7 @@ void_t gos_printStartupLogo (void_t);
  * @param   function     : Function name.
  * @param   line         : Line number.
  * @param   errorMessage : Error message.
+ * @param   ...          : Formatter variable arguments.
  *
  * @return  -
  */
@@ -107,7 +108,7 @@ void_t gos_errorHandler (
  * @param   initDescription : Message to describe the initialization step.
  * @param   initResult      : Result of initialization.
  *
- * @return  -
+ * @return  Result of initialization.
  */
 gos_result_t gos_traceInit (
         const char_t* initDescription,
