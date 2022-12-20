@@ -14,17 +14,18 @@
 //*************************************************************************************************
 //! @file       gos_gcp.h
 //! @author     Gabor Repasi
-//! @date       2022-12-10
-//! @version    1.0
+//! @date       2022-12-20
+//! @version    1.1
 //!
 //! @brief      GOS General Communication Protocol header.
-//! @details    This driver implements the GCP frame and message layers.
+//! @details    This service implements the GCP frame and message layers.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2022-12-10    Gabor Repasi    Initial version created.
+// 1.1        2022-12-20    Gabor Repasi    * Function description modified.
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -118,6 +119,7 @@ gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpChannelNumber_t channel,
  * @details Calculates the payload CRC (if previously calculated in the header, it overwrites it!),
  *          transmits the header frames, and then transmits the payload frames.
  *
+ * @param   channel         : GCP channel.
  * @param   pMessageHeader  : Pointer to the message header describing the message parameters.
  * @param   pMessagePayload : Pointer to the message payload.
  *
