@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_error.c
 //! @author     Gabor Repasi
-//! @date       2022-12-13
-//! @version    1.1
+//! @date       2023-01-12
+//! @version    2.1
 //!
 //! @brief      GOS error handler service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_error.h
@@ -24,9 +24,12 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-10    Gabor Repasi    Initial version created.
+// 1.0        2022-12-10    Gabor Repasi    Initial version created
 // 1.1        2022-12-13    Gabor Repasi    *    Continuous scheduling disabling added to error
 //                                               handler
+// 2.0        2022-12-20    Gabor Repasi    Released
+// 2.1        2023-01-12    Gabor Repasi    +    gos_traceResultToString added
+//                                               Logo printing simplified
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -50,8 +53,8 @@
 /*
  * Includes
  */
-#include "gos_error.h"
-#include "gos_timer_driver.h"
+#include <gos_error.h>
+#include <gos_timer_driver.h>
 #include <stdio.h>
 
 /*
@@ -60,12 +63,27 @@
 /**
  * Separator line.
  */
-#define SEPARATOR_LINE       "+------------------------------------------------------------------------+\r\n"
+#define SEPARATOR_LINE        "+------------------------------------------------------------------------+\r\n"
 
 /**
  * Error buffer size.
  */
-#define ERROR_BUFFER_SIZE    ( 80u )
+#define ERROR_BUFFER_SIZE     ( 80u )
+
+/**
+ * Success result string.
+ */
+#define RESULT_STRING_SUCCESS "  OK   "
+
+/**
+ * Error result string.
+ */
+#define RESULT_STRING_ERROR   " ERROR "
+
+/**
+ * Unknown result string.
+ */
+#define RESULT_STRING_UNKNOWN "UNKNOWN"
 
 /*
  * Static variables
@@ -76,6 +94,11 @@
 GOS_STATIC char_t errorBuffer [ERROR_BUFFER_SIZE];
 
 /*
+ * Function prototypes
+ */
+GOS_STATIC char_t* gos_traceResultToString (gos_result_t* pResult);
+
+/*
  * Function: gos_printStartupLogo
  */
 void_t gos_printStartupLogo (void_t)
@@ -83,20 +106,18 @@ void_t gos_printStartupLogo (void_t)
     /*
      * Function code.
      */
-    (void_t) gos_logLogFormattedUnsafe("**************************************************************************\r\n");
-    (void_t) gos_logLogFormattedUnsafe("\r\n");
-    (void_t) gos_logLogFormattedUnsafe("                 #####             #####             #####                \r\n");
-    (void_t) gos_logLogFormattedUnsafe("               #########         #########         #########              \r\n");
-    (void_t) gos_logLogFormattedUnsafe("              ##                ##       ##       ##                      \r\n");
-    (void_t) gos_logLogFormattedUnsafe("             ##                ##         ##        #####                 \r\n");
-    (void_t) gos_logLogFormattedUnsafe("             ##     #####      ##         ##           #####              \r\n");
-    (void_t) gos_logLogFormattedUnsafe("              ##       ##       ##       ##                ##             \r\n");
-    (void_t) gos_logLogFormattedUnsafe("               #########         #########         #########              \r\n");
-    (void_t) gos_logLogFormattedUnsafe("                 #####             #####             #####                \r\n");
-    (void_t) gos_logLogFormattedUnsafe("                                                                          \r\n");
-    (void_t) gos_logLogFormattedUnsafe("                           (c) Gabor Repasi, 2022                         \r\n");
-    (void_t) gos_logLogFormattedUnsafe("\r\n");
-    (void_t) gos_logLogFormattedUnsafe("**************************************************************************\r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("**************************************************************************\r\n\r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("                 #####             #####             #####                \r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("               #########         #########         #########              \r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("              ##                ##       ##       ##                      \r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("             ##                ##         ##        #####                 \r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("             ##     #####      ##         ##           #####              \r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("              ##       ##       ##       ##                ##             \r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("               #########         #########         #########              \r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("                 #####             #####             #####                \r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("\r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("                           (c) Gabor Repasi, 2023                         \r\n\r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("**************************************************************************\r\n");
 }
 
 /*
@@ -112,55 +133,55 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
     /*
      * Function code.
      */
-    (void_t) gos_logLogFormattedUnsafe(SEPARATOR_LINE);
+    (void_t) gos_traceTraceFormattedUnsafe(SEPARATOR_LINE);
 
     if (errorLevel == GOS_ERROR_LEVEL_OS_FATAL)
     {
-        (void_t) gos_logLogFormattedUnsafe(
-                LOG_FG_RED_START
+        (void_t) gos_traceTraceFormattedUnsafe(
+                TRACE_FG_RED_START
                 "OS-level error - system stopped.\r\n"
-                LOG_FORMAT_RESET
+                TRACE_FORMAT_RESET
                 );
     }
     else if (errorLevel == GOS_ERROR_LEVEL_OS_WARNING)
     {
-        (void_t) gos_logLogFormattedUnsafe(
-                LOG_FG_YELLOW_START
+        (void_t) gos_traceTraceFormattedUnsafe(
+                TRACE_FG_YELLOW_START
                 "OS-level error - warning.\r\n"
-                LOG_FORMAT_RESET
+                TRACE_FORMAT_RESET
                 );
     }
     else if (errorLevel == GOS_ERROR_LEVEL_USER_FATAL)
     {
-        (void_t) gos_logLogFormattedUnsafe(
-                LOG_FG_RED_START
+        (void_t) gos_traceTraceFormattedUnsafe(
+                TRACE_FG_RED_START
                 "User-level error - system stopped.\r\n"
-                LOG_FORMAT_RESET
+                TRACE_FORMAT_RESET
                 );
     }
     else if (errorLevel == GOS_ERROR_LEVEL_USER_WARNING)
     {
-        (void_t) gos_logLogFormattedUnsafe(
-                LOG_FG_YELLOW_START
+        (void_t) gos_traceTraceFormattedUnsafe(
+                TRACE_FG_YELLOW_START
                 "User-level error - warning.\r\n"
-                LOG_FORMAT_RESET
+                TRACE_FORMAT_RESET
                 );
     }
 
     if (function != NULL)
     {
-        (void_t) gos_logLogFormattedUnsafe("Function: <"
-                                  LOG_FG_YELLOW_START
+        (void_t) gos_traceTraceFormattedUnsafe("Function: <"
+                                  TRACE_FG_YELLOW_START
                                   "%s"
-                                  LOG_FORMAT_RESET
+                                  TRACE_FORMAT_RESET
                                   ">, line: %d\r\n", function, line);
     }
     else
     {
-        (void_t) gos_logLogFormattedUnsafe("Function: <"
-                                  LOG_FG_YELLOW_START
+        (void_t) gos_traceTraceFormattedUnsafe("Function: <"
+                                  TRACE_FG_YELLOW_START
                                   "unknown"
-                                  LOG_FORMAT_RESET
+                                  TRACE_FORMAT_RESET
                                   ">, line: %d\r\n", line);
     }
 
@@ -170,10 +191,10 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
         (void_t) vsprintf(errorBuffer, errorMessage, args);
         va_end(args);
 
-        (void_t) gos_logLogFormattedUnsafe("%s\r\n", errorBuffer);
+        (void_t) gos_traceTraceFormattedUnsafe("%s\r\n", errorBuffer);
     }
 
-    (void_t) gos_logLogFormattedUnsafe(SEPARATOR_LINE);
+    (void_t) gos_traceTraceFormattedUnsafe(SEPARATOR_LINE);
 
     if (errorLevel == GOS_ERROR_LEVEL_OS_FATAL || errorLevel == GOS_ERROR_LEVEL_USER_FATAL)
     {
@@ -185,39 +206,50 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 }
 
 /*
- * Function: gos_traceInit
+ * Function: gos_errorTraceInit
  */
-gos_result_t gos_traceInit (const char_t* initDescription, gos_result_t initResult)
+gos_result_t gos_errorTraceInit (const char_t* initDescription, gos_result_t initResult)
 {
     /*
      * Function code.
      */
-    switch (initResult)
-    {
-        case GOS_SUCCESS:
-        {
-            (void_t) gos_logLogFormattedUnsafe("[%-10d]\t%-48s [ "
-                    LOG_FG_GREEN_START
-                    " OK  "
-                    LOG_FORMAT_RESET
-                    " ]\r\n",
-                    gos_timerDriverSysTimerGet(),
-                    initDescription);
-            break;
-        }
-        case GOS_ERROR:
-        {
-            (void_t) gos_logLogFormattedUnsafe("[%-10d]\t%-48s [ "
-                    LOG_FG_RED_START
-                    "ERROR"
-                    LOG_FORMAT_RESET
-                    " ]\r\n",
-                    gos_timerDriverSysTimerGet(),
-                    initDescription);
-            break;
-        }
-        default: break;
-    }
+
+    (void_t) gos_traceTraceFormattedUnsafe("[%-5lu]    %-51s [ "
+            "%s"
+            " ]\r\n",
+			gos_kernelGetSysTicks(),
+            initDescription,
+			gos_traceResultToString(&initResult));
 
     return initResult;
+}
+
+/**
+ * @brief   Converts the result enumerator to a string.
+ * @details Returns the formatted string version of the result enumerator.
+ *
+ * @param   pResult : Pointer to the result variable.
+ *
+ * @return  Formatted string.
+ */
+GOS_STATIC char_t* gos_traceResultToString (gos_result_t* pResult)
+{
+	/*
+	 * Function code.
+	 */
+	switch (*pResult)
+	{
+		case GOS_SUCCESS:
+		{
+			return TRACE_FG_GREEN_START RESULT_STRING_SUCCESS TRACE_FORMAT_RESET;
+		}
+		case GOS_ERROR:
+		{
+			return TRACE_FG_RED_START RESULT_STRING_ERROR TRACE_FORMAT_RESET;
+		}
+		default:
+		{
+			return TRACE_FG_YELLOW_START RESULT_STRING_UNKNOWN TRACE_FORMAT_RESET;
+		}
+	}
 }

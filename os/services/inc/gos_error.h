@@ -15,7 +15,7 @@
 //! @file       gos_error.h
 //! @author     Gabor Repasi
 //! @date       2022-12-20
-//! @version    1.1
+//! @version    2.0
 //!
 //! @brief      GOS error handler header.
 //! @details    This service is used for tracing error and initialization messages on the log
@@ -25,8 +25,9 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-11    Gabor Repasi    Initial version created.
-// 1.1        2022-12-20    Gabor Repasi    * Function descriptions modified.
+// 1.0        2022-12-11    Gabor Repasi    Initial version created
+// 1.1        2022-12-20    Gabor Repasi    * Function descriptions modified
+// 2.0        2022-12-20    Gabor Repasi    Released
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -52,8 +53,8 @@
 /*
  * Includes
  */
-#include "gos_kernel.h"
-#include "gos_log.h"
+#include <gos_kernel.h>
+#include <gos_trace.h>
 #include <stdarg.h>
 
 /*
@@ -110,7 +111,7 @@ void_t gos_errorHandler (
  *
  * @return  Result of initialization.
  */
-gos_result_t gos_traceInit (
+gos_result_t gos_errorTraceInit (
         const char_t* initDescription,
         gos_result_t initResult
         );
