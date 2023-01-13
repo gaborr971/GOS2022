@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_shell.c
 //! @author     Gabor Repasi
-//! @date       2022-12-13
-//! @version    1.4
+//! @date       2023-01-12
+//! @version    1.5
 //!
 //! @brief      GOS shell service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_shell.h
@@ -24,13 +24,14 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-11-04    Gabor Repasi    Initial version created.
+// 1.0        2022-11-04    Gabor Repasi    Initial version created
 // 1.1        2022-11-15    Gabor Repasi    +    License added
 // 1.2        2022-12-03    Gabor Repasi    +    gos_shellRegisterCommands added
 //                                          *    Actual command and command parameter buffers
 //                                               made modul global instead of task local
 // 1.3        2022-12-11    Gabor Repasi    +    Built-in shell commands (dump and reset) added
 // 1.4        2022-12-13    Gabor Repasi    +    Privilege handling added
+// 1.5        2023-01-12    Gabor Repasi    +    Task delete, suspend, resume, help commands added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -54,11 +55,12 @@
 /*
  * Includes
  */
-#include <string.h>
+#include <gos_shell.h>
+#include <gos_shell_driver.h>
+#include <gos_trace.h>
 #include <stdio.h>
-#include "gos_log.h"
-#include "gos_shell.h"
-#include "gos_shell_driver.h"
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * Macros
@@ -84,7 +86,7 @@ GOS_STATIC gos_tid_t          shellDaemonTaskId;
 /**
  * Command buffer.
  */
-GOS_STATIC char_t             commandBuffer        [CFG_SHELL_MAX_COMMAND_LENGTH + 1];
+GOS_STATIC char_t             commandBuffer        [CFG_SHELL_MAX_COMMAND_LENGTH + CFG_SHELL_MAX_PARAMS_LENGTH + 1];
 
 /**
  * Command buffer index.
@@ -104,7 +106,7 @@ GOS_STATIC char_t             actualCommand        [CFG_SHELL_MAX_COMMAND_LENGTH
 /**
  * Command parameters buffer.
  */
-GOS_STATIC char_t             commandParams        [CFG_SHELL_MAX_COMMAND_LENGTH];
+GOS_STATIC char_t             commandParams        [CFG_SHELL_MAX_PARAMS_LENGTH];
 
 /*
  * Function prototypes
@@ -410,6 +412,13 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
  */
 GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
 {
+	/*
+	 * Local variables.
+	 */
+	u8_t                    index        = 0u;
+	gos_shellCommandIndex_t commandIndex = 0u;
+	gos_tid_t               taskId       = GOS_INVALID_TASK_ID;
+
     /*
      * Function code.
      */
@@ -421,5 +430,143 @@ GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
     else if (strcmp(params, "reset") == 0)
     {
         (void_t) gos_kernelReset();
+    }
+    else if (strcmp(params, "help") == 0)
+    {
+    	GOS_PRIVILEGED_ACCESS
+    	gos_traceTrace("List of registered shell commands: \r\n");
+    	for (commandIndex = 0u; commandIndex < CFG_SHELL_MAX_COMMAND_NUMBER; commandIndex++)
+    	{
+    		if (strcmp(shellCommands[commandIndex].command, "") == 0)
+    		{
+    			break;
+    		}
+    		GOS_PRIVILEGED_ACCESS
+    		gos_traceTraceFormatted("\t- %s\r\n", shellCommands[commandIndex].command);
+    	}
+    }
+    else
+    {
+    	while (params[index] != ' ' && params[index])
+    	{
+    		index++;
+    	}
+
+    	params[index] = '\0';
+
+    	if (strcmp(params, "delete_tid") == 0)
+    	{
+            taskId = (gos_tid_t)strtol(&params[++index], NULL, 16);
+
+            GOS_PRIVILEGED_ACCESS
+			if (gos_kernelTaskDelete(taskId) == GOS_SUCCESS)
+			{
+				GOS_PRIVILEGED_ACCESS
+				(void_t) gos_traceTraceFormatted("0x%X task has been deleted.\r\n", taskId);
+			}
+			else
+			{
+				GOS_PRIVILEGED_ACCESS
+				(void_t) gos_traceTraceFormatted("0x%X task could not be deleted.\r\n", taskId);
+			}
+    	}
+    	else if (strcmp(params, "delete") == 0)
+    	{
+    		if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
+    		{
+    			GOS_PRIVILEGED_ACCESS
+    			if (gos_kernelTaskDelete(taskId) == GOS_SUCCESS)
+    			{
+    				GOS_PRIVILEGED_ACCESS
+    				(void_t) gos_traceTraceFormatted("%s has been deleted.\r\n", &params[index]);
+    			}
+    			else
+    			{
+    				GOS_PRIVILEGED_ACCESS
+    				(void_t) gos_traceTraceFormatted("%s could not be deleted.\r\n", &params[index]);
+    			}
+    		}
+    		else
+    		{
+    			GOS_PRIVILEGED_ACCESS
+    			(void_t) gos_traceTrace("Task could not be found.\r\n");
+    		}
+    	}
+    	else if (strcmp(params, "suspend_tid") == 0)
+    	{
+            taskId = (gos_tid_t)strtol(&params[++index], NULL, 16);
+
+            GOS_PRIVILEGED_ACCESS
+			if (gos_kernelTaskSuspend(taskId) == GOS_SUCCESS)
+			{
+				GOS_PRIVILEGED_ACCESS
+				(void_t) gos_traceTraceFormatted("0x%X task has been suspended.\r\n", taskId);
+			}
+			else
+			{
+				GOS_PRIVILEGED_ACCESS
+				(void_t) gos_traceTraceFormatted("0x%X task could not be suspended.\r\n", taskId);
+			}
+    	}
+    	else if (strcmp(params, "suspend") == 0)
+    	{
+    		if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
+    		{
+    			GOS_PRIVILEGED_ACCESS
+    			if (gos_kernelTaskSuspend(taskId) == GOS_SUCCESS)
+    			{
+    				GOS_PRIVILEGED_ACCESS
+    				(void_t) gos_traceTraceFormatted("%s has been suspended.\r\n", &params[index]);
+    			}
+    			else
+    			{
+    				GOS_PRIVILEGED_ACCESS
+    				(void_t) gos_traceTraceFormatted("%s could not be suspended.\r\n", &params[index]);
+    			}
+    		}
+    		else
+    		{
+    			GOS_PRIVILEGED_ACCESS
+    			(void_t) gos_traceTrace("Task could not be found.\r\n");
+    		}
+    	}
+    	else if (strcmp(params, "resume_tid") == 0)
+    	{
+            taskId = (gos_tid_t)strtol(&params[++index], NULL, 16);
+
+            GOS_PRIVILEGED_ACCESS
+			if (gos_kernelTaskResume(taskId) == GOS_SUCCESS)
+			{
+				GOS_PRIVILEGED_ACCESS
+				(void_t) gos_traceTraceFormatted("0x%X task has been resumed.\r\n", taskId);
+			}
+			else
+			{
+				GOS_PRIVILEGED_ACCESS
+				(void_t) gos_traceTraceFormatted("0x%X task could not be resumed.\r\n", taskId);
+			}
+    	}
+    	else if (strcmp(params, "resume") == 0)
+    	{
+    		if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
+    		{
+    			GOS_PRIVILEGED_ACCESS
+    			if (gos_kernelTaskResume(taskId) == GOS_SUCCESS)
+    			{
+    				GOS_PRIVILEGED_ACCESS
+    				(void_t) gos_traceTraceFormatted("%s has been resumed.\r\n", &params[index]);
+    			}
+    			else
+    			{
+    				GOS_PRIVILEGED_ACCESS
+    				(void_t) gos_traceTraceFormatted("%s could not be resumed.\r\n", &params[index]);
+    			}
+    		}
+    		else
+    		{
+    			GOS_PRIVILEGED_ACCESS
+    			(void_t) gos_traceTrace("Task could not be found.\r\n");
+    		}
+    	}
     }
 }
