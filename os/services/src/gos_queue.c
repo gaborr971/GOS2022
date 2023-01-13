@@ -24,7 +24,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-23    Gabor Repasi    Initial version created.
+// 1.0        2022-10-23    Gabor Repasi    Initial version created
 // 1.1        2022-11-14    Gabor Repasi    +    Dump separator changed
 //                                          +    Signal sender enumerators added
 //                                          +    Formatted log used in dump
@@ -54,21 +54,27 @@
 /*
  * Includes
  */
-#include <string.h>
+#include <gos_error.h>
+#include <gos_lock.h>
+#include <gos_process.h>
+#include <gos_queue.h>
+#include <gos_signal.h>
+#include <gos_trace.h>
 #include <stdio.h>
-#include "gos_error.h"
-#include "gos_lock.h"
-#include "gos_log.h"
-#include "gos_process.h"
-#include "gos_signal.h"
-#include "gos_queue.h"
+#include <string.h>
 
 /*
  * Macros
  */
 #if CFG_QUEUE_USE_NAME == 1
-#define DUMP_SEPARATOR    "+--------+---------------------------+------------+\r\n"
+/**
+ * Dump separator line.
+ */
+#define DUMP_SEPARATOR    "+--------+------------------------------+------------+\r\n"
 #else
+/**
+ * Dump separator line.
+ */
 #define DUMP_SEPARATOR    "+--------+------------+\r\n"
 #endif
 
@@ -177,22 +183,12 @@ gos_result_t gos_queueInit (void_t)
     }
 
     // Create lock, register and suspend queue dump task.
-    if (gos_lockCreate(&queueLockId) != GOS_SUCCESS)
+    if (gos_lockCreate(&queueLockId) != GOS_SUCCESS ||
+    	gos_kernelTaskRegister(&queueDumpTaskDesc, &queueDumpTaskId)!= GOS_SUCCESS ||
+		gos_kernelTaskSuspend(queueDumpTaskId) != GOS_SUCCESS
+    )
     {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Queue lock creation failed.");
-        queueInitResult = GOS_ERROR;
-    }
-
-    if (gos_kernelTaskRegister(&queueDumpTaskDesc, &queueDumpTaskId)!= GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Queue dump task registration failed.");
-        queueInitResult = GOS_ERROR;
-    }
-
-    if (gos_kernelTaskSuspend(queueDumpTaskId) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Queue dump task suspension failed.");
-        queueInitResult = GOS_ERROR;
+    	queueInitResult = GOS_ERROR;
     }
 
     return queueInitResult;
@@ -482,7 +478,7 @@ gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t*
 
 /**
  * @brief    Handles the kernel dump signal.
- * @details    Resumes the queue dump task based on the sender ID.
+ * @details  Resumes the queue dump task based on the sender ID.
  *
  * @param    senderId    :    Sender ID.
  *
@@ -501,8 +497,8 @@ void_t gos_queueDumpSignalHandler (gos_signalSenderId_t senderId)
 
 /**
  * @brief    Queue dump task.
- * @details    Prints the queue data of all queues to the log output and suspends itself.
- *             This task is resumed by the kernel dump signal (through its handler function).
+ * @details  Prints the queue data of all queues to the log output and suspends itself.
+ *           This task is resumed by the kernel dump signal (through its handler function).
  *
  * @return    -
  */
@@ -511,7 +507,7 @@ GOS_STATIC void_t gos_queueDumpTask (void_t)
     /*
      * Local variables.
      */
-    GOS_EXTERN gos_signalId_t kernelDumpSignal = 0u;
+    GOS_EXTERN gos_signalId_t kernelDumpSignal;
     gos_queueIndex_t          queueIndex       = 0u;
 
     /*
@@ -519,24 +515,25 @@ GOS_STATIC void_t gos_queueDumpTask (void_t)
      */
     for(;;)
     {
-        (void_t) gos_logLogFormatted("Queue dump:\r\n");
-        (void_t) gos_logLogFormatted(DUMP_SEPARATOR);
+    	(void_t) gos_kernelTaskSleep(50);
+        (void_t) gos_traceTraceFormatted("Queue dump:\r\n");
+        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR);
 
 #if CFG_QUEUE_USE_NAME == 1
-        (void_t) gos_logLogFormatted(
-                "| %6s | %25s | %10s |\r\n",
+        (void_t) gos_traceTraceFormatted(
+                "| %6s | %28s | %10s |\r\n",
                 "qid",
-                "queue name",
+                "name",
                 "elements"
                 );
 #else
-        (void_t) gos_logLogFormatted(
+        (void_t) gos_traceTraceFormatted(
                 "| %6s | %10s |\r\n",
                 "qid",
                 "elements"
                 );
 #endif
-        (void_t) gos_logLogFormatted(DUMP_SEPARATOR);
+        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR);
 
         for (queueIndex = 0u; queueIndex < CFG_QUEUE_MAX_NUMBER; queueIndex++)
         {
@@ -545,23 +542,22 @@ GOS_STATIC void_t gos_queueDumpTask (void_t)
                 break;
             }
 #if CFG_QUEUE_USE_NAME == 1
-            (void_t) gos_logLogFormatted(
-                    "| 0x%04X | %25s | %10d |\r\n",
+            (void_t) gos_traceTraceFormatted(
+                    "| 0x%04X | %28s | %10d |\r\n",
                     queues[queueIndex].queueId,
                     queues[queueIndex].queueName,
                     queues[queueIndex].actualElementNumber
                     );
 #else
-            (void_t) gos_logLogFormatted(
+            (void_t) gos_traceTraceFormatted(
                     "| 0x%04X | %10d |\r\n",
                     queues[queueIndex].queueId,
                     queues[queueIndex].actualElementNumber
                     );
 #endif
         }
-        (void_t) gos_logLogFormatted(DUMP_SEPARATOR"\n");
+        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR"\n");
         (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_QUEUE);
-        (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_LAST);
         (void_t) gos_kernelTaskSuspend(queueDumpTaskId);
     }
 }

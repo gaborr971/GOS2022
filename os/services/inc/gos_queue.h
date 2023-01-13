@@ -32,7 +32,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-23    Gabor Repasi    Initial version created.
+// 1.0        2022-10-23    Gabor Repasi    Initial version created
 // 1.1        2022-11-15    Gabor Repasi    +    Function descriptions updated
 // 1.2        2022-11-15    Gabor Repasi    +    Queue peek function added
 //                                          +    Service description added
@@ -63,7 +63,7 @@
 /*
  * Includes
  */
-#include "gos_kernel.h"
+#include <gos_kernel.h>
 
 /*
  * Macros
