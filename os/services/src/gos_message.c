@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_message.c
 //! @author     Gabor Repasi
-//! @date       2022-12-15
-//! @version    1.4
+//! @date       2023-01-11
+//! @version    1.5
 //!
 //! @brief      GOS message service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_message.h
@@ -24,7 +24,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-27    Gabor Repasi    Initial version created.
+// 1.0        2022-10-27    Gabor Repasi    Initial version created
 // 1.1        2022-11-05    Gabor Repasi    +    Lock introduced to protect internal arrays as
 //                                               shared resources
 //                                          +    Simple array handling replaced with FIFO
@@ -35,6 +35,8 @@
 // 1.3        2022-12-13    Gabor Repasi    +    Privilege handling added
 //                                          +    Initialization error logging added
 // 1.4        2022-12-15    Gabor Repasi    *    Waiter array handling bugfix
+// 1.5        2023-01-11    Gabor Repasi    -    Unnecessary includes removed
+//                                               Initialization error logging removed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -58,11 +60,9 @@
 /*
  * Includes
  */
+#include <gos_lock.h>
+#include <gos_message.h>
 #include <string.h>
-#include "gos_error.h"
-#include "gos_lock.h"
-#include "gos_message.h"
-#include "gos_queue.h"
 
 /*
  * Macros
@@ -70,7 +70,7 @@
 /**
  * Message daemon poll time in [ms].
  */
-#define GOS_MESSAGE_DAEMON_POLL_TIME_MS    ( 10u )
+#define GOS_MESSAGE_DAEMON_POLL_TIME_MS    ( 30u )
 
 /*
  * Type definitions
@@ -166,15 +166,9 @@ gos_result_t gos_messageInit (void_t)
         messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
     }
 
-    if (gos_kernelTaskRegister(&messageDaemonTaskDesc, &messageDaemonTaskId) != GOS_SUCCESS)
+    if (gos_kernelTaskRegister(&messageDaemonTaskDesc, &messageDaemonTaskId) != GOS_SUCCESS ||
+    	gos_lockCreate(&messageLockId) != GOS_SUCCESS)
     {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Message daemon task registration failed.");
-        messageInitResult = GOS_ERROR;
-    }
-
-    if (gos_lockCreate(&messageLockId) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Message lock creation failed.");
         messageInitResult = GOS_ERROR;
     }
 
@@ -243,7 +237,7 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
             (void_t) gos_kernelTaskBlock(currentTaskId);
 
             // Task unblocked, check TMO.
-            if (messageWaiterArray[messageWaiterIndex].waitTmoCounter < messageWaiterArray[messageWaiterIndex].waitTmo)
+            if ((messageWaiterArray[messageWaiterIndex].waitTmoCounter * GOS_MESSAGE_DAEMON_POLL_TIME_MS) < messageWaiterArray[messageWaiterIndex].waitTmo)
             {
                 // Message received successfully.
                 messageRxResult = GOS_SUCCESS;
@@ -360,11 +354,11 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
                         }
                     }
 
-                    if (waiterServed == GOS_FALSE && messageWaiterArray[messageWaiterIndex].waitTmo != GOS_MESSGAGE_ENDLESS_TMO)
+                    if (waiterServed == GOS_FALSE && messageWaiterArray[messageWaiterIndex].waitTmo != GOS_MESSAGE_ENDLESS_TMO)
                     {
                         messageWaiterArray[messageWaiterIndex].waitTmoCounter++;
 
-                        if (messageWaiterArray[messageWaiterIndex].waitTmoCounter > (messageWaiterArray[messageWaiterIndex].waitTmo * GOS_MESSAGE_DAEMON_POLL_TIME_MS))
+                        if ((messageWaiterArray[messageWaiterIndex].waitTmoCounter * GOS_MESSAGE_DAEMON_POLL_TIME_MS)  > messageWaiterArray[messageWaiterIndex].waitTmo)
                         {
                             // Timeout. Delete waiter, unblock task.
                             (void_t) gos_kernelTaskUnblock(messageWaiterArray[messageWaiterIndex].waiterTaskId);

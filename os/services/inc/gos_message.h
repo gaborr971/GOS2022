@@ -38,7 +38,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-27    Gabor Repasi    Initial version created.
+// 1.0        2022-10-27    Gabor Repasi    Initial version created
 // 1.1        2022-11-05    Gabor Repasi    +    Service description modified to match with the
 //                                               FIFO implementation
 // 1.2        2022-11-15    Gabor Repasi    +    License added
@@ -67,7 +67,7 @@
 /*
  * Includes
  */
-#include "gos_kernel.h"
+#include <gos_kernel.h>
 
 /*
  * Macros
@@ -75,7 +75,7 @@
 /**
  * Endless timeout.
  */
-#define GOS_MESSGAGE_ENDLESS_TMO    ( UINT16_MAX )
+#define GOS_MESSAGE_ENDLESS_TMO     ( UINT16_MAX )
 
 /**
  * Invalid message ID.
@@ -95,7 +95,7 @@ typedef u16_t gos_messageId_t;
  */
 typedef u16_t gos_messageTimeout_t;
 
-#if CFG_QUEUE_MAX_LENGTH < 255
+#if CFG_MESSAGE_MAX_LENGTH < 255
 typedef u8_t  gos_messageSize_t;           //!< Message size type.
 #else
 typedef u16_t gos_messageSize_t;           //!< Message size type.
