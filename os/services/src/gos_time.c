@@ -24,7 +24,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-24    Gabor Repasi    Initial version created.
+// 1.0        2022-10-24    Gabor Repasi    Initial version created
 // 1.1        2022-11-15    Gabor Repasi    +    License added
 //                                          -    Elapsed sender ID getter API functions removed
 //                                          +    New elapsed sender ID enumerators are used
@@ -52,8 +52,8 @@
 /*
  * Includes
  */
-#include "gos_time.h"
-#include "gos_error.h"
+#include <gos_error.h>
+#include <gos_time.h>
 
 /*
  * Macros
@@ -145,16 +145,10 @@ gos_result_t gos_timeInit (void_t)
     /*
      * Function code.
      */
-    if (gos_signalCreate(&timeSignalId) != GOS_SUCCESS)
+    if (gos_signalCreate(&timeSignalId) != GOS_SUCCESS ||
+    	gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
     {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time signal registration failed.");
-        timeInitResult = GOS_ERROR;
-    }
-
-    if (gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Time daemon task registration failed.");
-        timeInitResult = GOS_ERROR;
+    	timeInitResult = GOS_ERROR;
     }
 
     return timeInitResult;

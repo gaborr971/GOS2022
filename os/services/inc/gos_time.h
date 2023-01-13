@@ -25,7 +25,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-24    Gabor Repasi    Initial version created.
+// 1.0        2022-10-24    Gabor Repasi    Initial version created
 // 1.1        2022-11-15    Gabor Repasi    +    License added
 //                                          *    gos_monthEnum_t renamed to gos_timeMonthEnum_t
 //                                          +    gos_timeElapsedSenderId_t type added
@@ -58,8 +58,8 @@
 /*
  * Includes
  */
-#include "gos_kernel.h"
-#include "gos_signal.h"
+#include <gos_kernel.h>
+#include <gos_signal.h>
 
 /*
  * Type definitions
