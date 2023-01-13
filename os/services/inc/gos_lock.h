@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_lock.h
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.2
+//! @date       2022-12-20
+//! @version    2.0
 //!
 //! @brief      GOS lock service header.
 //! @details    Lock service is a way of protecting shared resources between different tasks and
@@ -32,9 +32,10 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-22    Gabor Repasi    Initial version created.
+// 1.0        2022-10-22    Gabor Repasi    Initial version created
 // 1.1        2022-11-15    Gabor Repasi    +    License added
-// 1.2        2022-12-11    Gabor Repasi    *    Lock replaced with lock ID.
+// 1.2        2022-12-11    Gabor Repasi    *    Lock replaced with lock ID
+// 2.0        2022-12-20    Gabor Repasi    Released
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -60,7 +61,7 @@
 /*
  * Includes
  */
-#include "gos_kernel.h"
+#include <gos_kernel.h>
 
 /*
  * Type definitions
@@ -81,6 +82,14 @@ typedef u8_t  gos_lockWaiterIndex_t;  //!< Lock waiter index type.
 #else
 typedef u16_t gos_lockWaiterIndex_t;  //!< Lock waiter index type.
 #endif
+
+/*
+ * Global data
+ */
+/**
+ * Queue dump task ID.
+ */
+gos_tid_t lockDumpTaskId;
 
 /*
  * Function prototypes
@@ -108,7 +117,6 @@ gos_result_t gos_lockInit (void_t);
  * @retval  GOS_ERROR   : Lock array is full.
  */
 gos_result_t gos_lockCreate (gos_lockId_t* pLockId);
-
 
 /**
  * @brief   This function waits for a lock instance to

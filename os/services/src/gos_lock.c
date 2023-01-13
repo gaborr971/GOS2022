@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_lock.c
 //! @author     Gabor Repasi
-//! @date       2022-12-13
-//! @version    1.3
+//! @date       2023-01-08
+//! @version    2.1
 //!
 //! @brief      GOS lock service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_lock.h
@@ -24,13 +24,15 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-22    Gabor Repasi    Initial version created.
+// 1.0        2022-10-22    Gabor Repasi    Initial version created
 // 1.1        2022-11-15    Gabor Repasi    +    License added
 // 1.2        2022-12-11    Gabor Repasi    *    Lock variable changed to structure
 //                                          +    Lock owner, ID, and status added to handling
 // 1.3        2022-12-13    Gabor Repasi    +    Privilege handling added to ensure that lock
 //                                               service have privileged access to kernel functions
 //                                               no matter what privilege the caller task has
+// 2.0        2022-12-20    Gabor Repasi    Released
+// 2.1        2023-01-08    Gabor Repasi    +    Lock dump introduced
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -54,8 +56,9 @@
 /*
  * Includes
  */
-#include "gos_lock.h"
-#include "gos_error.h"
+#include <gos_error.h>
+#include <gos_lock.h>
+#include <gos_signal.h>
 
 /*
  * Macros
@@ -69,6 +72,11 @@
  * Default lock ID.
  */
 #define GOS_DEFAULT_LOCK_ID    ( 0x7000 )
+
+/**
+ * Dump separator line.
+ */
+#define DUMP_SEPARATOR         "+--------+--------+--------+----------+\r\n"
 
 /*
  * Type definitions
@@ -115,6 +123,24 @@ GOS_STATIC gos_lock_t                 lockArray [CFG_LOCK_MAX_NUMBER];
 GOS_STATIC gos_lockWaiterDescriptor_t waitArray [CFG_LOCK_MAX_WAITERS];
 
 /*
+ * Function prototypes
+ */
+void_t            gos_lockDumpSignalHandler (gos_signalSenderId_t senderId);
+GOS_STATIC void_t gos_lockDumpTask (void_t);
+
+/**
+ * Queue dump task descriptor.
+ */
+GOS_STATIC gos_taskDescriptor_t lockDumpTaskDesc =
+{
+    .taskFunction        = gos_lockDumpTask,
+    .taskName            = "gos_lock_dump_task",
+    .taskPriority        = CFG_TASK_LOCK_DUMP_PRIO,
+    .taskStackSize       = CFG_TASK_LOCK_DUMP_STACK,
+    .taskPrivilegeLevel  = GOS_TASK_PRIVILEGE_KERNEL
+};
+
+/*
  * Function: gos_lockInit
  */
 gos_result_t gos_lockInit (void_t)
@@ -142,6 +168,12 @@ gos_result_t gos_lockInit (void_t)
     {
         waitArray[lockWaiterIndex].lockId       = GOS_INVALID_LOCK_ID;
         waitArray[lockWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
+    }
+
+    if (gos_kernelTaskRegister(&lockDumpTaskDesc, &lockDumpTaskId)!= GOS_SUCCESS ||
+    	gos_kernelTaskSuspend(lockDumpTaskId) != GOS_SUCCESS)
+    {
+    	lockInitResult = GOS_ERROR;
     }
 
     return lockInitResult;
@@ -182,9 +214,8 @@ gos_result_t gos_lockCreate (gos_lockId_t* pLockId)
 /*
  * Function: gos_lockWaitGet
  */
-gos_result_t gos_lockWaitGet (gos_lockId_t lockId)
+GOS_INLINE gos_result_t gos_lockWaitGet (gos_lockId_t lockId)
 {
-    GOS_DISABLE_SCHED
     /*
      * Local variables.
      */
@@ -194,13 +225,15 @@ gos_result_t gos_lockWaitGet (gos_lockId_t lockId)
     gos_lockIndex_t       lockIndex       = 0u;
     bool_t                isCallerIsr     = GOS_FALSE;
 #if CFG_USE_PRIO_INHERITANCE == 1
-    gos_taskPrio_t        currentTaskPrio = CFG_TASK_MAX_PRIO_LEVELS;
-    gos_taskPrio_t        lockOwnerPrio   = CFG_TASK_MAX_PRIO_LEVELS;
+    gos_taskPrio_t        currentTaskPrio = GOS_TASK_MAX_PRIO_LEVELS;
+    gos_taskPrio_t        lockOwnerPrio   = GOS_TASK_MAX_PRIO_LEVELS;
 #endif
 
     /*
      * Function code.
      */
+    GOS_DISABLE_SCHED
+	GOS_ATOMIC_ENTER
     GOS_IS_CALLER_ISR(isCallerIsr);
     lockIndex = lockId - GOS_DEFAULT_LOCK_ID;
 
@@ -248,7 +281,8 @@ gos_result_t gos_lockWaitGet (gos_lockId_t lockId)
         if (lockWaiterIndex == CFG_LOCK_MAX_WAITERS)
         {
             GOS_ENABLE_SCHED
-            (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Lock waiter array full. Current task: %d.", currentTaskId);
+			GOS_ATOMIC_EXIT
+            (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Lock waiter array full. Current task: 0x%X.", currentTaskId);
         }
         else if (lockArray[lockIndex].lockStatus == GOS_LOCK_UNLOCKED)
         {
@@ -259,6 +293,7 @@ gos_result_t gos_lockWaitGet (gos_lockId_t lockId)
         }
     }
     GOS_ENABLE_SCHED
+	GOS_ATOMIC_EXIT
 
     return lockGetResult;
 }
@@ -266,9 +301,8 @@ gos_result_t gos_lockWaitGet (gos_lockId_t lockId)
 /*
  * Function: gos_lockRelease
  */
-gos_result_t gos_lockRelease (gos_lockId_t lockId)
+GOS_INLINE gos_result_t gos_lockRelease (gos_lockId_t lockId)
 {
-    GOS_DISABLE_SCHED
     /*
      * Local variables.
      */
@@ -286,6 +320,8 @@ gos_result_t gos_lockRelease (gos_lockId_t lockId)
     /*
      * Function code.
      */
+    GOS_DISABLE_SCHED
+	GOS_ATOMIC_ENTER
     lockIndex = lockId - GOS_DEFAULT_LOCK_ID;
 
     if (lockIndex < CFG_LOCK_MAX_NUMBER &&
@@ -336,6 +372,99 @@ gos_result_t gos_lockRelease (gos_lockId_t lockId)
         }
     }
     GOS_ENABLE_SCHED
+	GOS_ATOMIC_EXIT
 
     return releaseResult;
+}
+
+/**
+ * @brief    Handles the kernel dump signal.
+ * @details  Resumes the lock dump task based on the sender ID.
+ *
+ * @param    senderId    :    Sender ID.
+ *
+ * @return    -
+ */
+void_t gos_lockDumpSignalHandler (gos_signalSenderId_t senderId)
+{
+    /*
+     * Function code.
+     */
+    if (senderId == GOS_DUMP_SENDER_QUEUE)
+    {
+        (void_t) gos_kernelTaskResume(lockDumpTaskId);
+    }
+}
+
+/**
+ * @brief    Lock dump task.
+ * @details  Prints the lock data of all locks to the log output and suspends itself.
+ *           This task is resumed by the kernel dump signal (through its handler function).
+ *
+ * @return    -
+ */
+GOS_STATIC void_t gos_lockDumpTask (void_t)
+{
+    /*
+     * Local variables.
+     */
+    GOS_EXTERN gos_signalId_t kernelDumpSignal;
+    gos_lockIndex_t           lockIndex         = 0u;
+    gos_lockWaiterIndex_t     waiterIndex       = 0u;
+    u16_t                     waiters           = 0u;
+
+    /*
+     * Function code.
+     */
+    for(;;)
+    {
+    	(void_t) gos_kernelTaskSleep(50);
+        (void_t) gos_traceTraceFormatted("Lock dump:\r\n");
+        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR);
+
+        (void_t) gos_traceTraceFormatted(
+                "| %6s | %6s | %6s | %8s |\r\n",
+                "lid",
+                "status",
+                "owner",
+				"waiters"
+                );
+        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR);
+
+        for (lockIndex = 0u; lockIndex < CFG_LOCK_MAX_NUMBER; lockIndex++)
+        {
+        	waiters = 0u;
+
+        	if (lockArray[lockIndex].lockId == GOS_INVALID_LOCK_ID)
+        	{
+        		break;
+        	}
+
+        	// Count waiters.
+        	for (waiterIndex = 0u; waiterIndex < CFG_LOCK_MAX_WAITERS; waiterIndex++)
+        	{
+        		if (waitArray[waiterIndex].lockId == GOS_INVALID_LOCK_ID)
+        		{
+        			break;
+        		}
+
+        		if (waitArray[waiterIndex].lockId == lockArray[lockIndex].lockId)
+        		{
+        			waiters++;
+        		}
+        	}
+
+            (void_t) gos_traceTraceFormatted(
+                    "| 0x%04X | %6d | 0x%04X | %8d |\r\n",
+					lockArray[lockIndex].lockId,
+					lockArray[lockIndex].lockStatus,
+					lockArray[lockIndex].lockOwnerTask,
+					waiters
+                    );
+        }
+        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR"\n");
+        (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_LOCK);
+        (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_LAST);
+        (void_t) gos_kernelTaskSuspend(lockDumpTaskId);
+    }
 }
