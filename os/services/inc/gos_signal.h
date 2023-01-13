@@ -30,7 +30,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-23    Gabor Repasi    Initial version created.
+// 1.0        2022-10-23    Gabor Repasi    Initial version created
 // 1.1        2022-11-15    Gabor Repasi    +    License added
 //*************************************************************************************************
 //
@@ -57,7 +57,7 @@
 /*
  * Includes
  */
-#include "gos_kernel.h"
+#include <gos_kernel.h>
 
 /*
  * Type definitions

@@ -24,7 +24,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-23    Gabor Repasi    Initial version created.
+// 1.0        2022-10-23    Gabor Repasi    Initial version created
 // 1.1        2022-11-15    Gabor Repasi    +    License added
 // 1.2        2022-12-04    Gabor Repasi    +    Kernel dump ready signal handler added
 // 1.3        2022-12-15    Gabor Repasi    +    Initialization error logging added
@@ -52,10 +52,10 @@
 /*
  * Includes
  */
+#include <gos_error.h>
+#include <gos_queue.h>
+#include <gos_signal.h>
 #include <string.h>
-#include "gos_error.h"
-#include "gos_signal.h"
-#include "gos_queue.h"
 
 /*
  * Macros
@@ -121,6 +121,7 @@ GOS_EXTERN gos_signalId_t kernelTaskDeleteSignal;
 GOS_EXTERN void_t gos_kernelDumpSignalHandler (gos_signalSenderId_t senderId);
 GOS_EXTERN void_t gos_procDumpSignalHandler   (gos_signalSenderId_t senderId);
 GOS_EXTERN void_t gos_queueDumpSignalHandler  (gos_signalSenderId_t senderId);
+GOS_EXTERN void_t gos_lockDumpSignalHandler   (gos_signalSenderId_t senderId);
 
 /*
  * Function prototypes
@@ -159,53 +160,18 @@ gos_result_t gos_signalInit (void_t)
         signalArray[signalIndex].inUse = GOS_FALSE;
     }
 
-    // Create queue for signal invoking and register signal daemon task.
-    if (gos_queueCreate(&signalInvokeQueueDesc) != GOS_SUCCESS)
+    if (gos_queueCreate(&signalInvokeQueueDesc) != GOS_SUCCESS ||
+    	gos_kernelTaskRegister(&signalDaemonTaskDescriptor, &signalDaemonTaskId) != GOS_SUCCESS ||
+		gos_signalCreate(&kernelDumpSignal) != GOS_SUCCESS ||
+		gos_signalCreate(&kernelDumpReadySignal) != GOS_SUCCESS ||
+		gos_signalCreate(&kernelTaskDeleteSignal) != GOS_SUCCESS ||
+		gos_signalSubscribe(kernelDumpSignal, gos_kernelDumpSignalHandler) != GOS_SUCCESS ||
+		gos_signalSubscribe(kernelDumpSignal, gos_procDumpSignalHandler) != GOS_SUCCESS ||
+		gos_signalSubscribe(kernelDumpSignal, gos_queueDumpSignalHandler) != GOS_SUCCESS ||
+		gos_signalSubscribe(kernelDumpSignal, gos_lockDumpSignalHandler) != GOS_SUCCESS
+    )
     {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Signal queue creation failed.");
-        signalInitResult = GOS_ERROR;
-    }
-
-    if (gos_kernelTaskRegister(&signalDaemonTaskDescriptor, &signalDaemonTaskId) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Signal daemon task registration failed.");
-        signalInitResult = GOS_ERROR;
-    }
-
-    if (gos_signalCreate(&kernelDumpSignal) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump signal creation failed.");
-        signalInitResult = GOS_ERROR;
-    }
-
-    if (gos_signalCreate(&kernelDumpReadySignal) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump ready signal creation failed.");
-        signalInitResult = GOS_ERROR;
-    }
-
-    if (gos_signalCreate(&kernelTaskDeleteSignal) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel task delete signal creation failed.");
-        signalInitResult = GOS_ERROR;
-    }
-
-    if (gos_signalSubscribe(kernelDumpSignal, gos_kernelDumpSignalHandler) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump signal subscription failed <kernel dump handler>.");
-        signalInitResult = GOS_ERROR;
-    }
-
-    if (gos_signalSubscribe(kernelDumpSignal, gos_procDumpSignalHandler) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump signal subscription failed <proc dump handler>.");
-        signalInitResult = GOS_ERROR;
-    }
-
-    if (gos_signalSubscribe(kernelDumpSignal, gos_queueDumpSignalHandler) != GOS_SUCCESS)
-    {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "Kernel dump signal subscription failed <queue dump handler>.");
-        signalInitResult = GOS_ERROR;
+    	signalInitResult = GOS_ERROR;
     }
 
     return signalInitResult;
@@ -310,10 +276,11 @@ gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSenderId_t sen
         else
         {
             gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "<%s> has no privilege to invoke signals!",
-                taskDescriptors[callerTaskId].taskName
+            		callerTaskDesc.taskName
             );
         }
     }
+    GOS_UNPRIVILEGED_ACCESS
 
     return signalInvokeResult;
 }
