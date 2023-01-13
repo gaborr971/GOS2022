@@ -25,7 +25,7 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-28    Gabor Repasi    Initial version created.
+// 1.0        2022-10-28    Gabor Repasi    Initial version created
 // 1.1        2022-11-14    Gabor Repasi    +    Header description added
 //                                          +    Function descriptions added
 // 1.2        2022-11-15    Gabor Repasi    +    License added
@@ -56,17 +56,18 @@
 /*
  * Includes
  */
-#include "gos_driver.h"
-#include "gos_error.h"
-#include "gos_gcp.h"
-#include "gos_kernel.h"
-#include "gos_lock.h"
-#include "gos_log.h"
-#include "gos_message.h"
-#include "gos_process.h"
-#include "gos_queue.h"
-#include "gos_signal.h"
-#include "gos_shell.h"
-#include "gos_time.h"
+#include <gos_driver.h>
+#include <gos_error.h>
+#include <gos_gcp.h>
+#include <gos_kernel.h>
+#include <gos_lock.h>
+#include <gos_message.h>
+#include <gos_process.h>
+#include <gos_queue.h>
+#include <gos_shell.h>
+#include <gos_signal.h>
+#include <gos_time.h>
+#include <gos_trace.h>
+#include <gos_trigger.h>
 
 #endif

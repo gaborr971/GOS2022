@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos.c
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.3
+//! @date       2023-01-12
+//! @version    1.4
 //!
 //! @brief      GOS source.
 //! @details    For a more detailed description of this service, please refer to @ref gos.h
@@ -24,12 +24,14 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-31    Gabor Repasi    Initial version created.
-// 1.1        2022-11-14    Gabor Repasi    +    Init error flag setting modified.
+// 1.0        2022-10-31    Gabor Repasi    Initial version created
+// 1.1        2022-11-14    Gabor Repasi    +    Initialization error flag setting modified
 // 1.2        2022-11-15    Gabor Repasi    +    License added
 // 1.3        2022-12-11    Gabor Repasi    +    main function added here
 //                                          *    gos_Init and gos_Start made local static functions
 //                                          +    platform and user initializers added
+// 1.4        2023-01-12    Gabor Repasi    *    OS service initializaiton and user application
+//                                               initialization moved to a new initializer task
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -53,7 +55,24 @@
 /*
  * Includes
  */
-#include "gos.h"
+#include <gos.h>
+
+/*
+ * Type definitions
+ */
+/**
+ * Initializer function type.
+ */
+typedef gos_result_t (*gos_initFunc_t) (void_t);
+
+/**
+ * Initializer structure type.
+ */
+typedef struct
+{
+	char_t         initDesc [32]; //!< Initialization descriptor text.
+	gos_initFunc_t initFunc;      //!< Initializer function.
+}gos_initStruct_t;
 
 /*
  * Static variables
@@ -63,11 +82,50 @@
  */
 GOS_STATIC bool_t initError;
 
+/**
+ * Initializer function and description lookup table.
+ */
+GOS_STATIC gos_initStruct_t initializers [] =
+{
+	{"Lock service initialization"   ,  gos_lockInit},
+	{"Queue service initialization"  ,  gos_queueInit},
+	{"Log service initialization"    ,  gos_traceInit},
+	{"Signal service initialization" ,  gos_signalInit},
+#if CFG_PROC_USE_SERVICE == 1
+	{"Process service initialization",  gos_procInit},
+#endif
+	{"Time service initialization"   ,  gos_timeInit},
+#if CFG_SHELL_USE_SERVICE == 1
+	{"Shell service initialization"  ,  gos_shellInit},
+#endif
+	{"Message service initialization",  gos_messageInit},
+	{"GCP service initialization"    ,  gos_gcpInit},
+	{"Trigger service initialization",  gos_triggerInit},
+	{"User application initialization", gos_userApplicationInit}
+};
+
+/**
+ * Initializer task ID.
+ */
+GOS_STATIC gos_tid_t initTaskId;
+
 /*
  * Function prototypes
  */
-GOS_STATIC gos_result_t gos_Init  (void_t);
-GOS_STATIC gos_result_t gos_Start (void_t);
+GOS_STATIC void_t       gos_kernelInitTask (void_t);
+GOS_STATIC gos_result_t gos_Start          (void_t);
+
+/**
+ * Initializer task descriptor.
+ */
+GOS_STATIC gos_taskDescriptor_t initTaskDesc =
+{
+	.taskFunction       = gos_kernelInitTask,
+	.taskName           = "kernel_init_task",
+	.taskPriority       = 0u,
+	.taskStackSize      = 0x300,
+	.taskPrivilegeLevel = GOS_TASK_PRIVILEGE_KERNEL
+};
 
 /*
  * Main
@@ -83,6 +141,7 @@ int main (void_t)
      * Function code.
      */
     GOS_DISABLE_SCHED
+
     // Initialize platform drivers.
     platformDriverInitResult = gos_platformDriverInit();
 
@@ -90,19 +149,24 @@ int main (void_t)
     gos_printStartupLogo();
 
     // Pre-initialize.
-    (void_t) gos_traceInit("Platform driver initialization", platformDriverInitResult);
+    (void_t) gos_errorTraceInit("Platform driver initialization", platformDriverInitResult);
 
-    // Initialize OS.
-    (void_t) gos_traceInit("OS initialization", gos_Init());
-
-
-    // Call user initializer.
-    (void_t) gos_traceInit("User application initialization", gos_userApplicationInit());
+    // Initialize the kernel and register initializer task.
+    if (gos_errorTraceInit("Kernel initialization", gos_kernelInit()) == GOS_SUCCESS &&
+    	gos_kernelTaskRegister(&initTaskDesc, &initTaskId) == GOS_SUCCESS)
+    {
+    	initError = GOS_FALSE;
+    }
 
     // Start OS.
-    (void_t) gos_Start();
-
-    (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Kernel could not be started.");
+    if (gos_Start() == GOS_ERROR)
+    {
+        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Kernel could not be started.");
+    }
+    else
+    {
+    	(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Initializer task could not be registered.");
+    }
 
     for(;;);
 }
@@ -132,53 +196,6 @@ __attribute__((weak)) gos_result_t gos_userApplicationInit (void_t)
 }
 
 /**
- * @brief   OS initializer function.
- * @details Calls the necessary driver and service initializer functions.
- *
- * @return  Result of OS initialization.
- *
- * @retval  GOS_SUCCESS : OS initialization successful.
- * @retval  GOS_ERROR   : At least one driver or service initialization failed.
- */
-GOS_STATIC gos_result_t gos_Init (void_t)
-{
-    /*
-     * Local variables.
-     */
-    gos_result_t initStatus = GOS_SUCCESS;
-
-    /*
-     * Function code.
-     */
-    initStatus &= gos_traceInit("Kernel initialization", gos_kernelInit());
-    initStatus &= gos_traceInit("Lock service initialization", gos_lockInit());
-    initStatus &= gos_traceInit("Queue service initialization", gos_queueInit());
-    initStatus &= gos_traceInit("Log service initialization", gos_logInit());
-    initStatus &= gos_traceInit("Signal service initialization", gos_signalInit());
-#if CFG_PROC_USE_SERVICE == 1
-    initStatus &= gos_traceInit("Process service initialization", gos_procInit());
-#endif
-    initStatus &= gos_traceInit("Time service initialization", gos_timeInit());
-#if CFG_SHELL_USE_SERVICE == 1
-    initStatus &= gos_traceInit("Shell service initialization", gos_shellInit());
-#endif
-    initStatus &= gos_traceInit("Message service initialization", gos_messageInit());
-    initStatus &= gos_gcpInit();
-
-    if (initStatus != GOS_SUCCESS)
-    {
-        initStatus = GOS_ERROR;
-        initError = GOS_TRUE;
-    }
-    else
-    {
-        initError = GOS_FALSE;
-    }
-
-    return initStatus;
-}
-
-/**
  * @brief   Starts the OS.
  * @details Checks whether the initializer function has set the error flag to GOS_FALSE,
  *          and if so, it starts the kernel (and thus the scheduling of tasks).
@@ -195,7 +212,7 @@ GOS_STATIC gos_result_t gos_Start (void_t)
     /*
      * Local variables.
      */
-    gos_result_t startStatus = GOS_ERROR;
+    gos_result_t startStatus = GOS_BUSY;
 
     /*
      * Function code.
@@ -206,4 +223,45 @@ GOS_STATIC gos_result_t gos_Start (void_t)
     }
 
     return startStatus;
+}
+
+/**
+ * @brief   Initializes the system.
+ * @details Calls the OS service initializer functions and the user application initializer, and
+ *          deletes itself.
+
+ * @return  -
+ */
+GOS_STATIC void_t gos_kernelInitTask (void_t)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t sysInitResult = GOS_SUCCESS;
+	u8_t         initIndex     = 0u;
+
+	/*
+	 * Function code.
+	 */
+	GOS_DISABLE_SCHED
+
+	// Loop through the initializers and call them while tracing the results.
+    for (initIndex = 0u; initIndex < sizeof(initializers) / sizeof(gos_initStruct_t); initIndex++)
+    {
+    	sysInitResult &= gos_errorTraceInit(initializers[initIndex].initDesc, initializers[initIndex].initFunc());
+    }
+
+	// Check and correct flag value.
+    if (sysInitResult != GOS_SUCCESS)
+    {
+    	sysInitResult = GOS_ERROR;
+    }
+
+    // Trace overall result.
+    (void_t) gos_errorTraceInit("System initialization", sysInitResult);
+
+	GOS_ENABLE_SCHED
+
+	// Delete initializer task (one-shot).
+	gos_kernelTaskDelete(initTaskId);
 }
