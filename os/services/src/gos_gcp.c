@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_gcp.c
 //! @author     Gabor Repasi
-//! @date       2022-12-15
-//! @version    1.1
+//! @date       2022-12-20
+//! @version    2.0
 //!
 //! @brief      GOS General Communication Protocol handler service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_gcp.h
@@ -24,9 +24,10 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-10    Gabor Repasi    Initial version created.
+// 1.0        2022-12-10    Gabor Repasi    Initial version created
 // 1.1        2022-12-15    Gabor Repasi    *    Frame number calculation bugfix
 //                                          +    Multiple channel handling added
+// 2.0        2022-12-20    Gabor Repasi    Released
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -50,10 +51,10 @@
 /*
  * Includes
  */
-#include "gos_crc_driver.h"
-#include "gos_error.h"
-#include "gos_gcp.h"
-#include "gos_lock.h"
+#include <gos_crc_driver.h>
+#include <gos_error.h>
+#include <gos_gcp.h>
+#include <gos_lock.h>
 #include <string.h>
 
 /*
@@ -139,7 +140,6 @@ gos_result_t gos_gcpInit (void_t)
      */
     if (gos_lockCreate(&gcpLockId) != GOS_SUCCESS)
     {
-        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "GCP lock creation failed.");
         gcpInitResult = GOS_ERROR;
     }
 
@@ -257,8 +257,8 @@ gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel,
  * @retval  GOS_ERROR     : Transmit function is NULL pointer or frame transmission failed.
  */
 GOS_STATIC gos_result_t gos_gcpTransmitFrames (gos_gcpChannelNumber_t channel,
-                                                u8_t* pMessageBytes,
-                                                u16_t messageSize)
+                                               u8_t* pMessageBytes,
+                                               u16_t messageSize)
 {
     /*
      * Local variables.

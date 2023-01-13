@@ -15,7 +15,7 @@
 //! @file       gos_gcp.h
 //! @author     Gabor Repasi
 //! @date       2022-12-20
-//! @version    1.1
+//! @version    2.0
 //!
 //! @brief      GOS General Communication Protocol header.
 //! @details    This service implements the GCP frame and message layers.
@@ -24,8 +24,9 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-10    Gabor Repasi    Initial version created.
-// 1.1        2022-12-20    Gabor Repasi    * Function description modified.
+// 1.0        2022-12-10    Gabor Repasi    Initial version created
+// 1.1        2022-12-20    Gabor Repasi    * Function description modified
+// 2.0        2022-12-20    Gabor Repasi    Released
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -51,7 +52,7 @@
 /*
  * Includes
  */
-#include "gos_kernel.h"
+#include <gos_kernel.h>
 
 /*
  * Type definitions
