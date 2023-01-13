@@ -51,10 +51,10 @@
 /*
  * Includes
  */
-#include "gos_crc_driver.h"
-#include "gos_log_driver.h"
-#include "gos_shell_driver.h"
-#include "gos_timer_driver.h"
+#include <gos_crc_driver.h>
+#include <gos_trace_driver.h>
+#include <gos_shell_driver.h>
+#include <gos_timer_driver.h>
 
 /*
  * Type definitions
@@ -64,11 +64,11 @@
  */
 typedef struct
 {
-    gos_shellDriverReceiveChar_t         shellDriverReceiveChar;        //!< Shell character receive function.
-    gos_shellDriverTransmitString_t      shellDriverTransmitString;     //!< Shell string transmit function.
-    gos_logDriverTransmitString_t        logDriverTransmitString;       //!< Log string transmit function.
-    gos_logDriverTransmitString_Unsafe_t logDriverTransmitStringUnsafe; //!< Log unsafe string transmit function.
-    gos_timerDriverSysTimerGetVal_t      timerDriverSysTimerGetValue;   //!< System timer get function.
+    gos_shellDriverReceiveChar_t           shellDriverReceiveChar;          //!< Shell character receive function.
+    gos_shellDriverTransmitString_t        shellDriverTransmitString;       //!< Shell string transmit function.
+    gos_traceDriverTransmitString_t        traceDriverTransmitString;       //!< Log string transmit function.
+    gos_traceDriverTransmitString_Unsafe_t traceDriverTransmitStringUnsafe; //!< Log unsafe string transmit function.
+    gos_timerDriverSysTimerGetVal_t        timerDriverSysTimerGetValue;     //!< System timer get function.
 }gos_driver_functions_t;
 
 /*
