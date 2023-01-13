@@ -59,22 +59,22 @@
 GOS_EXTERN gos_driver_functions_t driverFunctions;
 
 /*
- * Function: gos_timerSysTimerGet
+ * Function: gos_timerDriverSysTimerGet
  */
-u32_t gos_timerDriverSysTimerGet (void_t)
+gos_result_t gos_timerDriverSysTimerGet (u32_t* pValue)
 {
     /*
      * Local variables.
      */
-    u32_t timerDriverSysTimerValue = 0u;
+	gos_result_t timerDriverSysTimerGetResult = GOS_ERROR;
 
     /*
      * Function code.
      */
     if (driverFunctions.timerDriverSysTimerGetValue != NULL)
     {
-        timerDriverSysTimerValue = driverFunctions.timerDriverSysTimerGetValue();
+    	timerDriverSysTimerGetResult = driverFunctions.timerDriverSysTimerGetValue(pValue);
     }
 
-    return timerDriverSysTimerValue;
+    return timerDriverSysTimerGetResult;
 }

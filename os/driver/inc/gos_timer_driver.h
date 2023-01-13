@@ -60,7 +60,7 @@
 /**
  * System timer value get function type.
  */
-typedef u32_t (*gos_timerDriverSysTimerGetVal_t)(void_t);
+typedef gos_result_t (*gos_timerDriverSysTimerGetVal_t)(u32_t*);
 
 /*
  * Function prototypes
@@ -69,10 +69,12 @@ typedef u32_t (*gos_timerDriverSysTimerGetVal_t)(void_t);
  * @brief   System timer value getter skeleton.
  * @details If registered, it calls the custom system timer getter function.
  *
+ * @param   pValue      : Pointer to the variable to store the timer value in.
+ *
  * @return  Result of system timer value getting.
  *
  * @retval  GOS_SUCCESS : According to user implementation.
  * @retval  GOS_ERROR   : According to user implementation / function not registered.
  */
-u32_t gos_timerDriverSysTimerGet (void_t);
+gos_result_t gos_timerDriverSysTimerGet (u32_t* pValue);
 #endif
