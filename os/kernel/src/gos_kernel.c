@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.c
 //! @author     Gabor Repasi
-//! @date       2022-12-15
-//! @version    1.5
+//! @date       2023-01-13
+//! @version    1.6
 //!
 //! @brief      GOS kernel source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -36,6 +36,8 @@
 // 1.4        2022-12-08    Gabor Repasi    +    Task priority setter and getter functions added
 // 1.5        2022-12-15    Gabor Repasi    +    Privilege handling introduced, privilege check
 //                                               added to kernel functions
+// 1.6        2023-01-13    Gabor Repasi    *    Scheduling disabled flag replaced with counter
+//                                          -    Configuration dump removed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -59,14 +61,14 @@
 /*
  * Includes
  */
-#include <string.h>
+#include <gos_error.h>
+#include <gos_kernel.h>
+#include <gos_process.h>
+#include <gos_signal.h>
+#include <gos_timer_driver.h>
+#include <gos_trace.h>
 #include <stdio.h>
-#include "gos_kernel.h"
-#include "gos_error.h"
-#include "gos_log.h"
-#include "gos_process.h"
-#include "gos_signal.h"
-#include "gos_timer_driver.h"
+#include <string.h>
 
 /*
  * Macros
@@ -114,28 +116,28 @@
 /**
  * Pattern for binary format printing.
  */
-#define BINARY_PATTERN          "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s"
+#define BINARY_PATTERN          "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s"TRACE_FORMAT_RESET
 
 /**
  * u16_t to binary converter macro.
  */
 #define TO_BINARY(word)  \
-    (word & 0x8000 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x4000 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x2000 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x1000 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0800 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0400 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0200 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0100 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0080 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0040 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0020 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0010 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0008 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0004 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0002 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0"), \
-    (word & 0x0001 ? LOG_FG_GREEN_START"1" : LOG_FG_RED_START"0")
+    (word & 0x8000 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x4000 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x2000 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x1000 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0800 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0400 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0200 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0100 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0080 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0040 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0020 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0010 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0008 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0004 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0002 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
+    (word & 0x0001 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0")
 
 /*
  * Type definitions
@@ -201,70 +203,6 @@ GOS_STATIC gos_tid_t                kernelDumpTaskId       = GOS_INVALID_TASK_ID
  */
 GOS_STATIC bool_t                   resetRequired          = GOS_FALSE;
 
-/**
- * Configuration parameter lookup table.
- */
-#if CFG_KERNEL_DUMP_CONFIG == 1
-GOS_STATIC const gos_kernelConfigDescriptor_t    kernelConfig [] =
-{
-    // Maximum task priority levels.
-    {
-        .configName = "Max. priority levels",
-        .configValue = CFG_TASK_MAX_PRIO_LEVELS
-    },
-    // Idle task priority.
-    {
-        .configName = "Idle task priority",
-        .configValue = CFG_TASK_IDLE_PRIO
-    },
-    // Maximum task name length.
-    {
-        .configName = "Max. task name length",
-        .configValue = CFG_TASK_MAX_NAME_LENGTH
-    },
-    // Maximum number of tasks.
-    {
-        .configName = "Max. number of tasks",
-        .configValue = CFG_TASK_MAX_NUMBER
-    },
-    // Minimum task stack size.
-    {
-        .configName = "Min. task stack size",
-        .configValue = CFG_TASK_MIN_STACK_SIZE
-    },
-    // Maximum task stack size.
-    {
-        .configName = "Max. task stack size",
-        .configValue = CFG_TASK_MAX_STACK_SIZE
-    },
-    // Process service use flag.
-    {
-        .configName = "Process service use flag",
-        .configValue = CFG_PROC_USE_SERVICE
-    },
-    // Maximum process priority levels.
-    {
-        .configName = "Maximum process priority levels",
-        .configValue = CFG_PROC_MAX_PRIO_LEVELS
-    },
-    // Idle process priority.
-    {
-        .configName = "Idle process priority",
-        .configValue = CFG_PROC_IDLE_PRIO
-    },
-    // Maximum process name length.
-    {
-        .configName = "Maximum process name length",
-        .configValue = CFG_PROC_MAX_NAME_LENGTH
-    },
-    // Maximum number of processes.
-    {
-        .configName = "Maximum number of processes",
-        .configValue = CFG_PROC_MAX_NUMBER
-    }
-};
-#endif
-
 /*
  * Global variables
  */
@@ -284,9 +222,9 @@ gos_signalId_t                      kernelDumpReadySignal;
 gos_signalId_t                      kernelTaskDeleteSignal;
 
 /**
- * Scheduling disabled flag.
+ * Scheduling disabled counter.
  */
-bool_t                              schedulingDisabled          = GOS_FALSE;
+u8_t                                schedDisableCntr            = 0u;
 
 /**
  * Privileged access counter.
@@ -398,7 +336,7 @@ gos_result_t gos_kernelInit (void_t)
     SHCSR |= (1 << 17); // Bus Fault
     SHCSR |= (1 << 18); // Usage Fault
 
-    schedulingDisabled = GOS_FALSE;
+    schedDisableCntr = 0u;
 
     if (gos_kernelTaskRegister(&kernelDumpTaskDesc, &kernelDumpTaskId) == GOS_SUCCESS &&
         gos_kernelTaskSuspend(kernelDumpTaskId) == GOS_SUCCESS)
@@ -444,7 +382,7 @@ gos_result_t gos_kernelStart (void_t)
     gos_task_t firstTask = taskDescriptors[currentTaskIndex].taskFunction;
 
     // Initialize system timer value.
-    sysTimerValue = gos_timerDriverSysTimerGet();
+    gos_timerDriverSysTimerGet(&sysTimerValue);
 
     // Enable scheduling.
     GOS_ENABLE_SCHED
@@ -608,7 +546,6 @@ GOS_INLINE gos_result_t gos_kernelTaskSleep (gos_taskSleepTick_t sleepTicks)
             {
                 taskDescriptors[currentTaskIndex].taskState      = GOS_TASK_SLEEPING;
                 taskDescriptors[currentTaskIndex].taskSleepTicks = sysTicks + sleepTicks;
-
                 taskSleepResult = GOS_SUCCESS;
             }
         }
@@ -798,6 +735,7 @@ GOS_INLINE gos_result_t gos_kernelTaskBlock (gos_tid_t taskId)
 
                 GOS_UNPRIVILEGED_ACCESS
                 GOS_ENABLE_SCHED
+				GOS_ATOMIC_EXIT
 
                 if (currentTaskIndex == taskIndex)
                 {
@@ -893,12 +831,13 @@ GOS_INLINE gos_result_t gos_kernelTaskDelete (gos_tid_t taskId)
 
         // Check task manipulation privilege.
         if ((taskDescriptors[currentTaskIndex].taskPrivilegeLevel & GOS_PRIV_TASK_MANIPULATE) == GOS_PRIV_TASK_MANIPULATE ||
-            currentTaskIndex == taskIndex || inIsr > 0)
+        	privilegedAccess > 0 || currentTaskIndex == taskIndex || inIsr > 0)
         {
             if (taskDescriptors[taskIndex].taskState != GOS_TASK_ZOMBIE)
             {
                 taskDescriptors[taskIndex].taskState = GOS_TASK_ZOMBIE;
                 taskDeletekResult = GOS_SUCCESS;
+                GOS_UNPRIVILEGED_ACCESS
                 // Invoke signal.
                 GOS_PRIVILEGED_ACCESS
                 gos_signalInvoke(kernelTaskDeleteSignal, taskId);
@@ -1017,19 +956,15 @@ gos_result_t gos_kernelTaskGetPriority (gos_tid_t taskId, gos_taskPrio_t* taskPr
     /*
      * Function code.
      */
+    GOS_DISABLE_SCHED
     if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
         taskPriority != NULL)
     {
         taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
-
-        GOS_DISABLE_SCHED
-        {
-            *taskPriority = taskDescriptors[taskIndex].taskPriority;
-        }
-        GOS_ENABLE_SCHED
-
+        *taskPriority = taskDescriptors[taskIndex].taskPriority;
         taskGetPriorityResult = GOS_SUCCESS;
     }
+    GOS_ENABLE_SCHED
     return taskGetPriorityResult;
 }
 
@@ -1047,19 +982,15 @@ gos_result_t gos_kernelTaskGetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t
     /*
      * Function code.
      */
+    GOS_DISABLE_SCHED
     if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
         taskPriority != NULL)
     {
         taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
-
-        GOS_DISABLE_SCHED
-        {
-            *taskPriority = taskDescriptors[taskIndex].taskOriginalPriority;
-        }
-        GOS_ENABLE_SCHED
-
+        *taskPriority = taskDescriptors[taskIndex].taskOriginalPriority;
         taskGetPriorityResult = GOS_SUCCESS;
     }
+    GOS_ENABLE_SCHED
     return taskGetPriorityResult;
 }
 
@@ -1211,7 +1142,7 @@ gos_result_t gos_kernelTaskGetId (gos_taskName_t taskName, gos_tid_t* taskId)
 /*
  * Function: gos_kernelTaskGetCurrentId
  */
-gos_result_t gos_kernelTaskGetCurrentId (gos_tid_t* taskId)
+GOS_INLINE gos_result_t gos_kernelTaskGetCurrentId (gos_tid_t* taskId)
 {
     /*
      * Local variables.
@@ -1221,11 +1152,13 @@ gos_result_t gos_kernelTaskGetCurrentId (gos_tid_t* taskId)
     /*
      * Function code.
      */
+    GOS_DISABLE_SCHED
     if (taskId != NULL)
     {
         *taskId = (gos_tid_t)(GOS_DEFAULT_TASK_ID + currentTaskIndex);
         taskGetCurrentIdResult = GOS_SUCCESS;
     }
+    GOS_ENABLE_SCHED
 
     return taskGetCurrentIdResult;
 }
@@ -1372,7 +1305,7 @@ void_t SysTick_Handler (void_t)
     sysTicks++;
 
 #if CFG_SCHED_COOPERATIVE == 0
-    if (schedulingDisabled == GOS_FALSE)
+    if (schedDisableCntr == 0u)
     {
         // Privileged.
         gos_kernelReschedule(GOS_PRIVILEGED);
@@ -1440,13 +1373,18 @@ GOS_INLINE void_t gos_kernelDelayUs (u16_t microseconds)
     /*
      * Local variables.
      */
-    u32_t tmrValue = 0u;
+	u32_t tmrInitialValue = 0u;
+    u32_t tmrActualValue  = 0u;
 
     /*
      * Function code.
      */
-    tmrValue = gos_timerDriverSysTimerGet();
-    while ((gos_timerDriverSysTimerGet() - tmrValue) < microseconds);
+    gos_timerDriverSysTimerGet(&tmrInitialValue);
+    do
+    {
+    	gos_timerDriverSysTimerGet(&tmrActualValue);
+    }
+    while ((tmrActualValue - tmrInitialValue) < microseconds);
 }
 
 /*
@@ -1672,12 +1610,13 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
     u16_t          taskIndex      = 0u;
     gos_taskPrio_t lowestPrio     = GOS_TASK_IDLE_PRIO;
     u16_t          nextTask       = 0u;
+    u32_t          sysTimerActVal = 0u;
     u64_t          currentRunTime = 0u;
 
     /*
      * Function code.
      */
-    if (schedulingDisabled == GOS_FALSE)
+    if (schedDisableCntr == 0u)
     {
         for (taskIndex = 0U; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
         {
@@ -1706,11 +1645,12 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
         }
 
         // Update run-time statistics.
-        currentRunTime = (gos_timerDriverSysTimerGet() - sysTimerValue);
+        gos_timerDriverSysTimerGet(&sysTimerActVal);
+        currentRunTime = sysTimerActVal - sysTimerValue;
         // Increase system up-time.
         totalSystemTime += currentRunTime;
         taskDescriptors[currentTaskIndex].taskRunTime += currentRunTime;
-        sysTimerValue = gos_timerDriverSysTimerGet();
+        gos_timerDriverSysTimerGet(&sysTimerValue);
 
         // Set current task.
         currentTaskIndex = nextTask;
@@ -1734,7 +1674,7 @@ GOS_STATIC void_t gos_kernelIdleTask (void_t)
     /*
      * Function code.
      */
-    gos_traceInit("Starting OS...", GOS_SUCCESS);
+    gos_errorTraceInit("Starting OS...", GOS_SUCCESS);
 
     for (;;)
     {
@@ -1773,23 +1713,23 @@ GOS_STATIC char_t* gos_kernelGetTaskStateString (gos_taskState_t taskState)
     {
         case GOS_TASK_READY:
         {
-            return LOG_FG_GREEN_START"ready    ";
+            return TRACE_FG_GREEN_START"ready"TRACE_FORMAT_RESET;
         }break;
         case GOS_TASK_SLEEPING:
         {
-            return LOG_FG_YELLOW_START"sleeping ";
+            return TRACE_FG_YELLOW_START"sleeping"TRACE_FORMAT_RESET;
         }break;
         case GOS_TASK_SUSPENDED:
         {
-            return LOG_FG_MAGENTA_START"suspended";
+            return TRACE_FG_MAGENTA_START"suspended"TRACE_FORMAT_RESET;
         }break;
         case GOS_TASK_BLOCKED:
         {
-            return LOG_FG_CYAN_START"blocked  ";
+            return TRACE_FG_CYAN_START"blocked"TRACE_FORMAT_RESET;
         }break;
         case GOS_TASK_ZOMBIE:
         {
-            return LOG_FG_RED_START"zombie   ";
+            return TRACE_FG_RED_START"zombie"TRACE_FORMAT_RESET;
         }
         default:
         {
@@ -1812,40 +1752,15 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
      * Local variables.
      */
     u16_t taskIndex = 0u;
-#if CFG_KERNEL_DUMP_CONFIG == 1
-    u8_t  confIndex = 0u;
-#endif
 
     /*
      * Function code.
      */
     for (;;)
     {
-#if CFG_KERNEL_DUMP_CONFIG == 1
-        // Log configuration.
-        gos_logLogFormatted("\nKernel configuration parameters:\r\n");
-        gos_logLogFormatted(CONFIG_DUMP_SEPARATOR);
-        gos_logLogFormatted(
-                "| %32s | %6s |\r\n",
-                "parameter",
-                "value"
-                );
-        gos_logLogFormatted(CONFIG_DUMP_SEPARATOR);
-
-        for (confIndex = 0u; confIndex < sizeof(kernelConfig) / sizeof(kernelConfig[0]); confIndex++)
-        {
-            gos_logLogFormatted(
-                    "| %32s | %6d |\r\n",
-                    kernelConfig[confIndex].configName,
-                    kernelConfig[confIndex].configValue
-                    );
-        }
-        gos_logLogFormatted(CONFIG_DUMP_SEPARATOR"\n");
-#endif
-
-        gos_logLogFormatted("Task dump:\r\n");
-        gos_logLogFormatted(TASK_DUMP_SEPARATOR);
-        gos_logLogFormatted(
+        (void_t) gos_traceTraceFormatted("Task dump:\r\n");
+        (void_t) gos_traceTraceFormatted(TASK_DUMP_SEPARATOR);
+        (void_t) gos_traceTraceFormatted(
             "| %6s | %28s | %6s | %4s | %16s | %6s | %9s |\r\n",
             "tid",
             "name",
@@ -1855,7 +1770,7 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
             "cpu [%]",
             "state"
             );
-        gos_logLogFormatted(TASK_DUMP_SEPARATOR);
+        (void_t) gos_traceTraceFormatted(TASK_DUMP_SEPARATOR);
 
         for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
         {
@@ -1863,8 +1778,8 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
             {
                 break;
             }
-            gos_logLogFormatted(
-                    "| 0x%04X | %28s | 0x%04X | %4d | "BINARY_PATTERN LOG_FORMAT_RESET" | %4u.%02u | %9s "LOG_FORMAT_RESET"|\r\n",
+            (void_t) gos_traceTraceFormatted(
+                    "| 0x%04X | %28s | 0x%04X | %4d | " BINARY_PATTERN " | %4u.%02u | %18s |\r\n",
                     taskDescriptors[taskIndex].taskId,
                     taskDescriptors[taskIndex].taskName,
                     taskDescriptors[taskIndex].taskStackSize,
@@ -1874,10 +1789,11 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
                     taskDescriptors[taskIndex].taskCpuUsage % 100,
                     gos_kernelGetTaskStateString(taskDescriptors[taskIndex].taskState)
                     );
+            (void_t) gos_kernelTaskSleep(15);
         }
-        gos_logLogFormatted(TASK_DUMP_SEPARATOR"\n");
-        gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_KERNEL);
-        gos_kernelTaskSuspend(kernelDumpTaskId);
+        (void_t) gos_traceTraceFormatted(TASK_DUMP_SEPARATOR"\n");
+        (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_KERNEL);
+        (void_t) gos_kernelTaskSuspend(kernelDumpTaskId);
     }
 }
 

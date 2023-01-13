@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.h
 //! @author     Gabor Repasi
-//! @date       2022-12-15
-//! @version    1.7
+//! @date       2023-01-13
+//! @version    1.8
 //!
 //! @brief      GOS kernel header.
 //! @details    The GOS kernel is the core of the GOS system. It contains the basic type
@@ -44,6 +44,8 @@
 //                                          +    Interface descriptions added
 // 1.7        2022-12-15    Gabor Repasi    +    Task privilege levels and privilege control macros
 //                                               and functions added
+// 1.8        2023-01-13    Gabor Repasi    +    Constant macro added
+//                                          *    Scheduling disabled flag replaced with counter
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -69,8 +71,8 @@
 /*
  * Includes
  */
+#include <gos_config.h>
 #include <stdint.h>
-#include "gos_config.h"
 
 /*
  * Macros
@@ -79,18 +81,18 @@
 /**
  * NULL pointer.
  */
-#define NULL ( (void *) 0 )
+#define NULL                           ( (void *) 0 )
 #endif
 
 /**
  * Default task ID.
  */
-#define GOS_DEFAULT_TASK_ID         ( (gos_tid_t)0x8000 )
+#define GOS_DEFAULT_TASK_ID            ( (gos_tid_t)0x8000 )
 
 /**
  * valid task ID.
  */
-#define GOS_INVALID_TASK_ID         ( (gos_tid_t)0x0100 )
+#define GOS_INVALID_TASK_ID            ( (gos_tid_t)0x0100 )
 
 /**
  * Maximum task priority levels.
@@ -106,6 +108,11 @@
  * Static macro.
  */
 #define GOS_STATIC                     static
+
+/**
+ * Constant macro.
+ */
+#define GOS_CONST                      const
 
 /**
  * Inline macro.
@@ -146,15 +153,16 @@
  * Disable scheduling.
  */
 #define GOS_DISABLE_SCHED              {                                            \
-                                           GOS_EXTERN bool_t schedulingDisabled;    \
-                                           schedulingDisabled = GOS_TRUE;           \
+                                           GOS_EXTERN u8_t schedDisableCntr;        \
+                                           schedDisableCntr++;                      \
                                        }
 /**
  * Enable scheduling.
  */
 #define GOS_ENABLE_SCHED               {                                            \
-                                           GOS_EXTERN bool_t schedulingDisabled;    \
-                                           schedulingDisabled = GOS_FALSE;          \
+	                                       GOS_EXTERN u8_t schedDisableCntr;        \
+                                           if (schedDisableCntr > 0)                \
+										   { schedDisableCntr--; }                  \
                                        }
 /**
  * Request privileged access to next function.
@@ -170,7 +178,7 @@
 #define GOS_UNPRIVILEGED_ACCESS        {                                            \
                                            GOS_EXTERN u8_t privilegedAccess;        \
                                            GOS_EXTERN u8_t inIsr;                   \
-                                           if (privilegedAccess > 0 && inIsr == 0){ \
+                                           if (privilegedAccess > 0){               \
                                                privilegedAccess--;                  \
                                            }                                        \
                                        }
@@ -232,9 +240,9 @@
 #define GOS_PRIV_TASK_PRIO_CHANGE      ( 1 << 14 )
 
 /**
- * Logging privilege flag.
+ * Tracing privilege flag.
  */
-#define GOS_PRIV_LOG                   ( 1 << 13 )
+#define GOS_PRIV_TRACE                 ( 1 << 13 )
 
 /**
  * Task privilege change privilege flag.
@@ -400,6 +408,7 @@ typedef enum
     GOS_DUMP_SENDER_KERNEL,  //!< Sender is the kernel.
     GOS_DUMP_SENDER_PROC,    //!< Sender is the process service.
     GOS_DUMP_SENDER_QUEUE,   //!< Sender is the queue.
+	GOS_DUMP_SENDER_LOCK,    //!< Sender is the lock service.
     GOS_DUMP_SENDER_SIGNAL,  //!< Sender is the signal service.
     GOS_DUMP_SENDER_MESSAGE, //!< Sender is the message service.
     GOS_DUMP_SENDER_SHELL,   //!< Sender is the shell service.
