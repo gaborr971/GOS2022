@@ -42,14 +42,14 @@
  * Macros
  */
 //! Cooperative scheduling flag.
-#define CFG_SCHED_COOPERATIVE           ( 0 )
+#define CFG_SCHED_COOPERATIVE           ( 1 )
 //! Priority inheritance flag for lock.
 #define CFG_USE_PRIO_INHERITANCE        ( 0 )
 
 //! Maximum task name length.
 #define CFG_TASK_MAX_NAME_LENGTH        ( 32 )
 //! Maximum number of tasks.
-#define CFG_TASK_MAX_NUMBER             ( 32 )
+#define CFG_TASK_MAX_NUMBER             ( 36 )
 
 
 //! Minimum task stack size.
@@ -59,26 +59,30 @@
 //! Idle task stack size.
 #define CFG_IDLE_TASK_STACK_SIZE        ( 0x300 )
 //! Signal daemon task stack size.
-#define CFG_TASK_SIGNAL_DAEMON_STACK    ( 0x300 )
+#define CFG_TASK_SIGNAL_DAEMON_STACK    ( 0x400 )
 //! Process daemon task stack size.
 #define CFG_TASK_PROC_DAEMON_STACK      ( 0x300 )
 //! Time daemon task stack size.
 #define CFG_TASK_TIME_DAEMON_STACK      ( 0x300 )
 //! Kernel dump stack size.
-#define CFG_TASK_KERNEL_DUMP_STACK      ( 0x300 )
+#define CFG_TASK_KERNEL_DUMP_STACK      ( 0x400 )
 //! Process dump stack size.
-#define CFG_TASK_PROC_DUMP_STACK        ( 0x300 )
+#define CFG_TASK_PROC_DUMP_STACK        ( 0x400 )
 //! Queue dump stack size.
 #define CFG_TASK_QUEUE_DUMP_STACK       ( 0x300 )
 //! Message daemon task stack size.
 #define CFG_TASK_MESSAGE_DAEMON_STACK   ( 0x300 )
+//! Trigger daemon task stack size.
+#define CFG_TASK_TRIGGER_DAEMON_STACK   ( 0x200 )
 //! Shell daemon task stack size.
-#define CFG_TASK_SHELL_DAEMON_STACK     ( 0x300 )
+#define CFG_TASK_SHELL_DAEMON_STACK     ( 0x400 )
 //! Log daemon task stack size.
-#define CFG_TASK_LOG_DAEMON_STACK       ( 0x400 )
+#define CFG_TASK_TRACE_DAEMON_STACK     ( 0x400 )
+//! Lock dump stack size.
+#define CFG_TASK_LOCK_DUMP_STACK        ( 0x300 )
 
 //! Log daemon task priority.
-#define CFG_TASK_LOG_DAEMON_PRIO        ( 194 )
+#define CFG_TASK_TRACE_DAEMON_PRIO      ( 194 )
 //! Message daemon task priority.
 #define CFG_TASK_MESSAGE_DAEMON_PRIO    ( 198 )
 //! Signal daemon task priority.
@@ -89,12 +93,16 @@
 #define CFG_TASK_SHELL_DAEMON_PRIO      ( 199 )
 //! Time daemon task priority.
 #define CFG_TASK_TIME_DAEMON_PRIO       ( 196 )
+//! Trigger daemon task priority.
+#define CFG_TASK_TRIGGER_DAEMON_PRIO    ( 193 )
 //! Kernel dump priority.
 #define CFG_TASK_KERNEL_DUMP_PRIO       ( 200 )
 //! Queue dump priority.
 #define CFG_TASK_QUEUE_DUMP_PRIO        ( 200 )
 //! Process dump priority.
 #define CFG_TASK_PROC_DUMP_PRIO         ( 200 )
+//! Lock dump priority.
+#define CFG_TASK_LOCK_DUMP_PRIO         ( 200 )
 
 //! Process service use flag.
 #define CFG_PROC_USE_SERVICE            ( 1 )
@@ -115,9 +123,9 @@
 
 
 //! Maximum number of queues.
-#define CFG_QUEUE_MAX_NUMBER            ( 6 )
+#define CFG_QUEUE_MAX_NUMBER            ( 4 )
 //! Maximum number of queue elements.
-#define CFG_QUEUE_MAX_ELEMENTS          ( 72 )
+#define CFG_QUEUE_MAX_ELEMENTS          ( 32 )
 //! Maximum queue length.
 #define CFG_QUEUE_MAX_LENGTH            ( 200 )
 //! Queue use name flag.
@@ -127,7 +135,7 @@
 
 
 //! Maximum number of signals.
-#define CFG_SIGNAL_MAX_NUMBER           ( 10 )
+#define CFG_SIGNAL_MAX_NUMBER           ( 8 )
 //! Maximum number of signal subscribers.
 #define CFG_SIGNAL_MAX_SUBSCRIBERS      ( 6 )
 
@@ -141,22 +149,28 @@
 //! Maximum number of message IDs a task can wait for (includes the terminating 0).
 #define CFG_MESSAGE_MAX_WAITER_IDS      ( 8 )
 
+//! Maximum number of trigger instances.
+#define CFG_TRIGGER_MAX_NUMBER          ( 10 )
+//! Maximum number of trigger waiters.
+#define CFG_TRIGGER_MAX_WAITERS         ( 8 )
+
 
 //! Shell service use flag.
 #define CFG_SHELL_USE_SERVICE           ( 1 )
 //! Maximum number of shell commands.
 #define CFG_SHELL_MAX_COMMAND_NUMBER    ( 10 )
 //! Maximum command length.
-#define CFG_SHELL_MAX_COMMAND_LENGTH    ( 24 )
+#define CFG_SHELL_MAX_COMMAND_LENGTH    ( 20 )
+//! Maximum parameters length.
+#define CFG_SHELL_MAX_PARAMS_LENGTH     ( 16 )
 
 
 //! GCP maximum number of channels.
 #define CFG_GCP_CHANNELS_MAX_NUMBER     ( 2 )
 
-//! Kernel dump configuration flag.
-#define CFG_KERNEL_DUMP_CONFIG          ( 0 )
+
 
 //! Log maximum (line) length.
-#define CFG_LOG_MAX_LENGTH              ( 200 )
+#define CFG_TRACE_MAX_LENGTH            ( 200 )
 
 #endif
