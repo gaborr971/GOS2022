@@ -14,21 +14,22 @@
 //*************************************************************************************************
 //! @file       gos_trigger.h
 //! @author     Gabor Repasi
-//! @date       2023-01-11
-//! @version    1.0
+//! @date       2023-05-04
+//! @version    2.0
 //!
 //! @brief      GOS trigger service header.
 //! @details    Trigger service is a way of synchronizing tasks. A trigger instance works as a
 //!             counter. A trigger can be incremented, and it can be waited on. When waiting for
 //!             a trigger, the caller must specify a desired trigger value to be reached. Until
-//!             the value is reached, the caller will be sent to blocked state. Once the value is
-//!             reached, the caller is unblocked, and trigger value will be set to 0.
+//!             the value is reached, the caller will wait in a non-blocking way. Once the value is
+//!             reached, the caller returns.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2023-01-11    Gabor Repasi    Initial version created
+// 2.0        2023-05-04    Gabor Repasi    Service completely reworked
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Gabor Repasi
@@ -60,85 +61,64 @@
  * Macros
  */
 /**
- * Invalid trigger ID.
+ * Mutex endless timeout.
  */
-#define GOS_TRIGGER_INVALID_ID      ( 0x0 )
+#define GOS_TRIGGER_ENDLESS_TMO ( 0xFFFFFFFF )
+
+/**
+ * Mutex no timeout.
+ */
+#define GOS_TRIGGER_NO_TMO      ( 0x00000000 )
 
 /*
  * Type definitions
  */
 /**
- * Trigger identifier type.
+ * Trigger descriptor type.
  */
-typedef u16_t gos_triggerId_t;
-
-#if CFG_TRIGGER_MAX_NUMBER < 255
-typedef u8_t  gos_triggerIndex_t;          //!< Trigger index type.
-#else
-typedef u16_t gos_triggerIndex_t;          //!< Trigger index type.
-#endif
-
-#if CFG_TRIGGER_MAX_WAITERS < 255
-typedef u8_t  gos_triggerWaiterIndex_t;    //!< Trigger waiter index type.
-#else
-typedef u16_t gos_triggerWaiterIndex_t;    //!< Trigger waiter index type.
-#endif
+typedef struct
+{
+    volatile u32_t triggerValueCounter; //!< Trigger value counter.
+    volatile u8_t  numOfWaiters;        //!< Number of waiters.
+}gos_trigger_t;
 
 /*
  * Function prototypes
  */
 /**
- * @brief   Initializes the trigger service.
- * @details Initializes the internal waiter array.
+ * @brief   Resets the trigger counter of the given trigger instance.
+ * @details Sets the trigger counter of the given trigger instance to zero.
  *
- * @return  Result of initialization.
+ * @param   pTrigger : Pointer to the trigger instance.
  *
- * @retval  GOS_SUCCESS : Initialization successful.
+ * @return  -
  */
-gos_result_t gos_triggerInit (void_t);
-
-/**
- * @brief   Creates a trigger instance.
- * @details Registers the trigger instance to the next empty slot in the
- *          internal trigger array.
- *
- * @param   pTriggerId : Pointer to a trigger ID variable.
- *
- * @return  Result of trigger creation.
- *
- * @retval  GOS_SUCCESS : Trigger instance created successfully.
- * @retval  GOS_ERROR   : Trigger array is full.
- */
-gos_result_t gos_triggerCreate (gos_triggerId_t* pTriggerId);
-
-/**
- * @brief   Increments the trigger value of the given trigger.
- * @details Increments the trigger value and checks whether a waiter
- *          has the same desired value as the current trigger value.
- *          If so, it unblocks the waiter task.
- *
- * @param   triggerId : Trigger ID.
- *
- * @return  Result of trigger increasing.
- *
- * @retval  GOS_SUCCESS : Trigger increased successfully.
- * @retval  GOS_ERROR   : Invalid trigger ID.
- */
-gos_result_t gos_triggerIncrement (gos_triggerId_t triggerId);
+void_t gos_triggerReset (gos_trigger_t* pTrigger);
 
 /**
  * @brief   Waits for the trigger instance to reach the given trigger value.
- * @details Checks whether the trigger already has the given value, and if not,
- *          it sends the caller task to blocked state.
+ * @details Increases the trigger waiter number, and waits in a non-blocking way
+ * 			until the desired trigger value is reached or the timeout is reached.
  *
- * @param   triggerId : Trigger ID.
- * @param   value     : The desired trigger value.
+ * @param   pTrigger : Pointer to the trigger instance.
+ * @param   value    : The desired trigger value.
+ * @param   timeout  : Timeout value.
  *
  * @return  Result of trigger waiting.
  *
  * @retval  GOS_SUCCESS : Trigger value reached.
- * @retval  GOS_ERROR   : Invalid trigger ID or current task ID could not be retrieved.
+ * @retval  GOS_ERROR   : Trigger value was not reached within the timeout value.
  */
-gos_result_t gos_triggerWait (gos_triggerId_t triggerId, u32_t value);
+gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u32_t timeout);
+
+/**
+ * @brief   Increments the trigger value of the given trigger.
+ * @details Increments the trigger value of the given trigger.
+ *
+ * @param   pTrigger : Pointer to the trigger instance.
+ *
+ * @return  -
+ */
+void_t gos_triggerIncrement (gos_trigger_t* pTrigger);
 
 #endif

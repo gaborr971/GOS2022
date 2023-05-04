@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trigger.c
 //! @author     Gabor Repasi
-//! @date       2023-01-11
-//! @version    1.0
+//! @date       2023-05-04
+//! @version    2.0
 //!
 //! @brief      GOS trigger service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_trigger.h
@@ -25,6 +25,7 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2023-01-11    Gabor Repasi    Initial version created
+// 2.0        2023-05-04    Gabor Repasi    Service completely reworked
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Gabor Repasi
@@ -48,219 +49,82 @@
 /*
  * Includes
  */
-#include <gos_lock.h>
 #include <gos_trigger.h>
 
 /*
- * Macros
+ * Function: gos_triggerReset
  */
-/**
- * Trigger daemon poll time in [ms].
- */
-#define GOS_TRIGGER_DAEMON_POLL_TIME_MS    ( 5u )
-
-/**
- * Default trigger ID.
- */
-#define GOS_DEFAULT_TRIGGER_ID             ( 0x6000 )
-
-/*
- * Type definitions
- */
-/**
- * Trigger waiter descriptor type.
- */
-typedef struct
+GOS_INLINE void_t gos_triggerReset (gos_trigger_t* pTrigger)
 {
-    gos_tid_t            waiterTaskId;        //!< Waiter task ID.
-    gos_triggerId_t      triggerId;           //!< Trigger ID.
-    u32_t                desiredTriggerValue; //!< Desired trigger value.
-}gos_triggerWaiterDesc_t;
-
-/**
- * Trigger descriptor type.
- */
-typedef struct
-{
-	gos_triggerId_t      triggerId;           //!< Trigger ID.
-    u32_t                triggerValueCounter; //!< Trigger value counter.
-}gos_trigger_t;
-
-/*
- * Static variables
- */
-/**
- * Internal trigger array.
- */
-GOS_STATIC gos_trigger_t            triggerArray       [CFG_TRIGGER_MAX_NUMBER] = {0};
-
-/**
- * Internal trigger waiter array.
- */
-GOS_STATIC gos_triggerWaiterDesc_t  triggerWaiterArray [CFG_TRIGGER_MAX_WAITERS] = {0};
-
-/*
- * Function: gos_triggerInit
- */
-gos_result_t gos_triggerInit (void_t)
-{
-    /*
-     * Local variables.
-     */
-    gos_result_t             triggerInitResult  = GOS_SUCCESS;
-    gos_triggerWaiterIndex_t triggerWaiterIndex = 0u;
-
     /*
      * Function code.
      */
-    for (triggerWaiterIndex = 0u; triggerWaiterIndex < CFG_TRIGGER_MAX_WAITERS; triggerWaiterIndex++)
-    {
-        triggerWaiterArray[triggerWaiterIndex].waiterTaskId        = GOS_INVALID_TASK_ID;
-        triggerWaiterArray[triggerWaiterIndex].triggerId           = GOS_TRIGGER_INVALID_ID;
-        triggerWaiterArray[triggerWaiterIndex].desiredTriggerValue = 0u;
-    }
+	GOS_ATOMIC_ENTER
 
-    return triggerInitResult;
-}
+	pTrigger->triggerValueCounter = 0u;
 
-/*
- * Function: gos_triggerCreate
- */
-gos_result_t gos_triggerCreate (gos_triggerId_t* pTriggerId)
-{
-    /*
-     * Local variables.
-     */
-    gos_result_t       triggerCreateResult = GOS_ERROR;
-    gos_triggerIndex_t triggerIndex        = 0u;
-
-    /*
-     * Function code.
-     */
-    if (pTriggerId != NULL)
-    {
-        // Find the next unused lock and reserve it.
-        for (triggerIndex = 0u; triggerIndex < CFG_TRIGGER_MAX_NUMBER; triggerIndex++)
-        {
-            if (triggerArray[triggerIndex].triggerId == GOS_TRIGGER_INVALID_ID)
-            {
-                triggerArray[triggerIndex].triggerId = GOS_DEFAULT_TRIGGER_ID + triggerIndex;
-                *pTriggerId                          = triggerArray[triggerIndex].triggerId;
-                triggerCreateResult                  = GOS_SUCCESS;
-                break;
-            }
-        }
-    }
-    return triggerCreateResult;
-}
-
-/*
- * Function: gos_triggerIncrement
- */
-GOS_INLINE gos_result_t gos_triggerIncrement (gos_triggerId_t triggerId)
-{
-    /*
-     * Local variables.
-     */
-	gos_result_t             triggerIncreaseResult = GOS_ERROR;
-	gos_triggerIndex_t       triggerIndex = 0u;
-	gos_triggerWaiterIndex_t triggerWaiterIndex = 0u;
-
-    /*
-     * Function code.
-     */
-	triggerIndex = triggerId - GOS_DEFAULT_TRIGGER_ID;
-
-	if (triggerIndex < CFG_TRIGGER_MAX_NUMBER &&
-		triggerArray[triggerIndex].triggerId != GOS_TRIGGER_INVALID_ID)
-	{
-		GOS_DISABLE_SCHED
-
-		triggerArray[triggerIndex].triggerValueCounter++;
-		triggerIncreaseResult = GOS_SUCCESS;
-
-        for (triggerWaiterIndex = 0u; triggerWaiterIndex < CFG_TRIGGER_MAX_WAITERS; triggerWaiterIndex++)
-        {
-        	if (triggerWaiterArray[triggerWaiterIndex].triggerId != GOS_TRIGGER_INVALID_ID &&
-        		triggerArray[triggerIndex].triggerValueCounter == triggerWaiterArray[triggerWaiterIndex].desiredTriggerValue)
-        	{
-        		triggerWaiterArray[triggerWaiterIndex].triggerId           = GOS_TRIGGER_INVALID_ID;
-        		triggerArray[triggerIndex].triggerValueCounter             = 0u;
-        		triggerWaiterArray[triggerWaiterIndex].desiredTriggerValue = 0u;
-
-        		GOS_PRIVILEGED_ACCESS
-        		(void_t) gos_kernelTaskUnblock(triggerWaiterArray[triggerWaiterIndex].waiterTaskId);
-
-        		triggerWaiterArray[triggerWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
-        	}
-        }
-        GOS_ENABLE_SCHED
-	}
-
-	return triggerIncreaseResult;
+	GOS_ATOMIC_EXIT
 }
 
 /*
  * Function: gos_triggerWait
  */
-GOS_INLINE gos_result_t gos_triggerWait (gos_triggerId_t triggerId, u32_t value)
+GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u32_t timeout)
 {
-    /*
-     * Local variables.
-     */
-    gos_result_t             triggerWaitResult  = GOS_ERROR;
-    gos_tid_t                currentTaskId      = GOS_INVALID_TASK_ID;
-    gos_triggerIndex_t       triggerIndex       = 0u;
-    gos_triggerWaiterIndex_t triggerWaiterIndex = 0u;
-    bool_t                   schedEnabled       = GOS_FALSE;
+	/*
+	 * Local variables.
+	 */
+    bool_t       isTriggerReached  = GOS_FALSE;
+    gos_result_t triggerWaitResult = GOS_ERROR;
+    u32_t        sysTickInitial    = 0u;
 
     /*
      * Function code.
      */
-    GOS_DISABLE_SCHED
-	triggerIndex = triggerId - GOS_DEFAULT_TRIGGER_ID;
+    sysTickInitial = gos_kernelGetSysTicks();
 
-	if (gos_kernelTaskGetCurrentId(&currentTaskId) == GOS_SUCCESS &&
-		triggerIndex < CFG_TRIGGER_MAX_NUMBER &&
-		triggerArray[triggerIndex].triggerId != GOS_TRIGGER_INVALID_ID)
-	{
-		if (triggerArray[triggerIndex].triggerValueCounter == value)
+    GOS_ATOMIC_ENTER
+	pTrigger->numOfWaiters++;
+    GOS_ATOMIC_EXIT
+
+    while (isTriggerReached == GOS_FALSE)
+    {
+    	if ((timeout != GOS_TRIGGER_ENDLESS_TMO)
+        	&& ((sysTickInitial - gos_kernelGetSysTicks()) >= timeout))
+    	{
+    		break;
+    	}
+
+        // Check if the trigger value is reached
+    	GOS_ATOMIC_ENTER
+		if (pTrigger->triggerValueCounter >= value)
 		{
-			triggerArray[triggerIndex].triggerValueCounter = 0u;
+			isTriggerReached = GOS_TRUE;
 			triggerWaitResult = GOS_SUCCESS;
+			pTrigger->numOfWaiters--;
 		}
-		else
+		GOS_ATOMIC_EXIT
+
+		if (isTriggerReached == GOS_FALSE)
 		{
-			for (triggerWaiterIndex = 0u; triggerWaiterIndex < CFG_TRIGGER_MAX_WAITERS; triggerWaiterIndex++)
-			{
-				if (triggerWaiterArray[triggerWaiterIndex].triggerId    == GOS_TRIGGER_INVALID_ID &&
-					triggerWaiterArray[triggerWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID)
-				{
-					triggerWaiterArray[triggerWaiterIndex].triggerId           = triggerId;
-					triggerWaiterArray[triggerWaiterIndex].desiredTriggerValue = value;
-					triggerWaiterArray[triggerWaiterIndex].waiterTaskId        = currentTaskId;
-
-		            // Block task.
-					GOS_ENABLE_SCHED
-		            GOS_PRIVILEGED_ACCESS
-		            (void_t) gos_kernelTaskBlock(currentTaskId);
-
-		            // Task unblocked.
-		            triggerWaitResult = GOS_SUCCESS;
-
-		            schedEnabled = GOS_TRUE;
-
-		            break;
-				}
-			}
+			gos_kernelTaskYield();
 		}
-	}
-
-    // Enable scheduling.
-	if (schedEnabled == GOS_FALSE)
-	{
-		GOS_ENABLE_SCHED
-	}
+    }
 
     return triggerWaitResult;
+}
+
+/*
+ * Function: gos_triggerIncrement
+ */
+GOS_INLINE void_t gos_triggerIncrement (gos_trigger_t* pTrigger)
+{
+    /*
+     * Function code.
+     */
+	GOS_ATOMIC_ENTER
+
+	pTrigger->triggerValueCounter++;
+
+	GOS_ATOMIC_EXIT
 }
