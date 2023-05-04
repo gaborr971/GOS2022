@@ -73,6 +73,19 @@
 #define TRACE_FG_RED_START        "\x1B[31m"    //!< Red foreground start.
 #define TRACE_FORMAT_RESET        "\x1B[0m"     //!< Reset formatting.
 
+#define TRACE_BG_RED_START        "\x1b[41m"
+#define TRACE_BG_GREEN_START      "\x1b[42m"
+#define TRACE_BG_YELLOW_START     "\x1b[43m"
+#define TRACE_BG_BLUE_START       "\x1b[44m"
+#define TRACE_BG_MAGENTA_START    "\x1b[45m"
+#define TRACE_BG_CYAN_START       "\x1b[46m"
+#define TRACE_BG_WHITE_START      "\x1b[47m"
+
+#define TRACE_BOLD_START		  "\x1B[1m"
+#define TRACE_ITALIC_START		  "\x1B[3m"
+#define TRACE_UNDERLINE_START     "\x1B[4m"
+#define TRACE_STRIKETHROUGH_START "\x1B[9m"
+
 /*
  * Function prototypes
  */

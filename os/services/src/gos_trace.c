@@ -55,10 +55,9 @@
 /*
  * Includes
  */
-#include <gos_error.h>
-#include <gos_lock.h>
-#include <gos_queue.h>
 #include <gos_trace.h>
+#include <gos_error.h>
+#include <gos_queue.h>
 #include <gos_trace_driver.h>
 #include <stdarg.h>
 #include <stdio.h>
