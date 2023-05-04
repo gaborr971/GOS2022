@@ -50,18 +50,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //*************************************************************************************************
+#if CFG_PROC_USE_SERVICE == 1
 /*
  * Includes
  */
-#include <gos_lock.h>
 #include <gos_process.h>
 #include <gos_signal.h>
 #include <gos_timer_driver.h>
 #include <gos_trace.h>
 #include <stdio.h>
 #include <string.h>
-
-#if CFG_PROC_USE_SERVICE == 1
 /*
  * Macros
  */
@@ -657,6 +655,9 @@ gos_result_t gos_procRegisterResumeHook (gos_procResumeHook_t resumeHookFunction
 /*
  * Function: gos_procDumpSignalHandler
  */
+#if CFG_PROC_USE_SERVICE != 1
+#include "gos_signal.h"
+#endif
 void_t gos_procDumpSignalHandler (gos_signalSenderId_t senderId)
 {
     /*
@@ -757,8 +758,8 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
     u16_t           currentProc     = currentProcIndex;
     gos_taskPrio_t  lowestPrio      = CFG_PROC_IDLE_PRIO;
     u16_t           nextProc        = 0u;
-    u32_t           sysTimerInitial = 0u;
-    u32_t           sysTimerCurrVal = 0u;
+    u16_t           sysTimerInitial = 0u;
+    u16_t           sysTimerCurrVal = 0u;
     u64_t           currentRunTime  = 0u;
 
     /*
