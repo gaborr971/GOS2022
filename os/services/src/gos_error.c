@@ -147,7 +147,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
     {
         (void_t) gos_traceTraceFormattedUnsafe(
                 TRACE_FG_YELLOW_START
-                "OS-level error - warning.\r\n"
+                "OS-level warning.\r\n"
                 TRACE_FORMAT_RESET
                 );
     }
@@ -163,7 +163,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
     {
         (void_t) gos_traceTraceFormattedUnsafe(
                 TRACE_FG_YELLOW_START
-                "User-level error - warning.\r\n"
+                "User-level warning.\r\n"
                 TRACE_FORMAT_RESET
                 );
     }
@@ -176,7 +176,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
                                   TRACE_FORMAT_RESET
                                   ">, line: %d\r\n", function, line);
     }
-    else
+    else if (line != 0)
     {
         (void_t) gos_traceTraceFormattedUnsafe("Function: <"
                                   TRACE_FG_YELLOW_START
