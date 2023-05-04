@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos.c
 //! @author     Gabor Repasi
-//! @date       2023-01-12
-//! @version    1.4
+//! @date       2023-05-04
+//! @version    1.6
 //!
 //! @brief      GOS source.
 //! @details    For a more detailed description of this service, please refer to @ref gos.h
@@ -30,8 +30,12 @@
 // 1.3        2022-12-11    Gabor Repasi    +    main function added here
 //                                          *    gos_Init and gos_Start made local static functions
 //                                          +    platform and user initializers added
-// 1.4        2023-01-12    Gabor Repasi    *    OS service initializaiton and user application
+// 1.4        2023-01-12    Gabor Repasi    *    OS service initialization and user application
 //                                               initialization moved to a new initializer task
+// 1.5        2023-01-31    Gabor Repasi    *    Initializer task renamed to system task
+//                                          +    Periodic CPU statistics calculation added to
+//                                               system task
+// 1.6        2023-05-04    Gabor Repasi    -    Lock and trigger service initialization removed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -87,7 +91,6 @@ GOS_STATIC bool_t initError;
  */
 GOS_STATIC gos_initStruct_t initializers [] =
 {
-	{"Lock service initialization"   ,  gos_lockInit},
 	{"Queue service initialization"  ,  gos_queueInit},
 	{"Log service initialization"    ,  gos_traceInit},
 	{"Signal service initialization" ,  gos_signalInit},
@@ -100,30 +103,29 @@ GOS_STATIC gos_initStruct_t initializers [] =
 #endif
 	{"Message service initialization",  gos_messageInit},
 	{"GCP service initialization"    ,  gos_gcpInit},
-	{"Trigger service initialization",  gos_triggerInit},
 	{"User application initialization", gos_userApplicationInit}
 };
 
 /**
  * Initializer task ID.
  */
-GOS_STATIC gos_tid_t initTaskId;
+GOS_STATIC gos_tid_t systemTaskId;
 
 /*
  * Function prototypes
  */
-GOS_STATIC void_t       gos_kernelInitTask (void_t);
-GOS_STATIC gos_result_t gos_Start          (void_t);
+GOS_STATIC void_t       gos_systemTask (void_t);
+GOS_STATIC gos_result_t gos_Start      (void_t);
 
 /**
  * Initializer task descriptor.
  */
-GOS_STATIC gos_taskDescriptor_t initTaskDesc =
+GOS_STATIC gos_taskDescriptor_t systemTaskDesc =
 {
-	.taskFunction       = gos_kernelInitTask,
-	.taskName           = "kernel_init_task",
+	.taskFunction       = gos_systemTask,
+	.taskName           = "gos_system_task",
 	.taskPriority       = 0u,
-	.taskStackSize      = 0x300,
+	.taskStackSize      = CFG_SYSTEM_TASK_STACK_SIZE,
 	.taskPrivilegeLevel = GOS_TASK_PRIVILEGE_KERNEL
 };
 
@@ -153,7 +155,7 @@ int main (void_t)
 
     // Initialize the kernel and register initializer task.
     if (gos_errorTraceInit("Kernel initialization", gos_kernelInit()) == GOS_SUCCESS &&
-    	gos_kernelTaskRegister(&initTaskDesc, &initTaskId) == GOS_SUCCESS)
+    	gos_kernelTaskRegister(&systemTaskDesc, &systemTaskId) == GOS_SUCCESS)
     {
     	initError = GOS_FALSE;
     }
@@ -232,7 +234,7 @@ GOS_STATIC gos_result_t gos_Start (void_t)
 
  * @return  -
  */
-GOS_STATIC void_t gos_kernelInitTask (void_t)
+GOS_STATIC void_t gos_systemTask (void_t)
 {
 	/*
 	 * Local variables.
@@ -262,6 +264,14 @@ GOS_STATIC void_t gos_kernelInitTask (void_t)
 
 	GOS_ENABLE_SCHED
 
-	// Delete initializer task (one-shot).
-	gos_kernelTaskDelete(initTaskId);
+	// Set priority to kernel-level.
+	gos_kernelTaskSetOriginalPriority(systemTaskId, 201);
+	gos_kernelTaskSetPriority(systemTaskId, 201);
+
+	for(;;)
+	{
+		// Refresh task statistics.
+		gos_kernelCalculateTaskCpuUsages();
+		gos_kernelTaskSleep(500);
+	}
 }

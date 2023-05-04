@@ -59,9 +59,8 @@
 #include <gos_driver.h>
 #include <gos_error.h>
 #include <gos_gcp.h>
-#include <gos_kernel.h>
-#include <gos_lock.h>
 #include <gos_message.h>
+#include <gos_mutex.h>
 #include <gos_process.h>
 #include <gos_queue.h>
 #include <gos_shell.h>
