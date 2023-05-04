@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_signal.c
 //! @author     Gabor Repasi
-//! @date       2022-12-15
-//! @version    1.3
+//! @date       2023-05-04
+//! @version    1.4
 //!
 //! @brief      GOS signal service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_signal.h
@@ -29,6 +29,7 @@
 // 1.2        2022-12-04    Gabor Repasi    +    Kernel dump ready signal handler added
 // 1.3        2022-12-15    Gabor Repasi    +    Initialization error logging added
 //                                          +    Privilege handling added
+// 1.4        2023-05-04    Gabor Repasi    -    Lock dump signal removed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -52,9 +53,9 @@
 /*
  * Includes
  */
+#include <gos_signal.h>
 #include <gos_error.h>
 #include <gos_queue.h>
-#include <gos_signal.h>
 #include <string.h>
 
 /*
@@ -167,8 +168,7 @@ gos_result_t gos_signalInit (void_t)
 		gos_signalCreate(&kernelTaskDeleteSignal) != GOS_SUCCESS ||
 		gos_signalSubscribe(kernelDumpSignal, gos_kernelDumpSignalHandler) != GOS_SUCCESS ||
 		gos_signalSubscribe(kernelDumpSignal, gos_procDumpSignalHandler) != GOS_SUCCESS ||
-		gos_signalSubscribe(kernelDumpSignal, gos_queueDumpSignalHandler) != GOS_SUCCESS ||
-		gos_signalSubscribe(kernelDumpSignal, gos_lockDumpSignalHandler) != GOS_SUCCESS
+		gos_signalSubscribe(kernelDumpSignal, gos_queueDumpSignalHandler) != GOS_SUCCESS
     )
     {
     	signalInitResult = GOS_ERROR;
