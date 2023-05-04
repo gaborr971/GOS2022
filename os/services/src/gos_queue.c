@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_queue.c
 //! @author     Gabor Repasi
-//! @date       2022-12-13
-//! @version    1.3
+//! @date       2023-05-04
+//! @version    1.4
 //!
 //! @brief      GOS queue service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_queue.h
@@ -31,6 +31,7 @@
 // 1.2        2022-11-15    Gabor Repasi    +    Queue peek function added
 //                                          +    License added
 // 1.3        2022-12-13    Gabor Repasi    +    Initialization error logging added
+// 1.4        2023-05-04    Gabor Repasi    *    Lock calls replaced with mutex calls
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -54,10 +55,9 @@
 /*
  * Includes
  */
-#include <gos_error.h>
-#include <gos_lock.h>
-#include <gos_process.h>
 #include <gos_queue.h>
+#include <gos_error.h>
+#include <gos_mutex.h>
 #include <gos_signal.h>
 #include <gos_trace.h>
 #include <stdio.h>
@@ -70,12 +70,12 @@
 /**
  * Dump separator line.
  */
-#define DUMP_SEPARATOR    "+--------+------------------------------+------------+\r\n"
+#define DUMP_SEPARATOR    "+--------+------------------------------+---------------+\r\n"
 #else
 /**
  * Dump separator line.
  */
-#define DUMP_SEPARATOR    "+--------+------------+\r\n"
+#define DUMP_SEPARATOR    "+--------+------------------------------+\r\n"
 #endif
 
 /*
@@ -122,9 +122,9 @@ GOS_STATIC gos_queueLength_t  readCounters   [CFG_QUEUE_MAX_NUMBER];
 GOS_STATIC gos_queueLength_t  writeCounters  [CFG_QUEUE_MAX_NUMBER];
 
 /**
- * Queue lock.
+ * Queue mutex.
  */
-GOS_STATIC gos_lockId_t       queueLockId;
+GOS_STATIC gos_mutex_t        queueMutex;
 
 /**
  * Queue full hook.
@@ -182,9 +182,11 @@ gos_result_t gos_queueInit (void_t)
         }
     }
 
-    // Create lock, register and suspend queue dump task.
-    if (gos_lockCreate(&queueLockId) != GOS_SUCCESS ||
-    	gos_kernelTaskRegister(&queueDumpTaskDesc, &queueDumpTaskId)!= GOS_SUCCESS ||
+    // Initialize mutex.
+    gos_mutexInit(&queueMutex);
+
+    // Register and suspend queue dump task.
+    if (gos_kernelTaskRegister(&queueDumpTaskDesc, &queueDumpTaskId)!= GOS_SUCCESS ||
 		gos_kernelTaskSuspend(queueDumpTaskId) != GOS_SUCCESS
     )
     {
@@ -246,7 +248,7 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
     /*
      * Function code.
      */
-    if (gos_lockWaitGet(queueLockId) == GOS_SUCCESS &&
+    if (gos_mutexLock(&queueMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS &&
         queueId >= GOS_DEFAULT_QUEUE_ID &&
         (queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
         element != NULL &&
@@ -280,7 +282,8 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
         }
     }
 
-    (void_t) gos_lockRelease(queueLockId);
+    // Unlock mutex.
+    gos_mutexUnlock(&queueMutex);
 
     return queuePutResult;
 }
@@ -299,7 +302,7 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
     /*
      * Function code.
      */
-    if (gos_lockWaitGet(queueLockId) == GOS_SUCCESS &&
+    if (gos_mutexLock(&queueMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS &&
         queueId >= GOS_DEFAULT_QUEUE_ID &&
         (queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
         target != NULL &&
@@ -332,7 +335,8 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
         }
     }
 
-    (void_t) gos_lockRelease(queueLockId);
+    // Unlock mutex.
+    gos_mutexUnlock(&queueMutex);
 
     return queueGetResult;
 }
@@ -351,7 +355,7 @@ gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLeng
     /*
      * Function code.
      */
-    if (gos_lockWaitGet(queueLockId) == GOS_SUCCESS &&
+    if (gos_mutexLock(&queueMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS &&
         queueId >= GOS_DEFAULT_QUEUE_ID &&
         (queueId - GOS_DEFAULT_QUEUE_ID) < CFG_QUEUE_MAX_NUMBER &&
         target != NULL &&
@@ -368,7 +372,8 @@ gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLeng
         }
     }
 
-    (void_t) gos_lockRelease(queueLockId);
+    // Unlock mutex.
+    gos_mutexUnlock(&queueMutex);
 
     return queueGetResult;
 }
@@ -521,14 +526,14 @@ GOS_STATIC void_t gos_queueDumpTask (void_t)
 
 #if CFG_QUEUE_USE_NAME == 1
         (void_t) gos_traceTraceFormatted(
-                "| %6s | %28s | %10s |\r\n",
+                "| %6s | %28s | %13s |\r\n",
                 "qid",
                 "name",
                 "elements"
                 );
 #else
         (void_t) gos_traceTraceFormatted(
-                "| %6s | %10s |\r\n",
+                "| %6s | %28s |\r\n",
                 "qid",
                 "elements"
                 );
@@ -543,14 +548,14 @@ GOS_STATIC void_t gos_queueDumpTask (void_t)
             }
 #if CFG_QUEUE_USE_NAME == 1
             (void_t) gos_traceTraceFormatted(
-                    "| 0x%04X | %28s | %10d |\r\n",
+                    "| 0x%04X | %28s | %13d |\r\n",
                     queues[queueIndex].queueId,
                     queues[queueIndex].queueName,
                     queues[queueIndex].actualElementNumber
                     );
 #else
             (void_t) gos_traceTraceFormatted(
-                    "| 0x%04X | %10d |\r\n",
+                    "| 0x%04X | %28d |\r\n",
                     queues[queueIndex].queueId,
                     queues[queueIndex].actualElementNumber
                     );
