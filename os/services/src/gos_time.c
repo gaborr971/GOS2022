@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_time.c
 //! @author     Gabor Repasi
-//! @date       2022-12-08
-//! @version    1.2
+//! @date       2023-01-31
+//! @version    1.3
 //!
 //! @brief      GOS time service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_time.h
@@ -29,6 +29,7 @@
 //                                          -    Elapsed sender ID getter API functions removed
 //                                          +    New elapsed sender ID enumerators are used
 // 1.2        2022-12-08    Gabor Repasi    +    Run-time handling added
+// 1.3        2023-01-31    Gabor Repasi    +    gos_runTimeAddMicroseconds added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -52,8 +53,9 @@
 /*
  * Includes
  */
-#include <gos_error.h>
 #include <gos_time.h>
+#include <gos_error.h>
+#include <gos_signal.h>
 
 /*
  * Macros
@@ -61,7 +63,7 @@
 /**
  * Default year.
  */
-#define TIME_DEFAULT_YEAR     ( 2022 )
+#define TIME_DEFAULT_YEAR     ( 2023 )
 
 /**
  * Default month.
@@ -114,6 +116,11 @@ GOS_STATIC const gos_day_t dayLookupTable [GOS_TIME_NUMBER_OF_MONTHS] =
  * Time task ID.
  */
 GOS_STATIC gos_tid_t timeDaemonTaskId;
+
+/**
+ * Time signal ID. This signal is invoked when a second has elapsed.
+ */
+GOS_STATIC gos_signalId_t timeSignalId;
 
 /*
  * Function prototypes
@@ -279,13 +286,13 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
 /*
  * Function: gos_timeAddSeconds
  */
-gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds)
+gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds)
 {
     /*
      * Local variables.
      */
     gos_result_t timeAddSecondsResult = GOS_ERROR;
-    gos_second_t secondCounter        = 0u;
+    u32_t        secondCounter        = 0u;
 
     /*
      * Function code.
@@ -345,15 +352,110 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds)
 }
 
 /*
+ * Function: gos_runTimeAddMicroseconds
+ */
+gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t* pRunTime2, u16_t microseconds)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t runtimeAddMicrosecondsResult = GOS_ERROR;
+    u16_t        microsecondCounter           = 0u;
+
+    /*
+     * Function code.
+     */
+    if (pRunTime1 != NULL && pRunTime2 != NULL)
+    {
+        while (microsecondCounter++ < microseconds)
+        {
+        	pRunTime1->microseconds++;
+        	pRunTime2->microseconds++;
+
+        	if (pRunTime1->microseconds >= 1000)
+        	{
+        		pRunTime1->microseconds = 0U;
+        		pRunTime1->milliseconds++;
+
+        		// Check milliseconds.
+                if (pRunTime1->milliseconds >= 1000)
+                {
+                	pRunTime1->milliseconds = 0U;
+                	pRunTime1->seconds++;
+
+                	// Check seconds.
+                    if (pRunTime1->seconds >= 60)
+                    {
+                    	pRunTime1->seconds = 0U;
+                    	pRunTime1->minutes++;
+
+                        // Check minutes.
+                        if (pRunTime1->minutes >= 60)
+                        {
+                        	pRunTime1->minutes = 0U;
+                        	pRunTime1->hours++;
+
+                            // Check hours.
+                            if (pRunTime1->hours >= 24)
+                            {
+                            	pRunTime1->hours = 0U;
+                            	pRunTime1->days++;
+                            }
+                        }
+                    }
+                }
+        	}
+
+        	if (pRunTime2->microseconds >= 1000)
+        	{
+        		pRunTime2->microseconds = 0U;
+        		pRunTime2->milliseconds++;
+
+        		// Check milliseconds.
+                if (pRunTime2->milliseconds >= 1000)
+                {
+                	pRunTime2->milliseconds = 0U;
+                	pRunTime2->seconds++;
+
+                	// Check seconds.
+                    if (pRunTime2->seconds >= 60)
+                    {
+                    	pRunTime2->seconds = 0U;
+                    	pRunTime2->minutes++;
+
+                        // Check minutes.
+                        if (pRunTime2->minutes >= 60)
+                        {
+                        	pRunTime2->minutes = 0U;
+                        	pRunTime2->hours++;
+
+                            // Check hours.
+                            if (pRunTime2->hours >= 24)
+                            {
+                            	pRunTime2->hours = 0U;
+                            	pRunTime2->days++;
+                            }
+                        }
+                    }
+                }
+        	}
+        }
+        runtimeAddMicrosecondsResult = GOS_SUCCESS;
+    }
+
+    return runtimeAddMicrosecondsResult;
+}
+
+/*
  * Function: gos_runTimeAddSeconds
  */
-gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, gos_second_t seconds)
+gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, u32_t seconds)
 {
     /*
      * Local variables.
      */
     gos_result_t runtimeAddSecondsResult = GOS_ERROR;
-    gos_second_t secondCounter           = 0u;
+    u32_t        secondCounter           = 0u;
 
     /*
      * Function code.

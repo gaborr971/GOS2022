@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_time.h
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.4
+//! @date       2023-01-31
+//! @version    1.5
 //!
 //! @brief      GOS time service header.
 //! @details    Time service provides an easy interface to manipulate time structures, track the
@@ -33,6 +33,10 @@
 // 1.2        2022-12-03    Gabor Repasi    +    Function header skeletons added
 // 1.3        2022-12-08    Gabor Repasi    +    Run-time type added
 // 1.4        2022-12-11    Gabor Repasi    +    Function descriptions completed
+// 1.5        2023-01-31    Gabor Repasi    +    Millisecond and microsecond types added
+//                                          +    Milliseconds and microseconds fields added to
+//                                               run-time structure
+//                                          +    gos_runTimeAddMicroseconds added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -59,22 +63,14 @@
  * Includes
  */
 #include <gos_kernel.h>
-#include <gos_signal.h>
 
 /*
  * Type definitions
  */
-typedef u8_t    gos_second_t;   //!< Second type.
-typedef u8_t    gos_minute_t;   //!< Minute type.
-typedef u8_t    gos_hour_t;     //!< Hour type.
-typedef u8_t    gos_day_t;      //!< Day type.
-typedef u8_t    gos_month_t;    //!< Month type.
-typedef u16_t   gos_year_t;     //!< Year type.
-
 /**
  * Time type.
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     gos_second_t seconds;    //!< Seconds.
     gos_minute_t minutes;    //!< Minutes.
@@ -83,17 +79,6 @@ typedef struct
     gos_month_t  months;     //!< Months.
     gos_year_t   years;      //!< Years.
 }gos_time_t;
-
-/**
- * Run-time type.
- */
-typedef struct
-{
-    gos_second_t seconds; //!< Seconds.
-    gos_minute_t minutes; //!< Minutes.
-    gos_hour_t   hours;   //!< Hours.
-    gos_day_t    days;    //!< Days.
-}gos_runtime_t;
 
 /**
  * Time comparison result enumerator.
@@ -138,14 +123,6 @@ typedef enum
     GOS_TIME_MONTH_ELAPSED_SENDER_ID,   //!< Month elapsed sender ID.
     GOS_TIME_YEAR_ELAPSED_SENDER_ID     //!< Year elapsed sender ID.
 }gos_timeElapsedSenderId_t;
-
-/*
- * Global variables
- */
-/**
- * Time signal ID. This signal is invoked when a second has elapsed.
- */
-gos_signalId_t timeSignalId;
 
 /*
  * Function prototypes
@@ -215,7 +192,22 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
  * @retval  GOS_SUCCESS : Seconds added successfully.
  * @retval  GOS_ERROR   : Time variable is NULL pointer.
  */
-gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds);
+gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds);
+
+/**
+ * @brief   This function adds the given number of microseconds to the given time variables.
+ * @details This function adds the given number of microseconds to the given time variables.
+ *
+ * @param   pRunTime1    : Pointer to the time variable.
+ * @param   pRunTime2    : Pointer to the time variable.
+ * @param   microseconds : Number of microseconds to add.
+ *
+ * @return  Result of time increasing.
+ *
+ * @retval  GOS_SUCCESS : Microseconds added successfully.
+ * @retval  GOS_ERROR   : Time variable is NULL pointer.
+ */
+gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t* pRunTime2, u16_t microseconds);
 
 /**
  * @brief   This function adds the given number of seconds to the given run-time variable.
@@ -229,7 +221,7 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, gos_second_t seconds);
  * @retval  GOS_SUCCESS : Seconds added successfully.
  * @retval  GOS_ERROR   : Run-time variable is NULL pointer.
  */
-gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, gos_second_t seconds);
+gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, u32_t seconds);
 
 /**
  * @brief   This function gets the system run-time.
