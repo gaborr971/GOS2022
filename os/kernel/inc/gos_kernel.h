@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.h
 //! @author     Gabor Repasi
-//! @date       2023-01-13
-//! @version    1.8
+//! @date       2023-05-04
+//! @version    1.9
 //!
 //! @brief      GOS kernel header.
 //! @details    The GOS kernel is the core of the GOS system. It contains the basic type
@@ -46,6 +46,7 @@
 //                                               and functions added
 // 1.8        2023-01-13    Gabor Repasi    +    Constant macro added
 //                                          *    Scheduling disabled flag replaced with counter
+// 1.9        2023-05-04    Gabor Repasi    +    Task stack monitoring variables added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -376,27 +377,52 @@ typedef enum
     GOS_FALSE = 0b01001001    //!< False value.
 }gos_boolValue_t;
 
+typedef u16_t   gos_microsecond_t; //!< Microsecond type.
+typedef u16_t   gos_millisecond_t; //!< Millisecond type.
+typedef u8_t    gos_second_t;      //!< Second type.
+typedef u8_t    gos_minute_t;      //!< Minute type.
+typedef u8_t    gos_hour_t;        //!< Hour type.
+typedef u8_t    gos_day_t;         //!< Day type.
+typedef u8_t    gos_month_t;       //!< Month type.
+typedef u16_t   gos_year_t;        //!< Year type.
+
+/**
+ * Run-time type.
+ */
+typedef struct __attribute__((packed))
+{
+	gos_microsecond_t microseconds; //!< Microseconds.
+	gos_millisecond_t milliseconds; //!< Milliseconds.
+    gos_second_t      seconds;      //!< Seconds.
+    gos_minute_t      minutes;      //!< Minutes.
+    gos_hour_t        hours;        //!< Hours.
+    gos_day_t         days;         //!< Days.
+}gos_runtime_t;
+
 /**
  * Task descriptor structure.
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
-    gos_task_t               taskFunction;         //!< Task function.
-    gos_taskState_t          taskState;            //!< Task state.
-    gos_taskState_t          taskPreviousState;    //!< Task previous state (for restoration).
-    gos_taskPrio_t           taskPriority;         //!< Task priority.
-    gos_taskPrio_t           taskOriginalPriority; //!< Task original priority.
-    gos_taskPrivilegeLevel_t taskPrivilegeLevel;   //!< Task privilege level.
-    gos_taskName_t           taskName;             //!< Task name.
-    gos_tid_t                taskId;               //!< Task ID (internal).
-    gos_tid_t*               taskIdEx;             //!< Task ID (external).
-    gos_taskSleepTick_t      taskSleepTicks;       //!< Task sleep ticks.
-    gos_taskAddress_t        taskPsp;              //!< Task PSP.
-    gos_taskRunCounter_t     taskRunCounter;       //!< Task run counter.
-    gos_taskRunTime_t        taskRunTime;          //!< Task run-time.
-    gos_taskCSCounter_t      taskCsCounter;        //!< Task context-switch counter.
-    gos_taskStackSize_t      taskStackSize;        //!< Task stack size.
-    u16_t                    taskCpuUsage;         //!< Task processor usage in [%].
+    gos_task_t               taskFunction;               //!< Task function.
+    gos_taskState_t          taskState;                  //!< Task state.
+    gos_taskState_t          taskPreviousState;          //!< Task previous state (for restoration).
+    gos_taskPrio_t           taskPriority;               //!< Task priority.
+    gos_taskPrio_t           taskOriginalPriority;       //!< Task original priority.
+    gos_taskPrivilegeLevel_t taskPrivilegeLevel;         //!< Task privilege level.
+    gos_taskName_t           taskName;                   //!< Task name.
+    gos_tid_t                taskId;                     //!< Task ID (internal).
+    gos_tid_t*               taskIdEx;                   //!< Task ID (external).
+    gos_taskSleepTick_t      taskSleepTicks;             //!< Task sleep ticks.
+    gos_taskAddress_t        taskPsp;                    //!< Task PSP.
+    gos_taskRunCounter_t     taskRunCounter;             //!< Task run counter.
+    gos_taskCSCounter_t      taskCsCounter;              //!< Task context-switch counter.
+    gos_taskStackSize_t      taskStackSize;              //!< Task stack size.
+    gos_runtime_t            taskRunTime;                //!< Task run-time.
+    u16_t                    taskCpuUsage;               //!< Task processor usage in [%].
+    u32_t                    taskStackOverflowThreshold; //!< Task stack overflow threshold address.
+    gos_taskStackSize_t      taskStackMaxUsage;          //!< Task max. stack usage.
+    u16_t                    taskStackUsage;             //!< Task stack usage in [%].
 }gos_taskDescriptor_t;
 
 /**
@@ -408,7 +434,6 @@ typedef enum
     GOS_DUMP_SENDER_KERNEL,  //!< Sender is the kernel.
     GOS_DUMP_SENDER_PROC,    //!< Sender is the process service.
     GOS_DUMP_SENDER_QUEUE,   //!< Sender is the queue.
-	GOS_DUMP_SENDER_LOCK,    //!< Sender is the lock service.
     GOS_DUMP_SENDER_SIGNAL,  //!< Sender is the signal service.
     GOS_DUMP_SENDER_MESSAGE, //!< Sender is the message service.
     GOS_DUMP_SENDER_SHELL,   //!< Sender is the shell service.
@@ -797,14 +822,6 @@ gos_result_t gos_kernelDump (void_t);
 u32_t gos_kernelGetSysTicks (void_t);
 
 /**
- * @brief   Returns the total system run-time.
- * @details Returns the internal total system run-time variable.
- *
- * @return  Total run-time in microseconds.
- */
-u64_t gos_kernelGetTotalSysTime (void_t);
-
-/**
  * @brief   Starts the kernel.
  * @details Prepares the PSP for the first task, changes to unprivileged level,
  *          initializes the system timer value, and starts executing the first task.
@@ -845,6 +862,15 @@ void_t gos_kernelDelayUs (u16_t microseconds);
  * @return    -
  */
 void_t gos_kernelDelayMs (u16_t milliseconds);
+
+/**
+ * @brief   Calculates the CPU usage for the tasks.
+ * @details Based on the total system time range, it refreshes
+ *          the CPU-usage statistics of tasks.
+ *
+ * @return    -
+ */
+void_t gos_kernelCalculateTaskCpuUsages (void_t);
 
 /**
  * @brief   Platform driver initializer. Used for the platform-specific driver initializations.

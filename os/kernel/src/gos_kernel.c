@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.c
 //! @author     Gabor Repasi
-//! @date       2023-01-13
-//! @version    1.6
+//! @date       2023-05-03
+//! @version    1.7
 //!
 //! @brief      GOS kernel source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -38,6 +38,8 @@
 //                                               added to kernel functions
 // 1.6        2023-01-13    Gabor Repasi    *    Scheduling disabled flag replaced with counter
 //                                          -    Configuration dump removed
+// 1.7        2023-05-03    Gabor Repasi    +    Stack overflow monitoring added
+//                                          *    Dump separated to task and stack statistics
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -101,12 +103,17 @@
 /**
  * Global stack.
  */
-#define GLOBAL_STACK            ( 2048 )
+#define GLOBAL_STACK            ( 0x1000 )
 
 /**
  * Task dump separator line.
  */
-#define TASK_DUMP_SEPARATOR     "+--------+------------------------------+--------+------+------------------+---------+-----------+\r\n"
+#define TASK_DUMP_SEPARATOR     "+--------+------------------------------+------+------------------+---------+-----------+\r\n"
+
+/**
+ * Stack statistics separator line.
+ */
+#define STACK_STATS_SEPARATOR   "+--------+------------------------------+--------+----------------+-----------+\r\n"
 
 /**
  * Config dump separator line.
@@ -139,6 +146,7 @@
     (word & 0x0002 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0"), \
     (word & 0x0001 ? TRACE_FG_GREEN_START"1" : TRACE_FG_RED_START"0")
 
+
 /*
  * Type definitions
  */
@@ -154,7 +162,7 @@ typedef enum
 /**
  * OS configuration descriptor.
  */
-typedef struct
+typedef struct __attribute__((packed))
 {
     char_t   configName [32];    //!< Name of configuration parameter.
     u16_t    configValue;        //!< Value of configuration parameter.
@@ -176,12 +184,12 @@ GOS_STATIC u32_t                    currentTaskIndex       = 0u;
 /**
  * System timer value for run-time calculations.
  */
-GOS_STATIC u32_t                    sysTimerValue          = 0u;
+GOS_STATIC u16_t                    sysTimerValue          = 0u;
 
 /**
  * Total system up-time since start.
  */
-GOS_STATIC u64_t                    totalSystemTime        = 0u;
+GOS_STATIC gos_runtime_t            totalSystemTime        = {0};
 
 /**
  * Kernel idle hook function.
@@ -244,15 +252,16 @@ void_t gos_kernelDumpSignalHandler  (gos_signalSenderId_t senderId);
 /*
  * Function prototypes
  */
-GOS_STATIC        gos_result_t  gos_kernelCheckTaskDescriptor (gos_taskDescriptor_t* taskDescriptor);
-GOS_STATIC        u32_t         gos_kernelGetCurrentPsp       (void_t);
-GOS_STATIC        void_t        gos_kernelSaveCurrentPsp      (u32_t psp);
-GOS_STATIC        void_t        gos_kernelSelectNextTask      (void_t);
-GOS_STATIC        void_t        gos_kernelIdleTask            (void_t);
-GOS_STATIC_INLINE void_t        gos_kernelReschedule          (gos_kernel_privilege_t privilege);
-GOS_STATIC        char_t*       gos_kernelGetTaskStateString  (gos_taskState_t taskState);
-GOS_STATIC        void_t        gos_kernelDumpTask            (void_t);
-GOS_STATIC        void_t        gos_kernelProcessorReset      (void_t);
+GOS_STATIC        void_t        gos_kernelCheckTaskStack         (void_t);
+GOS_STATIC        gos_result_t  gos_kernelCheckTaskDescriptor    (gos_taskDescriptor_t* taskDescriptor);
+GOS_STATIC        u32_t         gos_kernelGetCurrentPsp          (void_t);
+GOS_STATIC        void_t        gos_kernelSaveCurrentPsp         (u32_t psp);
+GOS_STATIC        void_t        gos_kernelSelectNextTask         (void_t);
+GOS_STATIC        void_t        gos_kernelIdleTask               (void_t);
+GOS_STATIC_INLINE void_t        gos_kernelReschedule             (gos_kernel_privilege_t privilege);
+GOS_STATIC        char_t*       gos_kernelGetTaskStateString     (gos_taskState_t taskState);
+GOS_STATIC        void_t        gos_kernelDumpTask               (void_t);
+GOS_STATIC        void_t        gos_kernelProcessorReset         (void_t);
 
 /**
  * Internal task array.
@@ -330,6 +339,10 @@ gos_result_t gos_kernelInit (void_t)
 
     // Save PSP.
     taskDescriptors[0].taskPsp = (u32_t)psp;
+
+    // Calculate stack overflow threshold.
+    taskDescriptors[0].taskStackOverflowThreshold = taskDescriptors[0].taskPsp - taskDescriptors[0].taskStackSize + 64;
+
 
     // Enable Fault Handlers
     SHCSR |= (1 << 16); // Memory Fault
@@ -519,6 +532,10 @@ gos_result_t gos_kernelTaskRegister (gos_taskDescriptor_t* taskDescriptor, gos_t
             {
                 *taskDescriptor->taskIdEx = taskDescriptors[taskIndex].taskId;
             }
+
+            // Calculate stack overflow threshold value (64 byte reserved for protection).
+            taskDescriptors[taskIndex].taskStackOverflowThreshold =
+            		taskDescriptors[taskIndex].taskPsp - taskDescriptors[taskIndex].taskStackSize + 64;
         }
     }
 
@@ -743,6 +760,10 @@ GOS_INLINE gos_result_t gos_kernelTaskBlock (gos_tid_t taskId)
                     gos_kernelReschedule(GOS_UNPRIVILEGED);
                 }
             }
+            else
+            {
+            	GOS_NOP;
+            }
         }
         else
         {
@@ -776,6 +797,7 @@ GOS_INLINE gos_result_t gos_kernelTaskUnblock (gos_tid_t taskId)
      * Function code.
      */
     GOS_DISABLE_SCHED
+	GOS_ATOMIC_ENTER
     if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER)
     {
         taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
@@ -805,6 +827,7 @@ GOS_INLINE gos_result_t gos_kernelTaskUnblock (gos_tid_t taskId)
     }
 
     GOS_UNPRIVILEGED_ACCESS
+	GOS_ATOMIC_EXIT
     GOS_ENABLE_SCHED
 
     return taskUnblockResult;
@@ -1304,6 +1327,9 @@ void_t SysTick_Handler (void_t)
      */
     sysTicks++;
 
+    // Periodic stack overflow check on currently running task.
+    gos_kernelCheckTaskStack();
+
 #if CFG_SCHED_COOPERATIVE == 0
     if (schedDisableCntr == 0u)
     {
@@ -1322,17 +1348,6 @@ u32_t gos_kernelGetSysTicks (void_t)
      * Function code.
      */
     return sysTicks;
-}
-
-/*
- * Function: gos_kernelGetTotalSysTime
- */
-u64_t gos_kernelGetTotalSysTime (void_t)
-{
-    /*
-     * Function code.
-     */
-    return totalSystemTime;
 }
 
 /*
@@ -1373,8 +1388,8 @@ GOS_INLINE void_t gos_kernelDelayUs (u16_t microseconds)
     /*
      * Local variables.
      */
-	u32_t tmrInitialValue = 0u;
-    u32_t tmrActualValue  = 0u;
+	u16_t tmrInitialValue = 0u;
+    u16_t tmrActualValue  = 0u;
 
     /*
      * Function code.
@@ -1384,7 +1399,7 @@ GOS_INLINE void_t gos_kernelDelayUs (u16_t microseconds)
     {
     	gos_timerDriverSysTimerGet(&tmrActualValue);
     }
-    while ((tmrActualValue - tmrInitialValue) < microseconds);
+    while ((u16_t)(tmrActualValue - tmrInitialValue) < microseconds);
 }
 
 /*
@@ -1400,7 +1415,79 @@ GOS_INLINE void_t gos_kernelDelayMs (u16_t milliseconds)
     /*
      * Function code.
      */
-    while ((sysTicks - sysTickVal) < milliseconds);
+    while ((u16_t)(sysTicks - sysTickVal) < milliseconds);
+}
+
+/*
+ * Function: gos_kernelCalculateTaskCpuUsages
+ */
+GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (void_t)
+{
+    /*
+     * Local variables.
+     */
+    u16_t taskIndex           = 0u;
+	u32_t systemConvertedTime = 0u;
+	u32_t taskConvertedTime   = 0u;
+
+	/*
+	 * Function code.
+	 */
+    for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
+    {
+    	// Check total system run-time range.
+    	if (totalSystemTime.days > 35)
+    	{
+    		// Calculate in seconds (microseconds and milliseconds ignored).
+        	systemConvertedTime = totalSystemTime.days * 24 * 60 * 60 +
+        						  totalSystemTime.hours * 60 * 60 +
+    							  totalSystemTime.minutes * 60 +
+        						  totalSystemTime.seconds;
+
+        	taskConvertedTime   = taskDescriptors[taskIndex].taskRunTime.days * 24 * 60 * 60 +
+        						  taskDescriptors[taskIndex].taskRunTime.hours * 60 * 60 +
+								  taskDescriptors[taskIndex].taskRunTime.minutes * 60 +
+								  taskDescriptors[taskIndex].taskRunTime.seconds;
+    	}
+        else if (totalSystemTime.days > 0 || totalSystemTime.hours > 0)
+        {
+        	// Calculate in milliseconds (microseconds ignored).
+        	systemConvertedTime = totalSystemTime.days * 24 * 60 * 60 * 1000 +
+        						  totalSystemTime.hours * 60 * 60 * 1000 +
+    							  totalSystemTime.minutes * 60 * 1000 +
+        						  totalSystemTime.seconds * 1000 +
+    							  totalSystemTime.milliseconds;
+
+        	taskConvertedTime   = taskDescriptors[taskIndex].taskRunTime.days * 24 * 60 * 60 * 1000 +
+        						  taskDescriptors[taskIndex].taskRunTime.hours * 60 * 60 * 1000 +
+								  taskDescriptors[taskIndex].taskRunTime.minutes * 60 * 1000 +
+								  taskDescriptors[taskIndex].taskRunTime.seconds * 1000 +
+								  taskDescriptors[taskIndex].taskRunTime.milliseconds;
+        }
+        else
+        {
+        	// Calculate in microseconds.
+        	systemConvertedTime = totalSystemTime.minutes * 60 * 1000 * 1000 +
+        						  totalSystemTime.seconds * 1000 * 1000 +
+        			              totalSystemTime.milliseconds * 1000 +
+    							  totalSystemTime.microseconds;
+
+        	taskConvertedTime   = taskDescriptors[taskIndex].taskRunTime.minutes * 60 * 1000 * 1000 +
+        						  taskDescriptors[taskIndex].taskRunTime.seconds * 1000 * 1000 +
+								  taskDescriptors[taskIndex].taskRunTime.milliseconds * 1000 +
+								  taskDescriptors[taskIndex].taskRunTime.microseconds;
+        }
+
+    	if (systemConvertedTime > 0)
+    	{
+    		taskDescriptors[taskIndex].taskCpuUsage = (u16_t)((u64_t)10000 * taskConvertedTime / systemConvertedTime);
+    	}
+
+    	if (taskDescriptors[taskIndex].taskFunction == NULL)
+        {
+            break;
+        }
+    }
 }
 
 /*
@@ -1492,6 +1579,48 @@ GOS_NAKED void_t PendSV_Handler (void_t)
     // Exit.
     GOS_ASM("POP {LR}");
     GOS_ASM("BX LR");
+}
+
+/**
+ * @brief   Checks the stack use of the current task.
+ * @details Gets the current stack pointer value and checks whether it is
+ *          lower than the allowed threshold value defined for the current stack.
+ *          After the overflow check, it calculates the stack usage and updates the
+ *          maximum stack usage for the current task. In case of stack overflow, it
+ *          goes to system error.
+ *
+ * @return  -
+ */
+GOS_STATIC void_t gos_kernelCheckTaskStack (void_t)
+{
+	/*
+	 * Local variables.
+	 */
+	u32_t sp = 0u;
+
+	/*
+	 * Function code.
+	 */
+	__asm volatile ("MRS %0, psp\n\t" : "=r" (sp));
+    if (sp != 0 &&
+    	sp < taskDescriptors[currentTaskIndex].taskStackOverflowThreshold)
+    {
+    	gos_errorHandler(
+    			GOS_ERROR_LEVEL_OS_FATAL,
+				NULL,
+				0,
+				"Stack overflow detected in <%s>. \r\nPSP: 0x%x overflown by %d bytes.",
+				taskDescriptors[currentTaskIndex].taskName,
+				sp,
+				(taskDescriptors[currentTaskIndex].taskStackOverflowThreshold - sp));
+    }
+
+    if (sp != 0 &&
+        (taskDescriptors[currentTaskIndex].taskStackOverflowThreshold - 64 + taskDescriptors[currentTaskIndex].taskStackSize - sp) >
+    	taskDescriptors[currentTaskIndex].taskStackMaxUsage)
+    {
+    	taskDescriptors[currentTaskIndex].taskStackMaxUsage = (taskDescriptors[currentTaskIndex].taskStackOverflowThreshold - 64 + 32 + taskDescriptors[currentTaskIndex].taskStackSize - sp);
+    }
 }
 
 /**
@@ -1602,6 +1731,7 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSaveCurrentPsp (u32_t psp)
  *
  * @return    -
  */
+#include <gos_time.h>
 GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
 {
     /*
@@ -1610,12 +1740,15 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
     u16_t          taskIndex      = 0u;
     gos_taskPrio_t lowestPrio     = GOS_TASK_IDLE_PRIO;
     u16_t          nextTask       = 0u;
-    u32_t          sysTimerActVal = 0u;
-    u64_t          currentRunTime = 0u;
+    u16_t          sysTimerActVal = 0u;
+    u16_t          currentRunTime = 0u;
 
     /*
      * Function code.
      */
+    // Run stack check.
+    gos_kernelCheckTaskStack();
+
     if (schedDisableCntr == 0u)
     {
         for (taskIndex = 0U; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
@@ -1638,18 +1771,23 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
         }
 
         // If there was a task-swap, call the hook function.
-        if (currentTaskIndex != nextTask && kernelSwapHookFunction != NULL)
+        if (currentTaskIndex != nextTask)
         {
-            kernelSwapHookFunction(taskDescriptors[currentTaskIndex].taskId, taskDescriptors[nextTask].taskId);
+        	if (kernelSwapHookFunction != NULL)
+        	{
+                kernelSwapHookFunction(taskDescriptors[currentTaskIndex].taskId, taskDescriptors[nextTask].taskId);
+        	}
             taskDescriptors[currentTaskIndex].taskCsCounter++;
         }
 
-        // Update run-time statistics.
+        // Calculate current task run-time.
         gos_timerDriverSysTimerGet(&sysTimerActVal);
         currentRunTime = sysTimerActVal - sysTimerValue;
-        // Increase system up-time.
-        totalSystemTime += currentRunTime;
-        taskDescriptors[currentTaskIndex].taskRunTime += currentRunTime;
+
+        // Increase total system time and current task runtime.
+        gos_runTimeAddMicroseconds(&totalSystemTime, &taskDescriptors[currentTaskIndex].taskRunTime, currentRunTime);
+
+        // Refresh system timer value.
         gos_timerDriverSysTimerGet(&sysTimerValue);
 
         // Set current task.
@@ -1667,11 +1805,6 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
 GOS_STATIC void_t gos_kernelIdleTask (void_t)
 {
     /*
-     * Local variables.
-     */
-    u16_t taskIndex = 0u;
-
-    /*
      * Function code.
      */
     gos_errorTraceInit("Starting OS...", GOS_SUCCESS);
@@ -1679,17 +1812,10 @@ GOS_STATIC void_t gos_kernelIdleTask (void_t)
     for (;;)
     {
         taskDescriptors[0].taskRunCounter++;
+
         if (kernelIdleHookFunction != NULL)
         {
             kernelIdleHookFunction();
-        }
-        for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
-        {
-            taskDescriptors[taskIndex].taskCpuUsage = (u16_t)((10000 * taskDescriptors[taskIndex].taskRunTime) / totalSystemTime);
-            if (taskDescriptors[taskIndex].taskFunction == NULL)
-            {
-                break;
-            }
         }
         gos_kernelTaskYield();
     }
@@ -1761,11 +1887,10 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
         (void_t) gos_traceTraceFormatted("Task dump:\r\n");
         (void_t) gos_traceTraceFormatted(TASK_DUMP_SEPARATOR);
         (void_t) gos_traceTraceFormatted(
-            "| %6s | %28s | %6s | %4s | %16s | %6s | %9s |\r\n",
+            "| %6s | %28s | %4s | %16s | %6s | %9s |\r\n",
             "tid",
             "name",
-            "stack",
-            "prio",
+			"prio",
             "privileges",
             "cpu [%]",
             "state"
@@ -1779,19 +1904,49 @@ GOS_STATIC void_t gos_kernelDumpTask (void_t)
                 break;
             }
             (void_t) gos_traceTraceFormatted(
-                    "| 0x%04X | %28s | 0x%04X | %4d | " BINARY_PATTERN " | %4u.%02u | %18s |\r\n",
+                    "| 0x%04X | %28s | %4d | " BINARY_PATTERN " | %4u.%02u | %18s |\r\n",
                     taskDescriptors[taskIndex].taskId,
                     taskDescriptors[taskIndex].taskName,
-                    taskDescriptors[taskIndex].taskStackSize,
-                    taskDescriptors[taskIndex].taskPriority,
+					taskDescriptors[taskIndex].taskPriority,
                     TO_BINARY((u16_t)taskDescriptors[taskIndex].taskPrivilegeLevel),
                     taskDescriptors[taskIndex].taskCpuUsage / 100,
                     taskDescriptors[taskIndex].taskCpuUsage % 100,
                     gos_kernelGetTaskStateString(taskDescriptors[taskIndex].taskState)
                     );
-            (void_t) gos_kernelTaskSleep(15);
+            (void_t) gos_kernelTaskSleep(20);
         }
         (void_t) gos_traceTraceFormatted(TASK_DUMP_SEPARATOR"\n");
+
+        // Stack stats.
+        (void_t) gos_traceTraceFormatted("Stack statistics:\r\n");
+        (void_t) gos_traceTraceFormatted(STACK_STATS_SEPARATOR);
+        (void_t) gos_traceTraceFormatted(
+            "| %6s | %28s | %6s | %14s | %9s |\r\n",
+            "tid",
+            "name",
+            "stack",
+			"max stack use",
+			"stack [%]"
+            );
+        (void_t) gos_traceTraceFormatted(STACK_STATS_SEPARATOR);
+        for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
+        {
+            if (taskDescriptors[taskIndex].taskFunction == NULL)
+            {
+                break;
+            }
+            (void_t) gos_traceTraceFormatted(
+                    "| 0x%04X | %28s | 0x%04X | 0x%-12X | %6u.%02u |%\r\n",
+                    taskDescriptors[taskIndex].taskId,
+                    taskDescriptors[taskIndex].taskName,
+                    taskDescriptors[taskIndex].taskStackSize,
+					taskDescriptors[taskIndex].taskStackMaxUsage,
+					((10000 * taskDescriptors[taskIndex].taskStackMaxUsage) / taskDescriptors[taskIndex].taskStackSize) / 100,
+					((10000 * taskDescriptors[taskIndex].taskStackMaxUsage) / taskDescriptors[taskIndex].taskStackSize) % 100
+                    );
+            (void_t) gos_kernelTaskSleep(20);
+        }
+        (void_t) gos_traceTraceFormatted(STACK_STATS_SEPARATOR"\n");
         (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_KERNEL);
         (void_t) gos_kernelTaskSuspend(kernelDumpTaskId);
     }
