@@ -61,7 +61,7 @@ GOS_EXTERN gos_driver_functions_t driverFunctions;
 /*
  * Function: gos_timerDriverSysTimerGet
  */
-gos_result_t gos_timerDriverSysTimerGet (u32_t* pValue)
+gos_result_t gos_timerDriverSysTimerGet (u16_t* pValue)
 {
     /*
      * Local variables.

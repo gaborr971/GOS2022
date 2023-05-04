@@ -60,7 +60,7 @@
 /**
  * System timer value get function type.
  */
-typedef gos_result_t (*gos_timerDriverSysTimerGetVal_t)(u32_t*);
+typedef gos_result_t (*gos_timerDriverSysTimerGetVal_t)(u16_t*);
 
 /*
  * Function prototypes
@@ -76,5 +76,5 @@ typedef gos_result_t (*gos_timerDriverSysTimerGetVal_t)(u32_t*);
  * @retval  GOS_SUCCESS : According to user implementation.
  * @retval  GOS_ERROR   : According to user implementation / function not registered.
  */
-gos_result_t gos_timerDriverSysTimerGet (u32_t* pValue);
+gos_result_t gos_timerDriverSysTimerGet (u16_t* pValue);
 #endif
