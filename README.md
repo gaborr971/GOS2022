@@ -4,7 +4,7 @@ This repository contains the source code of GOS2022
 # Description
 GOS2022 is an open-source, simple embedded operating system project.
 It is under development, therefore can be considered unsafe and can contain bugs.
-It is being tested during the development on a Nucleo F446 board with
+It is being tested during the development on an STM32F446RE board with
 a custom test environment.
 
 # Content
@@ -20,7 +20,7 @@ will be published later.
 Contribution to this project is encouraged and appriciated.
 If you have any questions or ideas, feel free to contact me: gaborr97@gmail.com
 
-The code can be used for basic testing at this point, but not recommended for building
+The code can be used for developing simple application, but not recommended for building
 complex applications yet.
 
-Last updated: 2023-01-13
+Last updated: 2023-05-04
