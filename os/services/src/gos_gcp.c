@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_gcp.c
 //! @author     Gabor Repasi
-//! @date       2022-12-20
-//! @version    2.0
+//! @date       2023-05-04
+//! @version    2.1
 //!
 //! @brief      GOS General Communication Protocol handler service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_gcp.h
@@ -28,6 +28,7 @@
 // 1.1        2022-12-15    Gabor Repasi    *    Frame number calculation bugfix
 //                                          +    Multiple channel handling added
 // 2.0        2022-12-20    Gabor Repasi    Released
+// 2.1        2023-05-04    Gabor Repasi    * Lock calls replaced with mutex calls
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -54,7 +55,7 @@
 #include <gos_crc_driver.h>
 #include <gos_error.h>
 #include <gos_gcp.h>
-#include <gos_lock.h>
+#include <gos_mutex.h>
 #include <string.h>
 
 /*
@@ -115,9 +116,9 @@ typedef struct
 GOS_STATIC gos_gcpChannelFunctions_t channelFunctions [CFG_GCP_CHANNELS_MAX_NUMBER];
 
 /**
- * GCP lock ID.
+ * GCP mutex.
  */
-GOS_STATIC gos_lockId_t gcpLockId;
+GOS_STATIC gos_mutex_t  gcpMutex;
 
 /*
  * Function prototypes
@@ -138,10 +139,12 @@ gos_result_t gos_gcpInit (void_t)
     /*
      * Function code.
      */
-    if (gos_lockCreate(&gcpLockId) != GOS_SUCCESS)
+    /*if (gos_lockCreate(&gcpLockId) != GOS_SUCCESS)
     {
         gcpInitResult = GOS_ERROR;
-    }
+    }*/
+
+    gos_mutexInit(&gcpMutex);
 
     return gcpInitResult;
 }
@@ -186,7 +189,7 @@ gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel,
     /*
      * Function code.
      */
-    if (gos_lockWaitGet(gcpLockId) == GOS_SUCCESS &&
+    if (gos_mutexLock(&gcpMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS &&
         pMessageHeader != NULL &&
         (pMessagePayload != NULL || (pMessagePayload == NULL && pMessageHeader->payloadSize == 0u)) &&
         channel < CFG_GCP_CHANNELS_MAX_NUMBER &&
@@ -203,7 +206,7 @@ gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel,
         }
     }
 
-    (void_t) gos_lockRelease(gcpLockId);
+    gos_mutexUnlock(&gcpMutex);
 
     return transmitMessageResult;
 }
@@ -223,7 +226,7 @@ gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel,
     /*
      * Function code.
      */
-    if (gos_lockWaitGet(gcpLockId) == GOS_SUCCESS &&
+    if (gos_mutexLock(&gcpMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS &&
         pTargetMessageHeader != NULL && pPayloadTarget != NULL &&
         channel < CFG_GCP_CHANNELS_MAX_NUMBER &&
         channelFunctions[channel].gcpReceiveFunction != NULL)
@@ -237,7 +240,7 @@ gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel,
         }
     }
 
-    (void_t) gos_lockRelease(gcpLockId);
+    gos_mutexUnlock(&gcpMutex);
 
     return receiveMessageResult;
 }

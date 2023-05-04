@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_message.c
 //! @author     Gabor Repasi
-//! @date       2023-01-11
-//! @version    1.5
+//! @date       2023-05-04
+//! @version    1.6
 //!
 //! @brief      GOS message service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_message.h
@@ -37,6 +37,7 @@
 // 1.4        2022-12-15    Gabor Repasi    *    Waiter array handling bugfix
 // 1.5        2023-01-11    Gabor Repasi    -    Unnecessary includes removed
 //                                               Initialization error logging removed
+// 1.6        2023-05-04    Gabor Repasi    *    Lock calls replaced with mutex calls
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -60,8 +61,8 @@
 /*
  * Includes
  */
-#include <gos_lock.h>
 #include <gos_message.h>
+#include <gos_mutex.h>
 #include <string.h>
 
 /*
@@ -70,7 +71,7 @@
 /**
  * Message daemon poll time in [ms].
  */
-#define GOS_MESSAGE_DAEMON_POLL_TIME_MS    ( 30u )
+#define GOS_MESSAGE_DAEMON_POLL_TIME_MS    ( 150u )
 
 /*
  * Type definitions
@@ -116,9 +117,9 @@ GOS_STATIC gos_messageIndex_t       nextMessageIndex;
 GOS_STATIC gos_messageWaiterIndex_t nextWaiterIndex;
 
 /**
- * Message lock to protect the internal arrays as shared resources.
+ * Message mutex to protect the internal arrays as shared resources.
  */
-GOS_STATIC gos_lockId_t             messageLockId;
+GOS_STATIC gos_mutex_t              messageMutex;
 
 /*
  * Function prototypes
@@ -166,8 +167,10 @@ gos_result_t gos_messageInit (void_t)
         messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
     }
 
-    if (gos_kernelTaskRegister(&messageDaemonTaskDesc, &messageDaemonTaskId) != GOS_SUCCESS ||
-    	gos_lockCreate(&messageLockId) != GOS_SUCCESS)
+    // Initialize message mutex.
+    gos_mutexInit(&messageMutex);
+
+    if (gos_kernelTaskRegister(&messageDaemonTaskDesc, &messageDaemonTaskId) != GOS_SUCCESS)
     {
         messageInitResult = GOS_ERROR;
     }
@@ -192,7 +195,8 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
     /*
      * Function code.
      */
-    if (target != NULL && messageIdArray != NULL && gos_lockWaitGet(messageLockId) == GOS_SUCCESS)
+    if (target != NULL && messageIdArray != NULL &&
+    	gos_mutexLock(&messageMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
     {
         if (messageWaiterArray[nextWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID &&
             gos_kernelTaskGetCurrentId(&currentTaskId) == GOS_SUCCESS)
@@ -229,8 +233,8 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
                 }
             }
 
-            // Release message lock.
-            (void_t) gos_lockRelease(messageLockId);
+            // Unlock message mutex.
+            gos_mutexUnlock(&messageMutex);
 
             // Block task (to be unblocked by daemon).
             GOS_PRIVILEGED_ACCESS
@@ -250,8 +254,8 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
         }
     }
 
-    // Release message lock.
-    (void_t) gos_lockRelease(messageLockId);
+    // Unlock message mutex.
+    gos_mutexUnlock(&messageMutex);
 
     return messageRxResult;
 }
@@ -273,7 +277,7 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
     if (message != NULL &&
         message->messageId != GOS_MESSAGE_INVALID_ID &&
         message->messageSize < CFG_MESSAGE_MAX_LENGTH &&
-        gos_lockWaitGet(messageLockId) == GOS_SUCCESS)
+		gos_mutexLock(&messageMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
     {
         if (messageArray[nextMessageIndex].messageId == GOS_MESSAGE_INVALID_ID)
         {
@@ -295,8 +299,8 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
         }
     }
 
-    // Release message lock.
-    (void_t) gos_lockRelease(messageLockId);
+    // Unlock message mutex.
+    gos_mutexUnlock(&messageMutex);
 
     return messageTxResult;
 }
@@ -325,8 +329,7 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
      */
     for(;;)
     {
-        (void_t) gos_lockWaitGet(messageLockId);
-        for (messageIndex = 0u; messageIndex < CFG_MESSAGE_MAX_NUMBER; messageIndex++)
+        if (gos_mutexLock(&messageMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
         {
             for (messageWaiterIndex = 0u; messageWaiterIndex < CFG_MESSAGE_MAX_WAITERS; messageWaiterIndex++)
             {
@@ -335,23 +338,26 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
                     waiterServed = GOS_FALSE;
                     for (messageIdIndex = 0u; messageIdIndex < CFG_MESSAGE_MAX_WAITER_IDS; messageIdIndex++)
                     {
-                        if (messageWaiterArray[messageWaiterIndex].messageIdArray[messageIdIndex] ==
-                            messageArray[messageIndex].messageId)
-                        {
-                            memcpy(messageWaiterArray[messageWaiterIndex].target->messageBytes,
-                                  (void_t*)messageArray[messageIndex].messageBytes,
-                                  messageArray[messageIndex].messageSize);
-                            messageWaiterArray[messageWaiterIndex].target->messageSize    = messageArray[messageIndex].messageSize;
-                            messageWaiterArray[messageWaiterIndex].target->messageId    = messageArray[messageIndex].messageId;
+                    	for (messageIndex = 0u; messageIndex < CFG_MESSAGE_MAX_NUMBER; messageIndex++)
+                    	{
+                            if (messageWaiterArray[messageWaiterIndex].messageIdArray[messageIdIndex] ==
+                                messageArray[messageIndex].messageId)
+                            {
+                                memcpy(messageWaiterArray[messageWaiterIndex].target->messageBytes,
+                                      (void_t*)messageArray[messageIndex].messageBytes,
+                                      messageArray[messageIndex].messageSize);
+                                messageWaiterArray[messageWaiterIndex].target->messageSize    = messageArray[messageIndex].messageSize;
+                                messageWaiterArray[messageWaiterIndex].target->messageId    = messageArray[messageIndex].messageId;
 
-                            (void_t) gos_kernelTaskUnblock(messageWaiterArray[messageWaiterIndex].waiterTaskId);
+                                (void_t) gos_kernelTaskUnblock(messageWaiterArray[messageWaiterIndex].waiterTaskId);
 
-                            messageArray[messageIndex].messageId = GOS_MESSAGE_INVALID_ID;
-                            messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
-                            waiterServed = GOS_TRUE;
+                                messageArray[messageIndex].messageId = GOS_MESSAGE_INVALID_ID;
+                                messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
+                                waiterServed = GOS_TRUE;
 
-                            break;
-                        }
+                                break;
+                            }
+                    	}
                     }
 
                     if (waiterServed == GOS_FALSE && messageWaiterArray[messageWaiterIndex].waitTmo != GOS_MESSAGE_ENDLESS_TMO)
@@ -367,8 +373,11 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
                     }
                 }
             }
+
+            // Unlock message mutex.
+            gos_mutexUnlock(&messageMutex);
         }
-        (void_t) gos_lockRelease(messageLockId);
+
         (void_t) gos_kernelTaskSleep(GOS_MESSAGE_DAEMON_POLL_TIME_MS);
     }
 }
