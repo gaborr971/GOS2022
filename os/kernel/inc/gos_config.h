@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_config.h
 //! @author     Gabor Repasi
-//! @date       2023-05-04
-//! @version    1.4
+//! @date       2023-05-19
+//! @version    1.5
 //!
 //! @brief      GOS configuration header.
 //! @details    This header contains the kernel and service configurations of the operating system.
@@ -32,6 +32,7 @@
 //                                               moved to gos_kernel.h
 // 1.4        2023-04-05    Gabor Repasi    -    Lock- and trigger-related macros removed
 //                                          +    CFG_SYSTEM_TASK_STACK_SIZE added
+// 1.5        2023-05-19    Ahmed Gazar     +    CFG_SHELL_COMMAND_BUFFER_SIZE added
 //*************************************************************************************************
 #ifndef GOS_CONFIG_H
 #define GOS_CONFIG_H
@@ -51,7 +52,7 @@
 //! Maximum task name length.
 #define CFG_TASK_MAX_NAME_LENGTH        ( 32 )
 //! Maximum number of tasks.
-#define CFG_TASK_MAX_NUMBER             ( 16 )
+#define CFG_TASK_MAX_NUMBER             ( 36 )
 
 
 //! Minimum task stack size.
@@ -61,25 +62,25 @@
 //! Idle task stack size.
 #define CFG_IDLE_TASK_STACK_SIZE        ( 0x300 )
 //! System task stack size.
-#define CFG_SYSTEM_TASK_STACK_SIZE      ( 0x200 )
+#define CFG_SYSTEM_TASK_STACK_SIZE      ( 0x400 )
 //! Signal daemon task stack size.
-#define CFG_TASK_SIGNAL_DAEMON_STACK    ( 0x200 )
+#define CFG_TASK_SIGNAL_DAEMON_STACK    ( 0x400 )
 //! Process daemon task stack size.
 #define CFG_TASK_PROC_DAEMON_STACK      ( 0x300 )
 //! Time daemon task stack size.
-#define CFG_TASK_TIME_DAEMON_STACK      ( 0x200 )
+#define CFG_TASK_TIME_DAEMON_STACK      ( 0x300 )
 //! Kernel dump stack size.
-#define CFG_TASK_KERNEL_DUMP_STACK      ( 0x400 )
+//#define CFG_TASK_KERNEL_DUMP_STACK      ( 0x400 )
 //! Process dump stack size.
-#define CFG_TASK_PROC_DUMP_STACK        ( 0x400 )
+//#define CFG_TASK_PROC_DUMP_STACK        ( 0x400 )
 //! Queue dump stack size.
-#define CFG_TASK_QUEUE_DUMP_STACK       ( 0x300 )
+//#define CFG_TASK_QUEUE_DUMP_STACK       ( 0x300 )
 //! Message daemon task stack size.
 #define CFG_TASK_MESSAGE_DAEMON_STACK   ( 0x200 )
 //! Shell daemon task stack size.
-#define CFG_TASK_SHELL_DAEMON_STACK     ( 0x200 )
+#define CFG_TASK_SHELL_DAEMON_STACK     ( 0x400 )
 //! Log daemon task stack size.
-#define CFG_TASK_TRACE_DAEMON_STACK     ( 0x200 )
+#define CFG_TASK_TRACE_DAEMON_STACK     ( 0x400 )
 
 //! Log daemon task priority.
 #define CFG_TASK_TRACE_DAEMON_PRIO      ( 194 )
@@ -96,14 +97,14 @@
 //! Trigger daemon task priority.
 #define CFG_TASK_TRIGGER_DAEMON_PRIO    ( 193 )
 //! Kernel dump priority.
-#define CFG_TASK_KERNEL_DUMP_PRIO       ( 200 )
+//#define CFG_TASK_KERNEL_DUMP_PRIO       ( 200 )
 //! Queue dump priority.
-#define CFG_TASK_QUEUE_DUMP_PRIO        ( 200 )
+//#define CFG_TASK_QUEUE_DUMP_PRIO        ( 200 )
 //! Process dump priority.
-#define CFG_TASK_PROC_DUMP_PRIO         ( 200 )
+//#define CFG_TASK_PROC_DUMP_PRIO         ( 200 )
 
 //! Process service use flag.
-#define CFG_PROC_USE_SERVICE            ( 0 )
+#define CFG_PROC_USE_SERVICE            ( 1 )
 //! Maximum process priority levels.
 #define CFG_PROC_MAX_PRIO_LEVELS        ( UINT8_MAX )
 //! Idle process priority.
@@ -115,9 +116,9 @@
 
 
 //! Maximum number of queues.
-#define CFG_QUEUE_MAX_NUMBER            ( 2 )
+#define CFG_QUEUE_MAX_NUMBER            ( 4 )
 //! Maximum number of queue elements.
-#define CFG_QUEUE_MAX_ELEMENTS          ( 32 )
+#define CFG_QUEUE_MAX_ELEMENTS          ( 40 )
 //! Maximum queue length.
 #define CFG_QUEUE_MAX_LENGTH            ( 200 )
 //! Queue use name flag.
@@ -127,7 +128,7 @@
 
 
 //! Maximum number of signals.
-#define CFG_SIGNAL_MAX_NUMBER           ( 4 )
+#define CFG_SIGNAL_MAX_NUMBER           ( 6 )
 //! Maximum number of signal subscribers.
 #define CFG_SIGNAL_MAX_SUBSCRIBERS      ( 6 )
 
@@ -143,13 +144,15 @@
 
 
 //! Shell service use flag.
-#define CFG_SHELL_USE_SERVICE           ( 0 )
+#define CFG_SHELL_USE_SERVICE           ( 1 )
 //! Maximum number of shell commands.
-#define CFG_SHELL_MAX_COMMAND_NUMBER    ( 10 )
+#define CFG_SHELL_MAX_COMMAND_NUMBER    ( 16 )
 //! Maximum command length.
 #define CFG_SHELL_MAX_COMMAND_LENGTH    ( 20 )
 //! Maximum parameters length.
-#define CFG_SHELL_MAX_PARAMS_LENGTH     ( 16 )
+#define CFG_SHELL_MAX_PARAMS_LENGTH     ( 128 )
+//! Command buffer size.
+#define CFG_SHELL_COMMAND_BUFFER_SIZE   ( 128 )
 
 
 //! GCP maximum number of channels.
