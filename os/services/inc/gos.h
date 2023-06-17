@@ -14,12 +14,12 @@
 //*************************************************************************************************
 //! @file       gos.h
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.3
+//! @date       2023-06-17
+//! @version    1.5
 //!
 //! @brief      GOS header.
 //! @details    This header is a wrapper for the inclusion of all OS services and drivers for
-//!             GOS2022 v0.3
+//!             GOS2022 v0.4
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
@@ -31,6 +31,8 @@
 // 1.2        2022-11-15    Gabor Repasi    +    License added
 // 1.3        2022-12-11    Gabor Repasi    -    Function prototypes removed
 // 1.4        2022-12-15    Gabor Repasi    *    OS version number changed to v0.3
+// 1.5        2023-06-17    Ahmed Gazar     +    gos_Dump added
+//                                               OS version number changed to v0.4
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -69,4 +71,15 @@
 #include <gos_trace.h>
 #include <gos_trigger.h>
 
+/*
+ * Function prototypes
+ */
+/**
+ * @brief   GOS dump.
+ * @details Sets the dump required flag and wakes up the system task
+ *          that calls the individual dump functions.
+ *
+ * @return  -
+ */
+void_t gos_Dump (void_t);
 #endif

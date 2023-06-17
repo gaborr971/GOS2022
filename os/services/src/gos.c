@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos.c
 //! @author     Gabor Repasi
-//! @date       2023-05-04
-//! @version    1.6
+//! @date       2023-06-17
+//! @version    1.7
 //!
 //! @brief      GOS source.
 //! @details    For a more detailed description of this service, please refer to @ref gos.h
@@ -36,6 +36,8 @@
 //                                          +    Periodic CPU statistics calculation added to
 //                                               system task
 // 1.6        2023-05-04    Gabor Repasi    -    Lock and trigger service initialization removed
+// 1.7        2023-06-17    Ahmed Gazar     +    Dump added
+//                                          +    GOS_SYS_TASK_SLEEP_TIME added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -62,6 +64,14 @@
 #include <gos.h>
 
 /*
+ * Macros
+ */
+/**
+ * System task sleep time.
+ */
+#define GOS_SYS_TASK_SLEEP_TIME ( 500u )
+
+/*
  * Type definitions
  */
 /**
@@ -74,8 +84,8 @@ typedef gos_result_t (*gos_initFunc_t) (void_t);
  */
 typedef struct
 {
-	char_t         initDesc [32]; //!< Initialization descriptor text.
-	gos_initFunc_t initFunc;      //!< Initializer function.
+    char_t         initDesc [32]; //!< Initialization descriptor text.
+    gos_initFunc_t initFunc;      //!< Initializer function.
 }gos_initStruct_t;
 
 /*
@@ -87,23 +97,28 @@ typedef struct
 GOS_STATIC bool_t initError;
 
 /**
+ * Dump required flag.
+ */
+GOS_STATIC bool_t dumpRequired;
+
+/**
  * Initializer function and description lookup table.
  */
 GOS_STATIC gos_initStruct_t initializers [] =
 {
-	{"Queue service initialization"  ,  gos_queueInit},
-	{"Log service initialization"    ,  gos_traceInit},
-	{"Signal service initialization" ,  gos_signalInit},
+    {"Queue service initialization"  ,  gos_queueInit},
+    {"Trace service initialization"  ,  gos_traceInit},
+    {"Signal service initialization" ,  gos_signalInit},
 #if CFG_PROC_USE_SERVICE == 1
-	{"Process service initialization",  gos_procInit},
+    {"Process service initialization",  gos_procInit},
 #endif
-	{"Time service initialization"   ,  gos_timeInit},
+    {"Time service initialization"   ,  gos_timeInit},
 #if CFG_SHELL_USE_SERVICE == 1
-	{"Shell service initialization"  ,  gos_shellInit},
+    {"Shell service initialization"  ,  gos_shellInit},
 #endif
-	{"Message service initialization",  gos_messageInit},
-	{"GCP service initialization"    ,  gos_gcpInit},
-	{"User application initialization", gos_userApplicationInit}
+    {"Message service initialization",  gos_messageInit},
+    {"GCP service initialization"    ,  gos_gcpInit},
+    {"User application initialization", gos_userApplicationInit}
 };
 
 /**
@@ -122,11 +137,11 @@ GOS_STATIC gos_result_t gos_Start      (void_t);
  */
 GOS_STATIC gos_taskDescriptor_t systemTaskDesc =
 {
-	.taskFunction       = gos_systemTask,
-	.taskName           = "gos_system_task",
-	.taskPriority       = 0u,
-	.taskStackSize      = CFG_SYSTEM_TASK_STACK_SIZE,
-	.taskPrivilegeLevel = GOS_TASK_PRIVILEGE_KERNEL
+    .taskFunction       = gos_systemTask,
+    .taskName           = "gos_system_task",
+    .taskPriority       = 0u,
+    .taskStackSize      = CFG_SYSTEM_TASK_STACK_SIZE,
+    .taskPrivilegeLevel = GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -155,9 +170,9 @@ int main (void_t)
 
     // Initialize the kernel and register initializer task.
     if (gos_errorTraceInit("Kernel initialization", gos_kernelInit()) == GOS_SUCCESS &&
-    	gos_kernelTaskRegister(&systemTaskDesc, &systemTaskId) == GOS_SUCCESS)
+        gos_kernelTaskRegister(&systemTaskDesc, &systemTaskId) == GOS_SUCCESS)
     {
-    	initError = GOS_FALSE;
+        initError = GOS_FALSE;
     }
 
     // Start OS.
@@ -167,10 +182,20 @@ int main (void_t)
     }
     else
     {
-    	(void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Initializer task could not be registered.");
+        (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Initializer task could not be registered.");
     }
 
     for(;;);
+}
+
+/*
+ * Function: gos_Dump
+ */
+void_t gos_Dump (void_t)
+{
+    dumpRequired = GOS_TRUE;
+    GOS_PRIVILEGED_ACCESS
+    gos_kernelTaskWakeup(systemTaskId);
 }
 
 /*
@@ -236,42 +261,53 @@ GOS_STATIC gos_result_t gos_Start (void_t)
  */
 GOS_STATIC void_t gos_systemTask (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t sysInitResult = GOS_SUCCESS;
-	u8_t         initIndex     = 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t sysInitResult = GOS_SUCCESS;
+    u8_t         initIndex     = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_DISABLE_SCHED
+    /*
+     * Function code.
+     */
+    GOS_DISABLE_SCHED
 
-	// Loop through the initializers and call them while tracing the results.
+    // Loop through the initializers and call them while tracing the results.
     for (initIndex = 0u; initIndex < sizeof(initializers) / sizeof(gos_initStruct_t); initIndex++)
     {
-    	sysInitResult &= gos_errorTraceInit(initializers[initIndex].initDesc, initializers[initIndex].initFunc());
+        sysInitResult &= gos_errorTraceInit(initializers[initIndex].initDesc, initializers[initIndex].initFunc());
     }
 
-	// Check and correct flag value.
+    // Check and correct flag value.
     if (sysInitResult != GOS_SUCCESS)
     {
-    	sysInitResult = GOS_ERROR;
+        sysInitResult = GOS_ERROR;
     }
 
     // Trace overall result.
     (void_t) gos_errorTraceInit("System initialization", sysInitResult);
 
-	GOS_ENABLE_SCHED
+    GOS_ENABLE_SCHED
 
-	// Set priority to kernel-level.
-	gos_kernelTaskSetOriginalPriority(systemTaskId, 201);
-	gos_kernelTaskSetPriority(systemTaskId, 201);
+    // Set priority to kernel-level.
+    gos_kernelTaskSetOriginalPriority(systemTaskId, 201);
+    gos_kernelTaskSetPriority(systemTaskId, 201);
 
-	for(;;)
-	{
-		// Refresh task statistics.
-		gos_kernelCalculateTaskCpuUsages();
-		gos_kernelTaskSleep(500);
-	}
+    for (;;)
+    {
+        // Refresh task statistics.
+        gos_kernelCalculateTaskCpuUsages();
+
+        if (dumpRequired == GOS_TRUE)
+        {
+            gos_kernelDump();
+#if CFG_PROC_USE_SERVICE
+            gos_procDump();
+#endif
+            gos_queueDump();
+            dumpRequired = GOS_FALSE;
+        }
+
+        gos_kernelTaskSleep(GOS_SYS_TASK_SLEEP_TIME);
+    }
 }
