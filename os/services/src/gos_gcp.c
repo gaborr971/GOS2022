@@ -139,11 +139,6 @@ gos_result_t gos_gcpInit (void_t)
     /*
      * Function code.
      */
-    /*if (gos_lockCreate(&gcpLockId) != GOS_SUCCESS)
-    {
-        gcpInitResult = GOS_ERROR;
-    }*/
-
     gos_mutexInit(&gcpMutex);
 
     return gcpInitResult;
