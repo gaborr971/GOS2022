@@ -59,11 +59,11 @@ GOS_INLINE void_t gos_triggerReset (gos_trigger_t* pTrigger)
     /*
      * Function code.
      */
-	GOS_ATOMIC_ENTER
+    GOS_ATOMIC_ENTER
 
-	pTrigger->triggerValueCounter = 0u;
+    pTrigger->triggerValueCounter = 0u;
 
-	GOS_ATOMIC_EXIT
+    GOS_ATOMIC_EXIT
 }
 
 /*
@@ -71,9 +71,9 @@ GOS_INLINE void_t gos_triggerReset (gos_trigger_t* pTrigger)
  */
 GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u32_t timeout)
 {
-	/*
-	 * Local variables.
-	 */
+    /*
+     * Local variables.
+     */
     bool_t       isTriggerReached  = GOS_FALSE;
     gos_result_t triggerWaitResult = GOS_ERROR;
     u32_t        sysTickInitial    = 0u;
@@ -84,31 +84,38 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
     sysTickInitial = gos_kernelGetSysTicks();
 
     GOS_ATOMIC_ENTER
-	pTrigger->numOfWaiters++;
+    pTrigger->numOfWaiters++;
     GOS_ATOMIC_EXIT
 
     while (isTriggerReached == GOS_FALSE)
     {
-    	if ((timeout != GOS_TRIGGER_ENDLESS_TMO)
-        	&& ((sysTickInitial - gos_kernelGetSysTicks()) >= timeout))
-    	{
-    		break;
-    	}
+        if ((timeout != GOS_TRIGGER_ENDLESS_TMO)
+            && ((sysTickInitial - gos_kernelGetSysTicks()) >= timeout))
+        {
+            break;
+        }
 
         // Check if the trigger value is reached
-    	GOS_ATOMIC_ENTER
-		if (pTrigger->triggerValueCounter >= value)
-		{
-			isTriggerReached = GOS_TRUE;
-			triggerWaitResult = GOS_SUCCESS;
-			pTrigger->numOfWaiters--;
-		}
-		GOS_ATOMIC_EXIT
+        GOS_ATOMIC_ENTER
+        if (pTrigger->triggerValueCounter >= value)
+        {
+            isTriggerReached = GOS_TRUE;
+            triggerWaitResult = GOS_SUCCESS;
+            pTrigger->numOfWaiters--;
+        }
+        GOS_ATOMIC_EXIT
 
-		if (isTriggerReached == GOS_FALSE)
-		{
-			gos_kernelTaskYield();
-		}
+        if (isTriggerReached == GOS_FALSE)
+        {
+            if (timeout == GOS_TRIGGER_ENDLESS_TMO)
+            {
+                gos_kernelTaskSleep(5);
+            }
+            else
+            {
+                gos_kernelTaskYield();
+            }
+        }
     }
 
     return triggerWaitResult;
@@ -122,9 +129,9 @@ GOS_INLINE void_t gos_triggerIncrement (gos_trigger_t* pTrigger)
     /*
      * Function code.
      */
-	GOS_ATOMIC_ENTER
+    GOS_ATOMIC_ENTER
 
-	pTrigger->triggerValueCounter++;
+    pTrigger->triggerValueCounter++;
 
-	GOS_ATOMIC_EXIT
+    GOS_ATOMIC_EXIT
 }

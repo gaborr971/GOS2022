@@ -98,7 +98,7 @@ void_t gos_triggerReset (gos_trigger_t* pTrigger);
 /**
  * @brief   Waits for the trigger instance to reach the given trigger value.
  * @details Increases the trigger waiter number, and waits in a non-blocking way
- * 			until the desired trigger value is reached or the timeout is reached.
+ *          until the desired trigger value is reached or the timeout is reached.
  *
  * @param   pTrigger : Pointer to the trigger instance.
  * @param   value    : The desired trigger value.
