@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_message.c
 //! @author     Gabor Repasi
-//! @date       2023-05-04
-//! @version    1.6
+//! @date       2023-06-17
+//! @version    1.7
 //!
 //! @brief      GOS message service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_message.h
@@ -38,6 +38,8 @@
 // 1.5        2023-01-11    Gabor Repasi    -    Unnecessary includes removed
 //                                               Initialization error logging removed
 // 1.6        2023-05-04    Gabor Repasi    *    Lock calls replaced with mutex calls
+// 1.7        2023-06-17    Ahmed Gazar     *    Message daemon bugfix for the case when a waiter
+//                                               is waiting for multiple messages
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -196,7 +198,7 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
      * Function code.
      */
     if (target != NULL && messageIdArray != NULL &&
-    	gos_mutexLock(&messageMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
+        gos_mutexLock(&messageMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
     {
         if (messageWaiterArray[nextWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID &&
             gos_kernelTaskGetCurrentId(&currentTaskId) == GOS_SUCCESS)
@@ -277,7 +279,7 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
     if (message != NULL &&
         message->messageId != GOS_MESSAGE_INVALID_ID &&
         message->messageSize < CFG_MESSAGE_MAX_LENGTH &&
-		gos_mutexLock(&messageMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
+        gos_mutexLock(&messageMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
     {
         if (messageArray[nextMessageIndex].messageId == GOS_MESSAGE_INVALID_ID)
         {
@@ -338,8 +340,8 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
                     waiterServed = GOS_FALSE;
                     for (messageIdIndex = 0u; messageIdIndex < CFG_MESSAGE_MAX_WAITER_IDS; messageIdIndex++)
                     {
-                    	for (messageIndex = 0u; messageIndex < CFG_MESSAGE_MAX_NUMBER; messageIndex++)
-                    	{
+                        for (messageIndex = 0u; messageIndex < CFG_MESSAGE_MAX_NUMBER; messageIndex++)
+                        {
                             if (messageWaiterArray[messageWaiterIndex].messageIdArray[messageIdIndex] ==
                                 messageArray[messageIndex].messageId)
                             {
@@ -355,9 +357,11 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
                                 messageWaiterArray[messageWaiterIndex].waiterTaskId = GOS_INVALID_TASK_ID;
                                 waiterServed = GOS_TRUE;
 
-                                break;
+                                messageIndex = CFG_MESSAGE_MAX_NUMBER;
+                                messageIdIndex = CFG_MESSAGE_MAX_WAITER_IDS;
+                                messageWaiterIndex = CFG_MESSAGE_MAX_WAITERS;
                             }
-                    	}
+                        }
                     }
 
                     if (waiterServed == GOS_FALSE && messageWaiterArray[messageWaiterIndex].waitTmo != GOS_MESSAGE_ENDLESS_TMO)
