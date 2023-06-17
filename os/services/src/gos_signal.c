@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_signal.c
 //! @author     Gabor Repasi
-//! @date       2023-05-04
-//! @version    1.4
+//! @date       2023-06-17
+//! @version    1.5
 //!
 //! @brief      GOS signal service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_signal.h
@@ -30,6 +30,8 @@
 // 1.3        2022-12-15    Gabor Repasi    +    Initialization error logging added
 //                                          +    Privilege handling added
 // 1.4        2023-05-04    Gabor Repasi    -    Lock dump signal removed
+// 1.5        2023-06-17    Ahmed Gazar     *    Service rework, optimizations, queue use removed,
+//                                               unnecessary system signals removed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -74,8 +76,10 @@
  */
 typedef struct
 {
-    bool_t              inUse;                                 //!< Flag to indicate whether the signal is in use.
-    gos_signalHandler_t handlers [CFG_SIGNAL_MAX_SUBSCRIBERS]; //!< Signal handler array.
+    bool_t               inUse;                                 //!< Flag to indicate whether the signal is in use.
+    gos_signalHandler_t  handlers [CFG_SIGNAL_MAX_SUBSCRIBERS]; //!< Signal handler array.
+    bool_t               invokeRequired;                        //!< Invoke required flag.
+    gos_signalSenderId_t senderId;                              //!< Sender ID.
 }gos_signalDescriptor_t;
 
 /**
@@ -96,15 +100,6 @@ typedef struct
 GOS_STATIC gos_signalDescriptor_t signalArray [CFG_SIGNAL_MAX_NUMBER];
 
 /**
- * Signal invoke queue (FIFO).
- */
-GOS_STATIC gos_queueDescriptor_t signalInvokeQueueDesc = {
-#if CFG_QUEUE_USE_NAME == 1
-        .queueName = "gos_signal_invoke_queue"
-#endif
-};
-
-/**
  * Signal daemon task ID.
  */
 GOS_STATIC gos_tid_t      signalDaemonTaskId;
@@ -112,17 +107,7 @@ GOS_STATIC gos_tid_t      signalDaemonTaskId;
 /*
  * External variables
  */
-GOS_EXTERN gos_signalId_t kernelDumpSignal;
-GOS_EXTERN gos_signalId_t kernelDumpReadySignal;
 GOS_EXTERN gos_signalId_t kernelTaskDeleteSignal;
-
-/*
- * External functions
- */
-GOS_EXTERN void_t gos_kernelDumpSignalHandler (gos_signalSenderId_t senderId);
-GOS_EXTERN void_t gos_procDumpSignalHandler   (gos_signalSenderId_t senderId);
-GOS_EXTERN void_t gos_queueDumpSignalHandler  (gos_signalSenderId_t senderId);
-GOS_EXTERN void_t gos_lockDumpSignalHandler   (gos_signalSenderId_t senderId);
 
 /*
  * Function prototypes
@@ -161,17 +146,12 @@ gos_result_t gos_signalInit (void_t)
         signalArray[signalIndex].inUse = GOS_FALSE;
     }
 
-    if (gos_queueCreate(&signalInvokeQueueDesc) != GOS_SUCCESS ||
-    	gos_kernelTaskRegister(&signalDaemonTaskDescriptor, &signalDaemonTaskId) != GOS_SUCCESS ||
-		gos_signalCreate(&kernelDumpSignal) != GOS_SUCCESS ||
-		gos_signalCreate(&kernelDumpReadySignal) != GOS_SUCCESS ||
-		gos_signalCreate(&kernelTaskDeleteSignal) != GOS_SUCCESS ||
-		gos_signalSubscribe(kernelDumpSignal, gos_kernelDumpSignalHandler) != GOS_SUCCESS ||
-		gos_signalSubscribe(kernelDumpSignal, gos_procDumpSignalHandler) != GOS_SUCCESS ||
-		gos_signalSubscribe(kernelDumpSignal, gos_queueDumpSignalHandler) != GOS_SUCCESS
+    // Register signal daemon and create kernel task delete signal.
+    if (gos_kernelTaskRegister(&signalDaemonTaskDescriptor, &signalDaemonTaskId) != GOS_SUCCESS ||
+        gos_signalCreate(&kernelTaskDeleteSignal) != GOS_SUCCESS
     )
     {
-    	signalInitResult = GOS_ERROR;
+        signalInitResult = GOS_ERROR;
     }
 
     return signalInitResult;
@@ -200,6 +180,7 @@ gos_result_t gos_signalCreate (gos_signalId_t* pSignal)
             {
                 *pSignal = signalIndex;
                 signalArray[signalIndex].inUse = GOS_TRUE;
+                signalArray[signalIndex].invokeRequired = GOS_FALSE;
                 signalCreateResult = GOS_SUCCESS;
                 break;
             }
@@ -242,13 +223,12 @@ gos_result_t gos_signalSubscribe (gos_signalId_t signalId, gos_signalHandler_t s
 /*
  * Function: gos_signalInvoke
  */
-gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSenderId_t senderId)
+GOS_INLINE gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSenderId_t senderId)
 {
     /*
      * Local variables.
      */
     gos_result_t               signalInvokeResult     = GOS_ERROR;
-    gos_signalInvokeDescriptor signalInvokeDescriptor = {0};
     gos_tid_t                  callerTaskId           = GOS_INVALID_TASK_ID;
     gos_taskDescriptor_t       callerTaskDesc         = {0};
     bool_t                     isCallerIsr            = GOS_FALSE;
@@ -268,15 +248,14 @@ gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSenderId_t sen
             (callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_SIGNALING) == GOS_PRIV_SIGNALING)))
         {
             GOS_UNPRIVILEGED_ACCESS
-            signalInvokeDescriptor.signalId = signalId;
-            signalInvokeDescriptor.senderId = senderId;
-
-            signalInvokeResult = gos_queuePut(signalInvokeQueueDesc.queueId, (void_t*)&signalInvokeDescriptor, sizeof(signalInvokeDescriptor));
+            signalArray[signalId].senderId       = senderId;
+            signalArray[signalId].invokeRequired = GOS_TRUE;
+            signalInvokeResult = GOS_SUCCESS;
         }
         else
         {
             gos_errorHandler(GOS_ERROR_LEVEL_OS_WARNING, __func__, __LINE__, "<%s> has no privilege to invoke signals!",
-            		callerTaskDesc.taskName
+                    callerTaskDesc.taskName
             );
         }
     }
@@ -296,30 +275,35 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
     /*
      * Local variables.
      */
-    gos_signalInvokeDescriptor signalInvokeDescriptor = {0};
-    gos_signalHandlerIndex_t   signalHandlerIndex     = 0u;
+    gos_signalHandlerIndex_t signalHandlerIndex = 0u;
+    gos_signalIndex_t        signalIndex        = 0u;
 
     /*
      * Function code.
      */
     for (;;)
     {
-        while (gos_queueGet(signalInvokeQueueDesc.queueId, (void_t*)&signalInvokeDescriptor, sizeof(signalInvokeDescriptor)) == GOS_SUCCESS)
+        for (signalIndex = 0u; signalIndex < CFG_SIGNAL_MAX_NUMBER; signalIndex++)
         {
-            for (signalHandlerIndex = 0u; signalHandlerIndex < CFG_SIGNAL_MAX_SUBSCRIBERS; signalHandlerIndex++)
+            if (signalArray[signalIndex].invokeRequired == GOS_TRUE)
             {
-                if (signalArray[signalInvokeDescriptor.signalId].handlers[signalHandlerIndex] == NULL)
+                for (signalHandlerIndex = 0u; signalHandlerIndex < CFG_SIGNAL_MAX_SUBSCRIBERS; signalHandlerIndex++)
                 {
-                    // Last handler called, stop calling.
-                    break;
+                    if (signalArray[signalIndex].handlers[signalHandlerIndex] == NULL)
+                    {
+                        // Last handler called, stop calling.
+                        break;
+                    }
+                    else
+                    {
+                        // Call signal handler.
+                        signalArray[signalIndex].handlers[signalHandlerIndex](signalArray[signalIndex].senderId);
+                    }
                 }
-                else
-                {
-                    // Call signal handler.
-                    signalArray[signalInvokeDescriptor.signalId].handlers[signalHandlerIndex](signalInvokeDescriptor.senderId);
-                }
+                signalArray[signalIndex].invokeRequired = GOS_FALSE;
             }
         }
+
         (void_t) gos_kernelTaskSleep(GOS_SIGNAL_DAEMON_POLL_TIME_MS);
     }
 }
