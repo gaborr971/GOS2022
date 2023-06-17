@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.h
 //! @author     Gabor Repasi
-//! @date       2023-05-04
-//! @version    1.9
+//! @date       2023-06-17
+//! @version    1.11
 //!
 //! @brief      GOS kernel header.
 //! @details    The GOS kernel is the core of the GOS system. It contains the basic type
@@ -47,6 +47,8 @@
 // 1.8        2023-01-13    Gabor Repasi    +    Constant macro added
 //                                          *    Scheduling disabled flag replaced with counter
 // 1.9        2023-05-04    Gabor Repasi    +    Task stack monitoring variables added
+// 1.10       2023-05-19    Ahmed Gazar     +    gos_kernelGetCpuUsage added
+// 1.11       2023-06-17    Ahmed Gazar     *    Kernel dump moved to function
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -161,9 +163,9 @@
  * Enable scheduling.
  */
 #define GOS_ENABLE_SCHED               {                                            \
-	                                       GOS_EXTERN u8_t schedDisableCntr;        \
+                                           GOS_EXTERN u8_t schedDisableCntr;        \
                                            if (schedDisableCntr > 0)                \
-										   { schedDisableCntr--; }                  \
+                                           { schedDisableCntr--; }                  \
                                        }
 /**
  * Request privileged access to next function.
@@ -391,8 +393,8 @@ typedef u16_t   gos_year_t;        //!< Year type.
  */
 typedef struct __attribute__((packed))
 {
-	gos_microsecond_t microseconds; //!< Microseconds.
-	gos_millisecond_t milliseconds; //!< Milliseconds.
+    gos_microsecond_t microseconds; //!< Microseconds.
+    gos_millisecond_t milliseconds; //!< Milliseconds.
     gos_second_t      seconds;      //!< Seconds.
     gos_minute_t      minutes;      //!< Minutes.
     gos_hour_t        hours;        //!< Hours.
@@ -803,23 +805,22 @@ gos_result_t gos_kernelSubscribeTaskDeleteSignal (void_t (*deleteSignalHandler)(
 gos_result_t gos_kernelSubscribeDumpReadySignal (void_t (*dumpReadySignalHandler)(u16_t));
 
 /**
- * @brief    Invokes the kernel dump signal.
- * @details  Invokes the kernel dump signal.
- *
- * @return   Result of kernel dump.
- *
- * @retval   GOS_SUCCESS : Kernel dump signal invoking successful.
- * @retval   GOS_ERROR   : Signal invoking failed.
- */
-gos_result_t gos_kernelDump (void_t);
-
-/**
  * @brief   Returns the system ticks.
  * @details Returns the internal system tick counter value.
  *
  * @return  System ticks.
  */
 u32_t gos_kernelGetSysTicks (void_t);
+
+/**
+ * @brief   Returns the CPU usage.
+ * @details Refreshes the CPU statistics and returns the current CPU usage
+ *          in [CPU%] * 100 format that results in a range of 0...10000 where
+ *          the last two digits represent two decimals. The usage is 100% - idle task%.
+ *
+ * @return  Overall CPU usage.
+ */
+u16_t gos_kernelGetCpuUsage (void_t);
 
 /**
  * @brief   Starts the kernel.
@@ -859,7 +860,7 @@ void_t gos_kernelDelayUs (u16_t microseconds);
  *
  * @param   milliseconds : Milliseconds to wait.
  *
- * @return    -
+ * @return  -
  */
 void_t gos_kernelDelayMs (u16_t milliseconds);
 
@@ -868,9 +869,18 @@ void_t gos_kernelDelayMs (u16_t milliseconds);
  * @details Based on the total system time range, it refreshes
  *          the CPU-usage statistics of tasks.
  *
- * @return    -
+ * @return  -
  */
 void_t gos_kernelCalculateTaskCpuUsages (void_t);
+
+/**
+ * @brief   Kernel dump.
+ * @details This function prints the kernel configuration and task data to
+ *          the trace output.
+ *
+ * @return  -
+ */
+void_t gos_kernelDump (void_t);
 
 /**
  * @brief   Platform driver initializer. Used for the platform-specific driver initializations.
