@@ -217,9 +217,9 @@ gos_result_t gos_errorTraceInit (const char_t* initDescription, gos_result_t ini
     (void_t) gos_traceTraceFormattedUnsafe("[%-5lu]    %-51s [ "
             "%s"
             " ]\r\n",
-			gos_kernelGetSysTicks(),
+            gos_kernelGetSysTicks(),
             initDescription,
-			gos_traceResultToString(&initResult));
+            gos_traceResultToString(&initResult));
 
     return initResult;
 }
@@ -234,22 +234,22 @@ gos_result_t gos_errorTraceInit (const char_t* initDescription, gos_result_t ini
  */
 GOS_STATIC char_t* gos_traceResultToString (gos_result_t* pResult)
 {
-	/*
-	 * Function code.
-	 */
-	switch (*pResult)
-	{
-		case GOS_SUCCESS:
-		{
-			return TRACE_FG_GREEN_START RESULT_STRING_SUCCESS TRACE_FORMAT_RESET;
-		}
-		case GOS_ERROR:
-		{
-			return TRACE_FG_RED_START RESULT_STRING_ERROR TRACE_FORMAT_RESET;
-		}
-		default:
-		{
-			return TRACE_FG_YELLOW_START RESULT_STRING_UNKNOWN TRACE_FORMAT_RESET;
-		}
-	}
+    /*
+     * Function code.
+     */
+    switch (*pResult)
+    {
+        case GOS_SUCCESS:
+        {
+            return TRACE_FG_GREEN_START RESULT_STRING_SUCCESS TRACE_FORMAT_RESET;
+        }
+        case GOS_ERROR:
+        {
+            return TRACE_FG_RED_START RESULT_STRING_ERROR TRACE_FORMAT_RESET;
+        }
+        default:
+        {
+            return TRACE_FG_YELLOW_START RESULT_STRING_UNKNOWN TRACE_FORMAT_RESET;
+        }
+    }
 }
