@@ -120,7 +120,7 @@ GOS_STATIC gos_tid_t timeDaemonTaskId;
 /**
  * Time signal ID. This signal is invoked when a second has elapsed.
  */
-GOS_STATIC gos_signalId_t timeSignalId;
+gos_signalId_t timeSignalId;
 
 /*
  * Function prototypes
@@ -153,9 +153,9 @@ gos_result_t gos_timeInit (void_t)
      * Function code.
      */
     if (gos_signalCreate(&timeSignalId) != GOS_SUCCESS ||
-    	gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
+        gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
     {
-    	timeInitResult = GOS_ERROR;
+        timeInitResult = GOS_ERROR;
     }
 
     return timeInitResult;
@@ -369,76 +369,76 @@ gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t
     {
         while (microsecondCounter++ < microseconds)
         {
-        	pRunTime1->microseconds++;
-        	pRunTime2->microseconds++;
+            pRunTime1->microseconds++;
+            pRunTime2->microseconds++;
 
-        	if (pRunTime1->microseconds >= 1000)
-        	{
-        		pRunTime1->microseconds = 0U;
-        		pRunTime1->milliseconds++;
+            if (pRunTime1->microseconds >= 1000)
+            {
+                pRunTime1->microseconds = 0U;
+                pRunTime1->milliseconds++;
 
-        		// Check milliseconds.
+                // Check milliseconds.
                 if (pRunTime1->milliseconds >= 1000)
                 {
-                	pRunTime1->milliseconds = 0U;
-                	pRunTime1->seconds++;
+                    pRunTime1->milliseconds = 0U;
+                    pRunTime1->seconds++;
 
-                	// Check seconds.
+                    // Check seconds.
                     if (pRunTime1->seconds >= 60)
                     {
-                    	pRunTime1->seconds = 0U;
-                    	pRunTime1->minutes++;
+                        pRunTime1->seconds = 0U;
+                        pRunTime1->minutes++;
 
                         // Check minutes.
                         if (pRunTime1->minutes >= 60)
                         {
-                        	pRunTime1->minutes = 0U;
-                        	pRunTime1->hours++;
+                            pRunTime1->minutes = 0U;
+                            pRunTime1->hours++;
 
                             // Check hours.
                             if (pRunTime1->hours >= 24)
                             {
-                            	pRunTime1->hours = 0U;
-                            	pRunTime1->days++;
+                                pRunTime1->hours = 0U;
+                                pRunTime1->days++;
                             }
                         }
                     }
                 }
-        	}
+            }
 
-        	if (pRunTime2->microseconds >= 1000)
-        	{
-        		pRunTime2->microseconds = 0U;
-        		pRunTime2->milliseconds++;
+            if (pRunTime2->microseconds >= 1000)
+            {
+                pRunTime2->microseconds = 0U;
+                pRunTime2->milliseconds++;
 
-        		// Check milliseconds.
+                // Check milliseconds.
                 if (pRunTime2->milliseconds >= 1000)
                 {
-                	pRunTime2->milliseconds = 0U;
-                	pRunTime2->seconds++;
+                    pRunTime2->milliseconds = 0U;
+                    pRunTime2->seconds++;
 
-                	// Check seconds.
+                    // Check seconds.
                     if (pRunTime2->seconds >= 60)
                     {
-                    	pRunTime2->seconds = 0U;
-                    	pRunTime2->minutes++;
+                        pRunTime2->seconds = 0U;
+                        pRunTime2->minutes++;
 
                         // Check minutes.
                         if (pRunTime2->minutes >= 60)
                         {
-                        	pRunTime2->minutes = 0U;
-                        	pRunTime2->hours++;
+                            pRunTime2->minutes = 0U;
+                            pRunTime2->hours++;
 
                             // Check hours.
                             if (pRunTime2->hours >= 24)
                             {
-                            	pRunTime2->hours = 0U;
-                            	pRunTime2->days++;
+                                pRunTime2->hours = 0U;
+                                pRunTime2->days++;
                             }
                         }
                     }
                 }
-        	}
+            }
         }
         runtimeAddMicrosecondsResult = GOS_SUCCESS;
     }
@@ -508,11 +508,11 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
     /*
      * Function code.
      */
-    // Initialize previous time.
-    (void_t) gos_timeGet(&previousTime);
-
-    for(;;)
+    for (;;)
     {
+        // Initialize previous time.
+        (void_t) gos_timeGet(&previousTime);
+
         // Increase time by 1 second.
         (void_t) gos_timeAddSeconds(&systemTime, 1);
 

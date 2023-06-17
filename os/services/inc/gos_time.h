@@ -235,4 +235,5 @@ gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, u32_t seconds);
  * @retval  GOS_ERROR   : Run-time variable is NULL pointer.
  */
 gos_result_t gos_runTimeGet (gos_runtime_t* pRunTime);
+
 #endif
