@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_queue.c
 //! @author     Gabor Repasi
-//! @date       2023-05-04
-//! @version    1.4
+//! @date       2023-06-17
+//! @version    1.5
 //!
 //! @brief      GOS queue service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_queue.h
@@ -32,6 +32,7 @@
 //                                          +    License added
 // 1.3        2022-12-13    Gabor Repasi    +    Initialization error logging added
 // 1.4        2023-05-04    Gabor Repasi    *    Lock calls replaced with mutex calls
+// 1.5        2023-06-17    Ahmed Gazar     *    Queue dump moved to function
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -137,24 +138,6 @@ GOS_STATIC gos_queueFullHook  queueFullHook  = NULL;
 GOS_STATIC gos_queueEmptyHook queueEmptyHook = NULL;
 
 /*
- * Function prototypes
- */
-void_t            gos_queueDumpSignalHandler (gos_signalSenderId_t senderId);
-GOS_STATIC void_t gos_queueDumpTask          (void_t);
-
-/**
- * Queue dump task descriptor.
- */
-GOS_STATIC gos_taskDescriptor_t queueDumpTaskDesc =
-{
-    .taskFunction        = gos_queueDumpTask,
-    .taskName            = "gos_queue_dump_task",
-    .taskPriority        = CFG_TASK_QUEUE_DUMP_PRIO,
-    .taskStackSize       = CFG_TASK_QUEUE_DUMP_STACK,
-    .taskPrivilegeLevel  = GOS_TASK_PRIVILEGE_KERNEL
-};
-
-/*
  * Function: gos_queueInit
  */
 gos_result_t gos_queueInit (void_t)
@@ -184,14 +167,6 @@ gos_result_t gos_queueInit (void_t)
 
     // Initialize mutex.
     gos_mutexInit(&queueMutex);
-
-    // Register and suspend queue dump task.
-    if (gos_kernelTaskRegister(&queueDumpTaskDesc, &queueDumpTaskId)!= GOS_SUCCESS ||
-		gos_kernelTaskSuspend(queueDumpTaskId) != GOS_SUCCESS
-    )
-    {
-    	queueInitResult = GOS_ERROR;
-    }
 
     return queueInitResult;
 }
@@ -481,88 +456,63 @@ gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t*
     return queueGetElementNumberResult;
 }
 
-/**
- * @brief    Handles the kernel dump signal.
- * @details  Resumes the queue dump task based on the sender ID.
- *
- * @param    senderId    :    Sender ID.
- *
- * @return    -
+/*
+ * Function: gos_queueDump
  */
-void_t gos_queueDumpSignalHandler (gos_signalSenderId_t senderId)
-{
-    /*
-     * Function code.
-     */
-    if (senderId == GOS_DUMP_SENDER_PROC)
-    {
-        (void_t) gos_kernelTaskResume(queueDumpTaskId);
-    }
-}
-
-/**
- * @brief    Queue dump task.
- * @details  Prints the queue data of all queues to the log output and suspends itself.
- *           This task is resumed by the kernel dump signal (through its handler function).
- *
- * @return    -
- */
-GOS_STATIC void_t gos_queueDumpTask (void_t)
+void_t gos_queueDump (void_t)
 {
     /*
      * Local variables.
      */
-    GOS_EXTERN gos_signalId_t kernelDumpSignal;
-    gos_queueIndex_t          queueIndex       = 0u;
+    gos_queueIndex_t queueIndex = 0u;
 
     /*
      * Function code.
      */
-    for(;;)
+    (void_t) gos_kernelTaskSleep(50);
+    (void_t) gos_traceTrace(GOS_FALSE, "Queue dump:\r\n");
+    (void_t) gos_traceTrace(GOS_FALSE, DUMP_SEPARATOR);
+
+#if CFG_QUEUE_USE_NAME == 1
+    (void_t) gos_traceTraceFormatted(
+            GOS_FALSE,
+            "| %6s | %28s | %13s |\r\n",
+            "qid",
+            "name",
+            "elements"
+            );
+#else
+    (void_t) gos_traceTraceFormatted(
+            GOS_FALSE,
+            "| %6s | %28s |\r\n",
+            "qid",
+            "elements"
+            );
+#endif
+    (void_t) gos_traceTrace(GOS_FALSE, DUMP_SEPARATOR);
+
+    for (queueIndex = 0u; queueIndex < CFG_QUEUE_MAX_NUMBER; queueIndex++)
     {
-    	(void_t) gos_kernelTaskSleep(50);
-        (void_t) gos_traceTraceFormatted("Queue dump:\r\n");
-        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR);
-
-#if CFG_QUEUE_USE_NAME == 1
-        (void_t) gos_traceTraceFormatted(
-                "| %6s | %28s | %13s |\r\n",
-                "qid",
-                "name",
-                "elements"
-                );
-#else
-        (void_t) gos_traceTraceFormatted(
-                "| %6s | %28s |\r\n",
-                "qid",
-                "elements"
-                );
-#endif
-        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR);
-
-        for (queueIndex = 0u; queueIndex < CFG_QUEUE_MAX_NUMBER; queueIndex++)
+        if (queues[queueIndex].queueId == GOS_INVALID_QUEUE_ID)
         {
-            if (queues[queueIndex].queueId == GOS_INVALID_QUEUE_ID)
-            {
-                break;
-            }
-#if CFG_QUEUE_USE_NAME == 1
-            (void_t) gos_traceTraceFormatted(
-                    "| 0x%04X | %28s | %13d |\r\n",
-                    queues[queueIndex].queueId,
-                    queues[queueIndex].queueName,
-                    queues[queueIndex].actualElementNumber
-                    );
-#else
-            (void_t) gos_traceTraceFormatted(
-                    "| 0x%04X | %28d |\r\n",
-                    queues[queueIndex].queueId,
-                    queues[queueIndex].actualElementNumber
-                    );
-#endif
+            break;
         }
-        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR"\n");
-        (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_QUEUE);
-        (void_t) gos_kernelTaskSuspend(queueDumpTaskId);
+#if CFG_QUEUE_USE_NAME == 1
+        (void_t) gos_traceTraceFormatted(
+                GOS_FALSE,
+                "| 0x%04X | %28s | %13d |\r\n",
+                queues[queueIndex].queueId,
+                queues[queueIndex].queueName,
+                queues[queueIndex].actualElementNumber
+                );
+#else
+        (void_t) gos_traceTraceFormatted(
+                GOS_FALSE,
+                "| 0x%04X | %28d |\r\n",
+                queues[queueIndex].queueId,
+                queues[queueIndex].actualElementNumber
+                );
+#endif
     }
+    (void_t) gos_traceTrace(GOS_FALSE, DUMP_SEPARATOR"\n");
 }

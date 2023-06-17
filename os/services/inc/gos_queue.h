@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_queue.h
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.3
+//! @date       2023-06-17
+//! @version    1.4
 //!
 //! @brief      GOS queue service header.
 //! @details    Queue service is one of the inter-task communication solutions offered by the OS.
@@ -38,6 +38,7 @@
 //                                          +    Service description added
 //                                          +    License added
 // 1.3        2022-12-11    Gabor Repasi    +    Function descriptions completed
+// 1.4        2023-06-17    Ahmed Gazar     *    Queue dump moved to function
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -122,14 +123,6 @@ typedef struct
     gos_queueName_t queueName; //!< Queue name.
 #endif
 }gos_queueDescriptor_t;
-
-/*
- * Global data
- */
-/**
- * Queue dump task ID.
- */
-gos_tid_t queueDumpTaskId;
 
 /*
  * Function prototypes
@@ -264,5 +257,13 @@ gos_result_t gos_queueGetName (gos_queueId_t queueId, gos_queueName_t queueName)
  * @retval  GOS_ERROR     : Invalid queue ID or element number variable is NULL.
  */
 gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t* elementNumber);
+
+/**
+ * @brief    Queue dump.
+ * @details  Prints the queue data of all queues to the trace output.
+ *
+ * @return    -
+ */
+void_t gos_queueDump (void_t);
 
 #endif
