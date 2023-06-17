@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_shell_driver.h
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.0
+//! @date       2023-06-17
+//! @version    1.1
 //!
 //! @brief      GOS SHELL driver header.
 //! @details    This driver provides a skeleton for the driver for the shell service.
@@ -25,6 +25,8 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2022-12-11    Gabor Repasi    Initial version created.
+// 1.1        2023-06-17    Ahmed Gazar     +    Variable parameters added to
+//                                               gos_shellDriverTransmitString
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -86,12 +88,13 @@ gos_result_t gos_shellDriverReceiveChar (char_t* pChar);
  * @details If registered, it calls the custom string transmitter function.
  *
  * @param   pString     : Pointer to the string to be transmitted.
+ * @param   ...         : Variable parameters for formatted strings.
  *
  * @return  Result of string transmission.
  *
  * @retval  GOS_SUCCESS : According to user implementation.
  * @retval  GOS_ERROR   : According to user implementation / function not registered.
  */
-gos_result_t gos_shellDriverTransmitString (char_t* pString);
+gos_result_t gos_shellDriverTransmitString (char_t* pString, ...);
 
 #endif

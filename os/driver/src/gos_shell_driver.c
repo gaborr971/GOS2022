@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_shell_driver.c
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.0
+//! @date       2023-06-17
+//! @version    1.1
 //!
 //! @brief      GOS SHELL driver source.
 //! @details    For a more detailed description of this driver, please refer to
@@ -26,6 +26,7 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2022-12-11    Gabor Repasi    Initial version created.
+// 1.1        2023-06-17    Ahmed Gazar     +    Formatted string support added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -51,6 +52,17 @@
  */
 #include "gos_shell_driver.h"
 #include "gos_driver.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+
+/*
+ * Static variables
+ */
+/**
+ * Buffer for formatted strings.
+ */
+GOS_STATIC char_t formattedBuffer [CFG_SHELL_COMMAND_BUFFER_SIZE];
 
 /*
  * External variables
@@ -81,19 +93,24 @@ gos_result_t gos_shellDriverReceiveChar (char_t* pChar)
 /*
  * Function: gos_shellDriverTransmitString
  */
-gos_result_t gos_shellDriverTransmitString (char_t* pString)
+gos_result_t gos_shellDriverTransmitString (char_t* pString, ...)
 {
     /*
      * Local variables.
      */
     gos_result_t shellDriverTransmitResult = GOS_ERROR;
+    va_list      args;
 
     /*
      * Function code.
      */
+    va_start(args, pString);
+    (void_t) vsprintf(formattedBuffer, pString, args);
+    va_end(args);
+
     if (driverFunctions.shellDriverTransmitString != NULL)
     {
-        shellDriverTransmitResult = driverFunctions.shellDriverTransmitString(pString);
+        shellDriverTransmitResult = driverFunctions.shellDriverTransmitString(formattedBuffer);
     }
 
     return shellDriverTransmitResult;
