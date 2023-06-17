@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_process.c
 //! @author     Gabor Repasi
-//! @date       2022-11-15
-//! @version    1.3
+//! @date       2023-06-17
+//! @version    1.4
 //!
 //! @brief      GOS process service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_process.h
@@ -30,6 +30,8 @@
 // 1.2        2022-11-14    Gabor Repasi    +    If service is off, dump signal handler invokes the
 //                                               signal with its own sender ID
 // 1.3        2022-11-15    Gabor Repasi    +    License added
+// 1.4        2023-06-17    Ahmed Gazar     *    Process dump moved to function
+//                                          +    System process addded for statistics calculation
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -50,28 +52,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //*************************************************************************************************
-#if CFG_PROC_USE_SERVICE == 1
 /*
  * Includes
  */
 #include <gos_process.h>
 #include <gos_signal.h>
+#include <gos_time.h>
 #include <gos_timer_driver.h>
 #include <gos_trace.h>
 #include <stdio.h>
 #include <string.h>
+#if CFG_PROC_USE_SERVICE == 1
 /*
  * Macros
  */
 /**
  * Dump separator line.
  */
-#define DUMP_SEPARATOR           "+--------+------------------------------+---------------+------------------+---------+-----------+\r\n"
+#define DUMP_SEPARATOR           "+--------+------------------------------+---------------+---------+-----------+\r\n"
 
 /**
  * Process daemon poll time [ms].
  */
-#define PROC_DAEMON_POLL_TIME    ( 10u )
+#define PROC_DAEMON_POLL_TIME    ( 100u )
+
+/**
+ * System process poll time [ms].
+ */
+#define PROC_SYS_POLL_TIME       ( 500u )
+
 /*
  * Type definitions
  */
@@ -125,35 +134,17 @@ GOS_STATIC gos_procWakeupHook_t  procWakeupHookFunction  = NULL;
 GOS_STATIC gos_tid_t             procDaemonTaskId        = GOS_INVALID_TASK_ID;
 
 /**
- * Process dump task ID.
+ * Monitoring process run-time for statistics.
  */
-GOS_STATIC gos_pid_t             procDumpTaskId          = GOS_INVALID_TASK_ID;
-
-/**
- * Total process run-time (sum of each process run-time.
- */
-GOS_STATIC u64_t                 totalProcRunTime        = 0u;
-
-/*
- * Module global functions
- */
-/**
- * @brief   Handles the process dump signal.
- * @details Resumes the process dump task based on the sender ID.
- *
- * @param    senderId    : Sender ID.
- *
- * @return -
- */
-void_t gos_procDumpSignalHandler (gos_signalSenderId_t senderId);
+GOS_STATIC gos_runtime_t         monitoringTime          = {0};
 
 /*
  * Function prototypes
  */
 GOS_STATIC gos_result_t gos_procCheckProcDescriptor (gos_procDescriptor_t* procDescriptor);
 GOS_STATIC void_t       gos_idleProc                (void_t);
+GOS_STATIC void_t       gos_systemProc              (void_t);
 GOS_STATIC void_t       gos_procDaemonTask          (void_t);
-GOS_STATIC void_t       gos_procDumpTask            (void_t);
 GOS_STATIC char_t*      gos_procGetProcStateString  (gos_procState_t procState);
 
 /**
@@ -167,19 +158,15 @@ GOS_STATIC gos_procDescriptor_t procDescriptors [CFG_PROC_MAX_NUMBER] = {
             .procId         = GOS_DEFAULT_PROC_ID,
             .procPriority   = CFG_PROC_IDLE_PRIO,
             .procName       = "gos_idle_proc"
+        },
+    [1] =
+        {
+            .procFunction   = gos_systemProc,
+            .procState      = GOS_PROC_READY,
+            .procId         = GOS_DEFAULT_PROC_ID + 1,
+            .procPriority   = CFG_PROC_IDLE_PRIO - 1,
+            .procName       = "gos_system_proc"
         }
-};
-
-/**
- * Process dump task descriptor.
- */
-GOS_STATIC gos_taskDescriptor_t procDumpTaskDesc =
-{
-    .taskFunction        = gos_procDumpTask,
-    .taskName            = "gos_proc_dump_task",
-    .taskPriority        = CFG_TASK_PROC_DUMP_PRIO,
-    .taskStackSize       = CFG_TASK_PROC_DUMP_STACK,
-    .taskPrivilegeLevel  = GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /**
@@ -208,9 +195,8 @@ gos_result_t gos_procInit (void_t)
     /*
      * Function code.
      */
-
     // Initialize process descriptors.
-    for (procIndex = 1u; procIndex < CFG_PROC_MAX_NUMBER; procIndex++)
+    for (procIndex = 2u; procIndex < CFG_PROC_MAX_NUMBER; procIndex++)
     {
         procDescriptors[procIndex].procFunction = NULL;
         procDescriptors[procIndex].procPriority = CFG_PROC_MAX_PRIO_LEVELS;
@@ -218,9 +204,7 @@ gos_result_t gos_procInit (void_t)
         procDescriptors[procIndex].procId       = GOS_INVALID_PROC_ID;
     }
 
-    if (gos_kernelTaskRegister(&processDaemonTaskDesc, &procDaemonTaskId) == GOS_SUCCESS &&
-        gos_kernelTaskRegister(&procDumpTaskDesc, &procDumpTaskId) == GOS_SUCCESS &&
-        gos_kernelTaskSuspend(procDumpTaskId) == GOS_SUCCESS)
+    if (gos_kernelTaskRegister(&processDaemonTaskDesc, &procDaemonTaskId) == GOS_SUCCESS)
     {
         initResult = GOS_SUCCESS;
     }
@@ -653,28 +637,52 @@ gos_result_t gos_procRegisterResumeHook (gos_procResumeHook_t resumeHookFunction
 #endif
 
 /*
- * Function: gos_procDumpSignalHandler
+ * Function: gos_procDump
  */
-#if CFG_PROC_USE_SERVICE != 1
-#include "gos_signal.h"
-#endif
-void_t gos_procDumpSignalHandler (gos_signalSenderId_t senderId)
+void_t gos_procDump (void_t)
 {
+    /*
+     * Local variables.
+     */
+    u16_t procIndex = 0u;
+
     /*
      * Function code.
      */
-#if CFG_PROC_USE_SERVICE == 1
-    if (senderId == GOS_DUMP_SENDER_KERNEL)
+    (void_t) gos_traceTrace(GOS_FALSE, "Process dump:\r\n");
+    (void_t) gos_traceTrace(GOS_FALSE, DUMP_SEPARATOR);
+    (void_t) gos_traceTraceFormatted(
+            GOS_FALSE,
+            "| %6s | %28s | %13s | %6s | %9s |\r\n",
+            "pid",
+            "name",
+            "prio",
+            "[%]",
+            "state"
+        );
+
+    (void_t) gos_traceTrace(GOS_FALSE, DUMP_SEPARATOR);
+
+    for (procIndex = 0u; procIndex < CFG_PROC_MAX_NUMBER; procIndex++)
     {
-        (void_t) gos_kernelTaskResume(procDumpTaskId);
+        if (procDescriptors[procIndex].procFunction == NULL)
+        {
+            break;
+        }
+
+        (void_t) gos_traceTraceFormatted(
+                GOS_FALSE,
+                "| 0x%04X | %28s | %13d | %4u.%02u | %9s "TRACE_FORMAT_RESET"|\r\n",
+                procDescriptors[procIndex].procId,
+                procDescriptors[procIndex].procName,
+                procDescriptors[procIndex].procPriority,
+                procDescriptors[procIndex].procCpuUsage / 100,
+                procDescriptors[procIndex].procCpuUsage % 100,
+                gos_procGetProcStateString(procDescriptors[procIndex].procState)
+                );
+        (void_t) gos_kernelTaskSleep(15);
     }
-#else
-    if (senderId == GOS_DUMP_SENDER_KERNEL)
-    {
-        GOS_EXTERN gos_signalId_t kernelDumpSignal;
-        (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_PROC);
-    }
-#endif
+    (void_t) gos_traceTraceFormatted(GOS_FALSE, DUMP_SEPARATOR"\n");
 }
 
 #if CFG_PROC_USE_SERVICE == 1
@@ -715,15 +723,11 @@ GOS_STATIC gos_result_t gos_procCheckProcDescriptor    (gos_procDescriptor_t* pr
  * @brief   Idle process.
  * @details Increases the idle process run counter and calls the idle process hook function
  *          (if registered).
+ *
  * @return  -
  */
 GOS_STATIC void_t gos_idleProc (void_t)
 {
-    /*
-     * Local variables.
-     */
-    gos_procIndex_t procIndex = 0u;
-
     /*
      * Function code.
      */
@@ -732,14 +736,66 @@ GOS_STATIC void_t gos_idleProc (void_t)
     {
         procIdleHookFunction();
     }
+}
+
+/**
+ * @brief   System process.
+ * @details Updates the process usage statistics.
+ *
+ * @return  -
+ */
+GOS_STATIC void_t gos_systemProc (void_t)
+{
+    /*
+     * Local variables.
+     */
+    gos_procIndex_t procIndex = 0u;
+    u32_t systemConvertedTime = 0u;
+    u32_t procConvertedTime   = 0u;
+
+    /*
+     * Function code.
+     */
+    // Calculate in microseconds.
+    systemConvertedTime = monitoringTime.minutes * 60 * 1000 * 1000 +
+                          monitoringTime.seconds * 1000 * 1000 +
+                          monitoringTime.milliseconds * 1000 +
+                          monitoringTime.microseconds;
+
     for (procIndex = 0u; procIndex < CFG_PROC_MAX_NUMBER; procIndex++)
     {
-        procDescriptors[procIndex].procCpuUsage = 100 * procDescriptors[procIndex].procRunTime / totalProcRunTime;
+        procConvertedTime = procDescriptors[procIndex].procRunTime.minutes * 60 * 1000 * 1000 +
+                            procDescriptors[procIndex].procRunTime.seconds * 1000 * 1000 +
+                            procDescriptors[procIndex].procRunTime.milliseconds * 1000 +
+                            procDescriptors[procIndex].procRunTime.microseconds;
+
+        if (systemConvertedTime > 0)
+        {
+            // Calculate CPU usage and then reset runtime counter.
+            procDescriptors[procIndex].procCpuUsage = (u16_t)((u32_t)(10000 * procConvertedTime) / systemConvertedTime);
+            procDescriptors[procIndex].procRunTime.days = 0;
+            procDescriptors[procIndex].procRunTime.hours = 0;
+            procDescriptors[procIndex].procRunTime.minutes = 0;
+            procDescriptors[procIndex].procRunTime.seconds = 0;
+            procDescriptors[procIndex].procRunTime.milliseconds = 0;
+            procDescriptors[procIndex].procRunTime.microseconds = 0;
+        }
+
         if (procDescriptors[procIndex].procFunction == NULL)
         {
             break;
         }
     }
+
+    // Reset monitoring time.
+    monitoringTime.days = 0;
+    monitoringTime.hours = 0;
+    monitoringTime.minutes = 0;
+    monitoringTime.seconds = 0;
+    monitoringTime.milliseconds = 0;
+    monitoringTime.microseconds = 0;
+
+    gos_procSleep(PROC_SYS_POLL_TIME);
 }
 
 /**
@@ -768,7 +824,7 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
     for (;;)
     {
         currentProc = currentProcIndex;
-        lowestPrio    = CFG_PROC_IDLE_PRIO;
+        lowestPrio  = CFG_PROC_IDLE_PRIO;
         nextProc    = 0u;
 
         for (procIndex = 0U; procIndex < CFG_PROC_MAX_NUMBER; procIndex++)
@@ -805,8 +861,8 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
         procDescriptors[currentProcIndex].procRunCounter++;
         gos_timerDriverSysTimerGet(&sysTimerCurrVal);
         currentRunTime = sysTimerInitial - sysTimerCurrVal;
-        procDescriptors[currentProcIndex].procRunTime += currentRunTime;
-        totalProcRunTime += currentRunTime;
+        // Increase monitoring system time and current task runtime.
+        gos_runTimeAddMicroseconds(&monitoringTime, &procDescriptors[currentProcIndex].procRunTime, currentRunTime);
 
         (void_t) gos_kernelTaskSleep(PROC_DAEMON_POLL_TIME);
     }
@@ -843,64 +899,6 @@ GOS_STATIC char_t* gos_procGetProcStateString (gos_procState_t procState)
         {
             return "";
         }
-    }
-}
-
-/**
- * @brief   Process dump task.
- * @details Prints the process data of all processes to the log output and suspends itself.
- *          This task is resumed by the kernel dump signal (through its handler function).
- *
- * @return  -
- */
-GOS_STATIC void_t gos_procDumpTask (void_t)
-{
-    /*
-     * Local variables.
-     */
-    u16_t                     procIndex = 0u;
-    GOS_EXTERN gos_signalId_t kernelDumpSignal;
-
-    /*
-     * Function code.
-     */
-    for (;;)
-    {
-        (void_t) gos_traceTraceFormatted("Process dump:\r\n");
-        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR);
-        (void_t) gos_traceTraceFormatted(
-                "| %6s | %28s | %13s | %16s | %7s | %9s |\r\n",
-                "pid",
-                "name",
-                "prio",
-                "time [us]",
-                "[%]",
-                "state"
-            );
-
-        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR);
-
-        for (procIndex = 0u; procIndex < CFG_PROC_MAX_NUMBER; procIndex++)
-        {
-            if (procDescriptors[procIndex].procFunction == NULL)
-            {
-                break;
-            }
-
-            (void_t) gos_traceTraceFormatted(
-                    "| 0x%04X | %28s | %13d | %16lu | %7d | %9s "TRACE_FORMAT_RESET"|\r\n",
-                    procDescriptors[procIndex].procId,
-                    procDescriptors[procIndex].procName,
-                    procDescriptors[procIndex].procPriority,
-                    (u32_t)procDescriptors[procIndex].procRunTime,
-                    procDescriptors[procIndex].procCpuUsage,
-                    gos_procGetProcStateString(procDescriptors[procIndex].procState)
-                    );
-            (void_t) gos_kernelTaskSleep(15);
-        }
-        (void_t) gos_traceTraceFormatted(DUMP_SEPARATOR"\n");
-        (void_t) gos_signalInvoke(kernelDumpSignal, GOS_DUMP_SENDER_PROC);
-        (void_t) gos_kernelTaskSuspend(procDumpTaskId);
     }
 }
 #endif

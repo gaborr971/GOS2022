@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_process.h
 //! @author     Gabor Repasi
-//! @date       2022-12-11
-//! @version    1.2
+//! @date       2023-06-17
+//! @version    1.3
 //!
 //! @brief      GOS process service header.
 //! @details    Process service is an alternative of tasks in the GOS system. Processes are
@@ -35,6 +35,8 @@
 //                                          +    Service description added
 //                                          +    License added
 // 1.2        2022-12-11    Gabor Repasi    +    Function descriptions completed
+// 1.3        2023-06-17    Ahmed Gazar     *    Proces dump moved to function
+//                                          *    Process run-time type modified
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -57,13 +59,11 @@
 //*************************************************************************************************
 #ifndef GOS_PROCESS_H
 #define GOS_PROCESS_H
-
-#if CFG_PROC_USE_SERVICE == 1
 /*
  * Includes
  */
 #include <gos_kernel.h>
-
+#if CFG_PROC_USE_SERVICE == 1
 /*
  * Macros
  */
@@ -118,8 +118,8 @@ typedef struct
     gos_pid_t            procId;         //!< Process ID.
     gos_procSleepTick_t  procSleepTicks; //!< Process sleep ticks.
     gos_procRunCounter_t procRunCounter; //!< Process run counter.
-    gos_procRunTime_t    procRunTime;    //!< Process run-time.
-    u8_t                 procCpuUsage;   //!< Process processor usage in [%].
+    gos_runtime_t        procRunTime;    //!< Process run-time.
+    u16_t                procCpuUsage;   //!< Process processor usage in [%].
 }gos_procDescriptor_t;
 
 /**
@@ -352,6 +352,14 @@ gos_result_t gos_procRegisterSuspendHook (gos_procSuspendHook_t suspendHookFunct
  * @retval  GOS_ERROR          : Hook already exists or given hook function is NULL pointer.
  */
 gos_result_t gos_procRegisterResumeHook (gos_procResumeHook_t resumeHookFunction);
+
+/**
+ * @brief   Process dump.
+ * @details Prints the process data of all processes to the trace output.
+ *
+ * @return  -
+ */
+void_t gos_procDump (void_t);
 
 #endif
 #endif
