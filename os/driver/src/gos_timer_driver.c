@@ -66,14 +66,14 @@ gos_result_t gos_timerDriverSysTimerGet (u16_t* pValue)
     /*
      * Local variables.
      */
-	gos_result_t timerDriverSysTimerGetResult = GOS_ERROR;
+    gos_result_t timerDriverSysTimerGetResult = GOS_ERROR;
 
     /*
      * Function code.
      */
     if (driverFunctions.timerDriverSysTimerGetValue != NULL)
     {
-    	timerDriverSysTimerGetResult = driverFunctions.timerDriverSysTimerGetValue(pValue);
+        timerDriverSysTimerGetResult = driverFunctions.timerDriverSysTimerGetValue(pValue);
     }
 
     return timerDriverSysTimerGetResult;
