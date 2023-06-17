@@ -77,8 +77,8 @@
  */
 typedef enum
 {
-	GOS_MUTEX_UNLOCKED = 0b11010010, //!< Mutex unlocked.
-	GOS_MUTEX_LOCKED   = 0b01101011  //!< Mutex locked.
+    GOS_MUTEX_UNLOCKED = 0b11010010, //!< Mutex unlocked.
+    GOS_MUTEX_LOCKED   = 0b01101011  //!< Mutex locked.
 }gos_mutexState_t;
 
 /**
@@ -86,8 +86,8 @@ typedef enum
  */
 typedef struct
 {
-	volatile gos_mutexState_t mutexState; //!< Mutex state.
-	         gos_tid_t        owner;      //!< Mutex owner task.
+    volatile gos_mutexState_t mutexState; //!< Mutex state.
+             gos_tid_t        owner;      //!< Mutex owner task.
 }gos_mutex_t;
 
 /*
