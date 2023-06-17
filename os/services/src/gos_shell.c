@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_shell.c
 //! @author     Gabor Repasi
-//! @date       2023-01-12
-//! @version    1.5
+//! @date       2023-05-19
+//! @version    1.6
 //!
 //! @brief      GOS shell service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_shell.h
@@ -32,6 +32,8 @@
 // 1.3        2022-12-11    Gabor Repasi    +    Built-in shell commands (dump and reset) added
 // 1.4        2022-12-13    Gabor Repasi    +    Privilege handling added
 // 1.5        2023-01-12    Gabor Repasi    +    Task delete, suspend, resume, help commands added
+// 1.6        2023-05-19    Ahmed Gazar     *    Command buffer size modified
+//                                          +    Buffer overflow protection added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -55,6 +57,7 @@
 /*
  * Includes
  */
+#include <gos.h>
 #include <gos_shell.h>
 #include <gos_shell_driver.h>
 #include <gos_trace.h>
@@ -86,7 +89,7 @@ GOS_STATIC gos_tid_t          shellDaemonTaskId;
 /**
  * Command buffer.
  */
-GOS_STATIC char_t             commandBuffer        [CFG_SHELL_MAX_COMMAND_LENGTH + CFG_SHELL_MAX_PARAMS_LENGTH + 1];
+GOS_STATIC char_t             commandBuffer        [CFG_SHELL_COMMAND_BUFFER_SIZE];
 
 /**
  * Command buffer index.
@@ -392,12 +395,18 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
                     (void_t) gos_shellDriverTransmitString("Unrecognized command!\r\n");
                 }
 
-                (void_t) memset((void_t*)commandBuffer, '\0', (CFG_SHELL_MAX_COMMAND_LENGTH + 1) * sizeof(char_t));
+                (void_t) memset((void_t*)commandBuffer, '\0', CFG_SHELL_COMMAND_BUFFER_SIZE);
                 commandBufferIndex = 0u;
             }
             else
             {
                 commandBufferIndex++;
+
+                if (commandBufferIndex >= CFG_SHELL_COMMAND_BUFFER_SIZE)
+                {
+                    (void_t) memset((void_t*)commandBuffer, '\0', CFG_SHELL_COMMAND_BUFFER_SIZE);
+                    commandBufferIndex = 0u;
+                }
             }
         }
         (void_t) gos_kernelTaskSleep(GOS_SHELL_DAEMON_POLL_TIME_MS);
@@ -412,20 +421,19 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
  */
 GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t                    index        = 0u;
-	gos_shellCommandIndex_t commandIndex = 0u;
-	gos_tid_t               taskId       = GOS_INVALID_TASK_ID;
+    /*
+     * Local variables.
+     */
+    u8_t                    index        = 0u;
+    gos_shellCommandIndex_t commandIndex = 0u;
+    gos_tid_t               taskId       = GOS_INVALID_TASK_ID;
 
     /*
      * Function code.
      */
     if (strcmp(params, "dump") == 0)
     {
-        GOS_PRIVILEGED_ACCESS
-        (void_t) gos_kernelDump();
+        gos_Dump();
     }
     else if (strcmp(params, "reset") == 0)
     {
@@ -433,140 +441,134 @@ GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
     }
     else if (strcmp(params, "help") == 0)
     {
-    	GOS_PRIVILEGED_ACCESS
-    	gos_traceTrace("List of registered shell commands: \r\n");
-    	for (commandIndex = 0u; commandIndex < CFG_SHELL_MAX_COMMAND_NUMBER; commandIndex++)
-    	{
-    		if (strcmp(shellCommands[commandIndex].command, "") == 0)
-    		{
-    			break;
-    		}
-    		GOS_PRIVILEGED_ACCESS
-    		gos_traceTraceFormatted("\t- %s\r\n", shellCommands[commandIndex].command);
-    	}
+        gos_shellDriverTransmitString("List of registered shell commands: \r\n");
+        for (commandIndex = 0u; commandIndex < CFG_SHELL_MAX_COMMAND_NUMBER; commandIndex++)
+        {
+            if (strcmp(shellCommands[commandIndex].command, "") == 0)
+            {
+                break;
+            }
+            gos_shellDriverTransmitString("\t- %s\r\n", shellCommands[commandIndex].command);
+        }
     }
     else
     {
-    	while (params[index] != ' ' && params[index])
-    	{
-    		index++;
-    	}
+        while (params[index] != ' ' && params[index])
+        {
+            index++;
+        }
 
-    	params[index] = '\0';
+        params[index] = '\0';
 
-    	if (strcmp(params, "delete_tid") == 0)
-    	{
+        if (strcmp(params, "delete_tid") == 0)
+        {
             taskId = (gos_tid_t)strtol(&params[++index], NULL, 16);
 
             GOS_PRIVILEGED_ACCESS
-			if (gos_kernelTaskDelete(taskId) == GOS_SUCCESS)
-			{
-				GOS_PRIVILEGED_ACCESS
-				(void_t) gos_traceTraceFormatted("0x%X task has been deleted.\r\n", taskId);
-			}
-			else
-			{
-				GOS_PRIVILEGED_ACCESS
-				(void_t) gos_traceTraceFormatted("0x%X task could not be deleted.\r\n", taskId);
-			}
-    	}
-    	else if (strcmp(params, "delete") == 0)
-    	{
-    		if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
-    		{
-    			GOS_PRIVILEGED_ACCESS
-    			if (gos_kernelTaskDelete(taskId) == GOS_SUCCESS)
-    			{
-    				GOS_PRIVILEGED_ACCESS
-    				(void_t) gos_traceTraceFormatted("%s has been deleted.\r\n", &params[index]);
-    			}
-    			else
-    			{
-    				GOS_PRIVILEGED_ACCESS
-    				(void_t) gos_traceTraceFormatted("%s could not be deleted.\r\n", &params[index]);
-    			}
-    		}
-    		else
-    		{
-    			GOS_PRIVILEGED_ACCESS
-    			(void_t) gos_traceTrace("Task could not be found.\r\n");
-    		}
-    	}
-    	else if (strcmp(params, "suspend_tid") == 0)
-    	{
+            if (gos_kernelTaskDelete(taskId) == GOS_SUCCESS)
+            {
+                GOS_PRIVILEGED_ACCESS
+                (void_t) gos_shellDriverTransmitString("0x%X task has been deleted.\r\n", taskId);
+            }
+            else
+            {
+                GOS_PRIVILEGED_ACCESS
+                (void_t) gos_shellDriverTransmitString("0x%X task could not be deleted.\r\n", taskId);
+            }
+        }
+        else if (strcmp(params, "delete") == 0)
+        {
+            if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
+            {
+                GOS_PRIVILEGED_ACCESS
+                if (gos_kernelTaskDelete(taskId) == GOS_SUCCESS)
+                {
+                    GOS_PRIVILEGED_ACCESS
+                    (void_t) gos_shellDriverTransmitString("%s has been deleted.\r\n", &params[index]);
+                }
+                else
+                {
+                    GOS_PRIVILEGED_ACCESS
+                    (void_t) gos_shellDriverTransmitString("%s could not be deleted.\r\n", &params[index]);
+                }
+            }
+            else
+            {
+                (void_t) gos_shellDriverTransmitString("Task could not be found.\r\n");
+            }
+        }
+        else if (strcmp(params, "suspend_tid") == 0)
+        {
             taskId = (gos_tid_t)strtol(&params[++index], NULL, 16);
 
             GOS_PRIVILEGED_ACCESS
-			if (gos_kernelTaskSuspend(taskId) == GOS_SUCCESS)
-			{
-				GOS_PRIVILEGED_ACCESS
-				(void_t) gos_traceTraceFormatted("0x%X task has been suspended.\r\n", taskId);
-			}
-			else
-			{
-				GOS_PRIVILEGED_ACCESS
-				(void_t) gos_traceTraceFormatted("0x%X task could not be suspended.\r\n", taskId);
-			}
-    	}
-    	else if (strcmp(params, "suspend") == 0)
-    	{
-    		if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
-    		{
-    			GOS_PRIVILEGED_ACCESS
-    			if (gos_kernelTaskSuspend(taskId) == GOS_SUCCESS)
-    			{
-    				GOS_PRIVILEGED_ACCESS
-    				(void_t) gos_traceTraceFormatted("%s has been suspended.\r\n", &params[index]);
-    			}
-    			else
-    			{
-    				GOS_PRIVILEGED_ACCESS
-    				(void_t) gos_traceTraceFormatted("%s could not be suspended.\r\n", &params[index]);
-    			}
-    		}
-    		else
-    		{
-    			GOS_PRIVILEGED_ACCESS
-    			(void_t) gos_traceTrace("Task could not be found.\r\n");
-    		}
-    	}
-    	else if (strcmp(params, "resume_tid") == 0)
-    	{
+            if (gos_kernelTaskSuspend(taskId) == GOS_SUCCESS)
+            {
+                GOS_PRIVILEGED_ACCESS
+                (void_t) gos_shellDriverTransmitString("0x%X task has been suspended.\r\n", taskId);
+            }
+            else
+            {
+                GOS_PRIVILEGED_ACCESS
+                (void_t) gos_shellDriverTransmitString("0x%X task could not be suspended.\r\n", taskId);
+            }
+        }
+        else if (strcmp(params, "suspend") == 0)
+        {
+            if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
+            {
+                GOS_PRIVILEGED_ACCESS
+                if (gos_kernelTaskSuspend(taskId) == GOS_SUCCESS)
+                {
+                    GOS_PRIVILEGED_ACCESS
+                    (void_t) gos_shellDriverTransmitString("%s has been suspended.\r\n", &params[index]);
+                }
+                else
+                {
+                    GOS_PRIVILEGED_ACCESS
+                    (void_t) gos_shellDriverTransmitString("%s could not be suspended.\r\n", &params[index]);
+                }
+            }
+            else
+            {
+                (void_t) gos_shellDriverTransmitString("Task could not be found.\r\n");            }
+        }
+        else if (strcmp(params, "resume_tid") == 0)
+        {
             taskId = (gos_tid_t)strtol(&params[++index], NULL, 16);
 
             GOS_PRIVILEGED_ACCESS
-			if (gos_kernelTaskResume(taskId) == GOS_SUCCESS)
-			{
-				GOS_PRIVILEGED_ACCESS
-				(void_t) gos_traceTraceFormatted("0x%X task has been resumed.\r\n", taskId);
-			}
-			else
-			{
-				GOS_PRIVILEGED_ACCESS
-				(void_t) gos_traceTraceFormatted("0x%X task could not be resumed.\r\n", taskId);
-			}
-    	}
-    	else if (strcmp(params, "resume") == 0)
-    	{
-    		if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
-    		{
-    			GOS_PRIVILEGED_ACCESS
-    			if (gos_kernelTaskResume(taskId) == GOS_SUCCESS)
-    			{
-    				GOS_PRIVILEGED_ACCESS
-    				(void_t) gos_traceTraceFormatted("%s has been resumed.\r\n", &params[index]);
-    			}
-    			else
-    			{
-    				GOS_PRIVILEGED_ACCESS
-    				(void_t) gos_traceTraceFormatted("%s could not be resumed.\r\n", &params[index]);
-    			}
-    		}
-    		else
-    		{
-    			GOS_PRIVILEGED_ACCESS
-    			(void_t) gos_traceTrace("Task could not be found.\r\n");
-    		}
-    	}
+            if (gos_kernelTaskResume(taskId) == GOS_SUCCESS)
+            {
+                GOS_PRIVILEGED_ACCESS
+                (void_t) gos_shellDriverTransmitString("0x%X task has been resumed.\r\n", taskId);
+            }
+            else
+            {
+                GOS_PRIVILEGED_ACCESS
+                (void_t) gos_shellDriverTransmitString("0x%X task could not be resumed.\r\n", taskId);
+            }
+        }
+        else if (strcmp(params, "resume") == 0)
+        {
+            if (gos_kernelTaskGetId(&params[++index], &taskId) == GOS_SUCCESS)
+            {
+                GOS_PRIVILEGED_ACCESS
+                if (gos_kernelTaskResume(taskId) == GOS_SUCCESS)
+                {
+                    GOS_PRIVILEGED_ACCESS
+                    (void_t) gos_shellDriverTransmitString("%s has been resumed.\r\n", &params[index]);
+                }
+                else
+                {
+                    GOS_PRIVILEGED_ACCESS
+                    (void_t) gos_shellDriverTransmitString("%s could not be resumed.\r\n", &params[index]);
+                }
+            }
+            else
+            {
+                (void_t) gos_shellDriverTransmitString("Task could not be found.\r\n");
+            }
+        }
     }
 }
