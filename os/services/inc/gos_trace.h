@@ -81,8 +81,8 @@
 #define TRACE_BG_CYAN_START       "\x1b[46m"
 #define TRACE_BG_WHITE_START      "\x1b[47m"
 
-#define TRACE_BOLD_START		  "\x1B[1m"
-#define TRACE_ITALIC_START		  "\x1B[3m"
+#define TRACE_BOLD_START          "\x1B[1m"
+#define TRACE_ITALIC_START        "\x1B[3m"
 #define TRACE_UNDERLINE_START     "\x1B[4m"
 #define TRACE_STRIKETHROUGH_START "\x1B[9m"
 
@@ -105,6 +105,7 @@ gos_result_t gos_traceInit (void_t);
  * @details Places the given message to the trace queue (for the trace daemon to print it).
  *
  * @param   traceMessage : String to trace.
+ * @param   addTimeStamp : Flag to indicate whether to add time-stamp or not.
  *
  * @return  Result of tracing.
  *
@@ -113,22 +114,23 @@ gos_result_t gos_traceInit (void_t);
  *
  * @remark  This function uses the queue service.
  */
-gos_result_t gos_traceTrace (char_t* traceMessage);
+gos_result_t gos_traceTrace (bool_t addTimeStamp, char_t* traceMessage);
 
 /**
  * @brief   Traces a given formatted message.
  * @details Prints the formatted message into a local buffer and places it
  *          to the trace queue (for the trace daemon to print it).
  *
- * @param   traceFormat : Formatter string.
- * @param   ...         : Optional parameters.
+ * @param   traceFormat  : Formatter string.
+ * @param   addTimeStamp : Flag to indicate whether to add time-stamp or not.
+ * @param   ...          : Optional parameters.
  *
  * @return  Result of formatted tracing.
  *
  * @retval  GOS_SUCCESS : Formatted tracing successful.
  * @retval  GOS_ERROR   : Queue put error.
  */
-gos_result_t gos_traceTraceFormatted (const char_t* traceFormat, ...);
+gos_result_t gos_traceTraceFormatted (bool_t addTimeStamp, const char_t* traceFormat, ...);
 
 /**
  * @brief   Traces a given formatted message.

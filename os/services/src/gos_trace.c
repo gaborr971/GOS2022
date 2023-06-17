@@ -32,6 +32,7 @@
 // 1.5        2022-12-13    Gabor Repasi    +    Privilege handling added
 //                                          +    Initialization error logging added
 // 1.6        2023-01-13    Gabor Repasi    *    Service renamed to trace
+// 1.7        2023-06-17    Ahmed Gazar     +    Optional trace timestamp added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Gabor Repasi
@@ -58,6 +59,7 @@
 #include <gos_trace.h>
 #include <gos_error.h>
 #include <gos_queue.h>
+#include <gos_time.h>
 #include <gos_trace_driver.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -69,6 +71,16 @@
  * Trace daemon poll time [ms].
  */
 #define GOS_TRACE_DAEMON_POLL_TIME_MS    ( 20u )
+
+/**
+ * Trace timestamp formatter.
+ */
+#define GOS_TRACE_TIMESTAMP_FORMAT       "["TRACE_FG_YELLOW_START"%04d-%02d-%02d %02d:%02d:%02d"TRACE_FORMAT_RESET"]\t"
+
+/**
+ * Trace timestamp length.
+ */
+#define GOS_TRACE_TIMESTAMP_LENGTH       ( 44u )
 
 /*
  * Static variables
@@ -90,6 +102,11 @@ GOS_STATIC char_t traceLine       [CFG_TRACE_MAX_LENGTH];
  * Trace formatted buffer for message formatting.
  */
 GOS_STATIC char_t formattedBuffer [CFG_TRACE_MAX_LENGTH];
+
+/**
+ * Buffer for timestamp printing.
+ */
+GOS_STATIC char_t timeStampBuffer [GOS_TRACE_TIMESTAMP_LENGTH];
 
 /*
  * Function prototypes
@@ -122,9 +139,9 @@ gos_result_t gos_traceInit (void_t)
      * Function code.
      */
     if (gos_queueCreate(&traceQueue) != GOS_SUCCESS ||
-    	gos_kernelTaskRegister(&traceDaemonTaskDesc, NULL) != GOS_SUCCESS)
+        gos_kernelTaskRegister(&traceDaemonTaskDesc, NULL) != GOS_SUCCESS)
     {
-    	traceInitResult = GOS_ERROR;
+        traceInitResult = GOS_ERROR;
     }
 
     return traceInitResult;
@@ -133,7 +150,7 @@ gos_result_t gos_traceInit (void_t)
 /*
  * Function: gos_traceTrace
  */
-GOS_INLINE gos_result_t gos_traceTrace (char_t* traceMessage)
+GOS_INLINE gos_result_t gos_traceTrace (bool_t addTimeStamp, char_t* traceMessage)
 {
     /*
      * Local variables.
@@ -143,6 +160,7 @@ GOS_INLINE gos_result_t gos_traceTrace (char_t* traceMessage)
     gos_taskDescriptor_t callerTaskDesc      = {0};
     bool_t               isCallerIsr         = GOS_FALSE;
     bool_t               isCallerPrivileged  = GOS_FALSE;
+    gos_time_t           sysTime             = {0};
 
     /*
      * Function code.
@@ -151,19 +169,36 @@ GOS_INLINE gos_result_t gos_traceTrace (char_t* traceMessage)
     GOS_IS_CALLER_ISR(isCallerIsr);
     GOS_IS_ACCESS_PRIVILEGED(isCallerPrivileged);
 
-    if (traceMessage != NULL &&
-        (isCallerIsr == GOS_TRUE || isCallerPrivileged == GOS_TRUE ||
-        (gos_kernelTaskGetCurrentId(&callerTaskId) == GOS_SUCCESS &&
-        gos_kernelTaskGetData(callerTaskId, &callerTaskDesc) == GOS_SUCCESS &&
-        (callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE)) &&
-        gos_queuePut(traceQueue.queueId, (void_t*)traceMessage, strlen(traceMessage) + 1) == GOS_SUCCESS
-        )
+    if (traceMessage != NULL)
     {
-        GOS_UNPRIVILEGED_ACCESS
-        traceResult = GOS_SUCCESS;
+        if ((isCallerIsr == GOS_TRUE || isCallerPrivileged == GOS_TRUE ||
+            (gos_kernelTaskGetCurrentId(&callerTaskId) == GOS_SUCCESS &&
+            gos_kernelTaskGetData(callerTaskId, &callerTaskDesc) == GOS_SUCCESS &&
+            (callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE))
+            )
+        {
+            if (addTimeStamp == GOS_TRUE)
+            {
+                (void_t) gos_timeGet(&sysTime);
+                (void_t) sprintf(timeStampBuffer, GOS_TRACE_TIMESTAMP_FORMAT,
+                        sysTime.years,
+                        sysTime.months,
+                        sysTime.days,
+                        sysTime.hours,
+                        sysTime.minutes,
+                        sysTime.seconds
+                        );
+                (void_t) gos_queuePut(traceQueue.queueId, (void_t*)timeStampBuffer, strlen(timeStampBuffer) + 1);
+            }
 
-        GOS_PRIVILEGED_ACCESS
-		(void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
+            (void_t) gos_queuePut(traceQueue.queueId, (void_t*)traceMessage, strlen(traceMessage) + 1);
+
+            GOS_UNPRIVILEGED_ACCESS
+            traceResult = GOS_SUCCESS;
+
+            GOS_PRIVILEGED_ACCESS
+            (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
+        }
     }
     GOS_ENABLE_SCHED
 
@@ -173,9 +208,8 @@ GOS_INLINE gos_result_t gos_traceTrace (char_t* traceMessage)
 /*
  * Function: gos_traceTraceFormatted
  */
-gos_result_t gos_traceTraceFormatted (const char_t* traceFormat, ...)
+gos_result_t gos_traceTraceFormatted (bool_t addTimeStamp, const char_t* traceFormat, ...)
 {
-	GOS_DISABLE_SCHED
     /*
      * Local variables.
      */
@@ -185,10 +219,12 @@ gos_result_t gos_traceTraceFormatted (const char_t* traceFormat, ...)
     gos_taskDescriptor_t callerTaskDesc     = {0};
     bool_t               isCallerIsr        = GOS_FALSE;
     bool_t               isCallerPrivileged = GOS_FALSE;
+    gos_time_t           sysTime            = {0};
 
     /*
      * Function code.
      */
+    GOS_DISABLE_SCHED
     GOS_IS_CALLER_ISR(isCallerIsr);
     GOS_IS_ACCESS_PRIVILEGED(isCallerPrivileged);
 
@@ -201,15 +237,30 @@ gos_result_t gos_traceTraceFormatted (const char_t* traceFormat, ...)
         if ((isCallerIsr == GOS_TRUE || isCallerPrivileged == GOS_TRUE ||
             (gos_kernelTaskGetCurrentId(&callerTaskId) == GOS_SUCCESS &&
             gos_kernelTaskGetData(callerTaskId, &callerTaskDesc) == GOS_SUCCESS &&
-            (callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE)) &&
-            gos_queuePut(traceQueue.queueId, (void_t*)formattedBuffer, strlen(formattedBuffer) + 1) == GOS_SUCCESS
+            (callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE))
             )
         {
+            if (addTimeStamp == GOS_TRUE)
+            {
+                (void_t) gos_timeGet(&sysTime);
+                (void_t) sprintf(timeStampBuffer, GOS_TRACE_TIMESTAMP_FORMAT,
+                        sysTime.years,
+                        sysTime.months,
+                        sysTime.days,
+                        sysTime.hours,
+                        sysTime.minutes,
+                        sysTime.seconds
+                        );
+                (void_t) gos_queuePut(traceQueue.queueId, (void_t*)timeStampBuffer, strlen(timeStampBuffer) + 1);
+            }
+
+            (void_t) gos_queuePut(traceQueue.queueId, (void_t*)formattedBuffer, strlen(formattedBuffer) + 1);
+
             GOS_UNPRIVILEGED_ACCESS
             traceResult = GOS_SUCCESS;
 
             GOS_PRIVILEGED_ACCESS
-			(void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
+            (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
         }
     }
     GOS_ENABLE_SCHED
