@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2023
+//                                      (c) Ahmed Gazar, 2023
 //
 //*************************************************************************************************
 //! @file       gos_trigger.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2023-05-04
 //! @version    2.0
 //!
@@ -28,11 +28,11 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2023-01-11    Gabor Repasi    Initial version created
-// 2.0        2023-05-04    Gabor Repasi    Service completely reworked
+// 1.0        2023-01-11    Ahmed Gazar     Initial version created
+// 2.0        2023-05-04    Ahmed Gazar     Service completely reworked
 //*************************************************************************************************
 //
-// Copyright (c) 2023 Gabor Repasi
+// Copyright (c) 2023 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -93,7 +93,9 @@ typedef struct
  *
  * @return  -
  */
-void_t gos_triggerReset (gos_trigger_t* pTrigger);
+void_t gos_triggerReset (
+		gos_trigger_t* pTrigger
+		);
 
 /**
  * @brief   Waits for the trigger instance to reach the given trigger value.
@@ -109,7 +111,11 @@ void_t gos_triggerReset (gos_trigger_t* pTrigger);
  * @retval  GOS_SUCCESS : Trigger value reached.
  * @retval  GOS_ERROR   : Trigger value was not reached within the timeout value.
  */
-gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u32_t timeout);
+gos_result_t gos_triggerWait (
+		gos_trigger_t* pTrigger,
+		u32_t          value,
+		u32_t          timeout
+		);
 
 /**
  * @brief   Increments the trigger value of the given trigger.
@@ -119,6 +125,8 @@ gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u32_t timeou
  *
  * @return  -
  */
-void_t gos_triggerIncrement (gos_trigger_t* pTrigger);
+void_t gos_triggerIncrement (
+		gos_trigger_t* pTrigger
+		);
 
 #endif

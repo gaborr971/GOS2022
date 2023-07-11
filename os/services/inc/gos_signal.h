@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_signal.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2022-11-15
 //! @version    1.1
 //!
@@ -30,11 +30,11 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-23    Gabor Repasi    Initial version created
-// 1.1        2022-11-15    Gabor Repasi    +    License added
+// 1.0        2022-10-23    Ahmed Gazar     Initial version created
+// 1.1        2022-11-15    Ahmed Gazar     +    License added
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -98,7 +98,9 @@ typedef void_t (*gos_signalHandler_t)(gos_signalSenderId_t);
  *
  * @return  -
  */
-gos_result_t gos_signalInit (void_t);
+gos_result_t gos_signalInit (
+		void_t
+		);
 
 /**
  * @brief   Creates a new signal.
@@ -112,15 +114,18 @@ gos_result_t gos_signalInit (void_t);
  * @retval  GOS_SUCCESS : Creation successful.
  * @retval  GOS_ERROR   : Signal array full.
  */
-gos_result_t gos_signalCreate (gos_signalId_t* pSignal);
+gos_result_t gos_signalCreate (
+		gos_signalId_t* pSignal
+		);
 
 /**
  * @brief   Subscribes to the given signal.
  * @details Finds the next free slot in the signal handler array and registers the
  *          signal handler there.
  *
- * @param   signalId      : Signal identifier.
- * @param   signalHandler : Signal handler function pointer.
+ * @param   signalId                : Signal identifier.
+ * @param   signalHandler           : Signal handler function pointer.
+ * @param   signalHandlerPrivileges : Signal handler privilege level.
  *
  * @return  Success of signal subscription.
  *
@@ -128,7 +133,11 @@ gos_result_t gos_signalCreate (gos_signalId_t* pSignal);
  * @retval  GOS_ERROR     : Invalid signal ID, signal handler NULL pointer, or
  *                          handler array full.
  */
-gos_result_t gos_signalSubscribe (gos_signalId_t signalId, gos_signalHandler_t signalHandler);
+gos_result_t gos_signalSubscribe (
+		gos_signalId_t           signalId,
+		gos_signalHandler_t      signalHandler,
+		gos_taskPrivilegeLevel_t signalHandlerPrivileges
+		);
 
 /**
  * @brief   Invokes the given signal.
@@ -143,6 +152,9 @@ gos_result_t gos_signalSubscribe (gos_signalId_t signalId, gos_signalHandler_t s
  * @retval  GOS_SUCCESS : Invoking successful.
  * @retval  GOS_ERROR   : Invalid signal ID or signal unused.
  */
-gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSenderId_t senderId);
+gos_result_t gos_signalInvoke (
+		gos_signalId_t       signalId,
+		gos_signalSenderId_t senderId
+		);
 
 #endif

@@ -9,13 +9,13 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_queue.h
-//! @author     Gabor Repasi
-//! @date       2023-06-17
-//! @version    1.4
+//! @author     Ahmed Gazar
+//! @date       2023-06-30
+//! @version    1.5
 //!
 //! @brief      GOS queue service header.
 //! @details    Queue service is one of the inter-task communication solutions offered by the OS.
@@ -32,16 +32,17 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-23    Gabor Repasi    Initial version created
-// 1.1        2022-11-15    Gabor Repasi    +    Function descriptions updated
-// 1.2        2022-11-15    Gabor Repasi    +    Queue peek function added
+// 1.0        2022-10-23    Ahmed Gazar     Initial version created
+// 1.1        2022-11-15    Ahmed Gazar     +    Function descriptions updated
+// 1.2        2022-11-15    Ahmed Gazar     +    Queue peek function added
 //                                          +    Service description added
 //                                          +    License added
-// 1.3        2022-12-11    Gabor Repasi    +    Function descriptions completed
+// 1.3        2022-12-11    Ahmed Gazar     +    Function descriptions completed
 // 1.4        2023-06-17    Ahmed Gazar     *    Queue dump moved to function
+// 1.5        2023-06-30    Ahmed Gazar     +    Timeout parameter added to queue peek, put, get
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -72,12 +73,12 @@
 /**
  * Default queue ID.
  */
-#define GOS_DEFAULT_QUEUE_ID    ( (gos_queueId_t)0x3000 )
+#define GOS_DEFAULT_QUEUE_ID    ( (gos_queueId_t) 0x3000 )
 
 /**
  * Invalid queue ID.
  */
-#define GOS_INVALID_QUEUE_ID    ( (gos_queueId_t)0x0300 )
+#define GOS_INVALID_QUEUE_ID    ( (gos_queueId_t) 0x0300 )
 
 /*
  * Type definitions
@@ -137,7 +138,9 @@ typedef struct
  * @retval  GOS_SUCCESS : Initialization successful.
  * @retval  GOS_ERROR   : Lock creation, task registration or task suspension error.
  */
-gos_result_t gos_queueInit (void_t);
+gos_result_t gos_queueInit (
+		void_t
+		);
 
 /**
  * @brief   This function creates a new queue.
@@ -151,7 +154,9 @@ gos_result_t gos_queueInit (void_t);
  * @retval  GOS_SUCCESS      : Queue creation successful.
  * @retval  GOS_ERROR        : Queue descriptor is NULL pointer or queue array is full.
  */
-gos_result_t gos_queueCreate (gos_queueDescriptor_t* pQueueDescriptor);
+gos_result_t gos_queueCreate (
+		gos_queueDescriptor_t* pQueueDescriptor
+		);
 
 /**
  * @brief   This function puts an element in the given queue.
@@ -161,13 +166,17 @@ gos_result_t gos_queueCreate (gos_queueDescriptor_t* pQueueDescriptor);
  * @param   queueId     : Queue ID.
  * @param   element     : Pointer to element.
  * @param   elementSize : Size of element.
+ * @param   timeout     : Timeout for locking queue mutex.
  *
  * @return  Result of element putting.
  *
  * @retval  GOS_SUCCESS : Element successfully put in the queue.
  * @retval  GOS_ERROR   : Invalid queue ID, invalid element size or queue is full.
  */
-gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLength_t elementSize);
+gos_result_t gos_queuePut (
+		gos_queueId_t     queueId,     void_t* element,
+		gos_queueLength_t elementSize, u32_t   timeout
+		);
 
 /**
  * @brief   This function gets the next element from the given queue.
@@ -176,13 +185,17 @@ gos_result_t gos_queuePut (gos_queueId_t queueId, void_t* element, gos_queueLeng
  * @param   queueId     : Queue ID.
  * @param   target      : Pointer to target variable.
  * @param   targetSize  : Size of target.
+ * @param   timeout     : Timeout for locking queue mutex.
  *
  * @return  Result of element getting.
  *
  * @retval  GOS_SUCCESS : Element successfully moved from queue to target.
  * @retval  GOS_ERROR   : Invalid queue ID, invalid target size or queue is empty.
  */
-gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLength_t targetSize);
+gos_result_t gos_queueGet (
+		gos_queueId_t     queueId,    void_t* target,
+		gos_queueLength_t targetSize, u32_t   timeout
+		);
 
 /**
  * @brief   This function gets the next element from the given queue without removing it.
@@ -192,13 +205,17 @@ gos_result_t gos_queueGet (gos_queueId_t queueId, void_t* target, gos_queueLengt
  * @param   queueId     : Queue ID.
  * @param   target      : Pointer to target variable.
  * @param   targetSize  : Size of target.
+ * @param   timeout     : Timeout for locking queue mutex.
  *
  * @return  Result of element getting.
  *
  * @retval  GOS_SUCCESS : Element successfully copied from queue to target.
  * @retval  GOS_ERROR   : Invalid queue ID, invalid target size or queue is empty.
  */
-gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLength_t targetSize);
+gos_result_t gos_queuePeek (
+		gos_queueId_t     queueId,    void_t* target,
+		gos_queueLength_t targetSize, u32_t   timeout
+		);
 
 /**
  * @brief   This function registers a queue full hook function.
@@ -212,7 +229,9 @@ gos_result_t gos_queuePeek (gos_queueId_t queueId, void_t* target, gos_queueLeng
  * @retval  GOS_SUCCESS : Hook registration successful.
  * @retval  GOS_ERROR   : Hook already exists or parameter is NULL pointer.
  */
-gos_result_t gos_queueRegisterFullHook (gos_queueFullHook fullHook);
+gos_result_t gos_queueRegisterFullHook (
+		gos_queueFullHook fullHook
+		);
 
 /**
  * @brief   This function registers a queue empty hook function.
@@ -226,7 +245,9 @@ gos_result_t gos_queueRegisterFullHook (gos_queueFullHook fullHook);
  * @retval  GOS_SUCCESS : Hook registration successful.
  * @retval  GOS_ERROR   : Hook already exists or parameter is NULL pointer.
  */
-gos_result_t gos_queueRegisterEmptyHook (gos_queueEmptyHook emptyHook);
+gos_result_t gos_queueRegisterEmptyHook (
+		gos_queueEmptyHook emptyHook
+		);
 
 /**
  * @brief   This function gets the name of the given queue.
@@ -241,7 +262,10 @@ gos_result_t gos_queueRegisterEmptyHook (gos_queueEmptyHook emptyHook);
  * @retval  GOS_SUCCESS : Name getting successful.
  * @retval  GOS_ERROR   : Invalid queue ID or queue name variable is NULL.
  */
-gos_result_t gos_queueGetName (gos_queueId_t queueId, gos_queueName_t queueName);
+gos_result_t gos_queueGetName (
+		gos_queueId_t   queueId,
+		gos_queueName_t queueName
+		);
 
 /**
  * @brief   This function gets the number of elements in the given queue.
@@ -256,7 +280,10 @@ gos_result_t gos_queueGetName (gos_queueId_t queueId, gos_queueName_t queueName)
  * @retval  GOS_SUCCESS   : Element number getting successful.
  * @retval  GOS_ERROR     : Invalid queue ID or element number variable is NULL.
  */
-gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t* elementNumber);
+gos_result_t gos_queueGetElementNumber (
+		gos_queueId_t     queueId,
+		gos_queueIndex_t* elementNumber
+		);
 
 /**
  * @brief    Queue dump.
@@ -264,6 +291,8 @@ gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t*
  *
  * @return    -
  */
-void_t gos_queueDump (void_t);
+void_t gos_queueDump (
+		void_t
+		);
 
 #endif

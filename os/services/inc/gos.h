@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2023-06-17
 //! @version    1.5
 //!
@@ -25,17 +25,17 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-28    Gabor Repasi    Initial version created
-// 1.1        2022-11-14    Gabor Repasi    +    Header description added
+// 1.0        2022-10-28    Ahmed Gazar     Initial version created
+// 1.1        2022-11-14    Ahmed Gazar     +    Header description added
 //                                          +    Function descriptions added
-// 1.2        2022-11-15    Gabor Repasi    +    License added
-// 1.3        2022-12-11    Gabor Repasi    -    Function prototypes removed
-// 1.4        2022-12-15    Gabor Repasi    *    OS version number changed to v0.3
+// 1.2        2022-11-15    Ahmed Gazar     +    License added
+// 1.3        2022-12-11    Ahmed Gazar     -    Function prototypes removed
+// 1.4        2022-12-15    Ahmed Gazar     *    OS version number changed to v0.3
 // 1.5        2023-06-17    Ahmed Gazar     +    gos_Dump added
 //                                               OS version number changed to v0.4
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -81,5 +81,7 @@
  *
  * @return  -
  */
-void_t gos_Dump (void_t);
+void_t gos_Dump (
+		void_t
+		);
 #endif

@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_gcp.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2022-12-20
 //! @version    2.0
 //!
@@ -24,12 +24,12 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-10    Gabor Repasi    Initial version created
-// 1.1        2022-12-20    Gabor Repasi    * Function description modified
-// 2.0        2022-12-20    Gabor Repasi    Released
+// 1.0        2022-12-10    Ahmed Gazar     Initial version created
+// 1.1        2022-12-20    Ahmed Gazar     * Function description modified
+// 2.0        2022-12-20    Ahmed Gazar     Released
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -96,7 +96,9 @@ typedef struct
  * @retval  GOS_SUCCESS : GCP service initialized successfully.
  * @retval  GOS_ERROR   : Lock creation error.
  */
-gos_result_t gos_gcpInit (void_t);
+gos_result_t gos_gcpInit (
+		void_t
+		);
 
 /**
  * @brief   Registers the physical-layer transmit and receive driver functions.
@@ -111,9 +113,11 @@ gos_result_t gos_gcpInit (void_t);
  * @retval  GOS_SUCCESS      : Physical driver registration successful.
  * @retval  GOS_ERROR        : Transmit or receive function is NULL.
  */
-gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpChannelNumber_t channel,
-                                            gos_gcpTransmitFunction_t transmitFunction,
-                                            gos_gcpReceiveFunction_t receiveFunction);
+gos_result_t gos_gcpRegisterPhysicalDriver (
+		gos_gcpChannelNumber_t    channel,
+		gos_gcpTransmitFunction_t transmitFunction,
+		gos_gcpReceiveFunction_t  receiveFunction
+		);
 
 /**
  * @brief   Transmits the given message via the GCP protocol.
@@ -130,7 +134,11 @@ gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpChannelNumber_t channel,
  * @retval  GOS_ERROR       : Message header, message payload or transmit function is NULL pointer or
  *                            frame transmission error occurred.
  */
-gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel, gos_gcpMessageHeader_t* pMessageHeader, void_t* pMessagePayload);
+gos_result_t gos_gcpTransmitMessage (
+		gos_gcpChannelNumber_t  channel,
+		gos_gcpMessageHeader_t* pMessageHeader,
+		void_t*                 pMessagePayload
+		);
 
 /**
  * @brief   Receives the given message via the GCP protocol.
@@ -147,5 +155,9 @@ gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel, gos_gcpMess
  * @retval  GOS_ERROR            : Message header target, payload target or receive function is NULL pointer or
  *                                 frame reception error occurred.
  */
-gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel, gos_gcpMessageHeader_t* pTargetMessageHeader, void_t* pPayloadTarget);
+gos_result_t gos_gcpReceiveMessage (
+		gos_gcpChannelNumber_t  channel,
+		gos_gcpMessageHeader_t* pTargetMessageHeader,
+		void_t*                 pPayloadTarget
+		);
 #endif

@@ -23,5 +23,8 @@ If you have any questions or ideas, feel free to contact me: gaborr97@gmail.com
 The code can be used for developing simple application, but not recommended for building
 complex applications yet.
 
-Last updated: 2023-06-17
+Update: The code is being tested with a fairly complex application now and is
+proving well.
+
+Last updated: 2023-07-12
 (c) 2023, Ahmed Gazar

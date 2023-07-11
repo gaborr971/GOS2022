@@ -9,13 +9,13 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_kernel.h
-//! @author     Gabor Repasi
-//! @date       2023-06-17
-//! @version    1.11
+//! @author     Ahmed Gazar
+//! @date       2023-06-30
+//! @version    1.13
 //!
 //! @brief      GOS kernel header.
 //! @details    The GOS kernel is the core of the GOS system. It contains the basic type
@@ -29,29 +29,48 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-21    Gabor Repasi    Initial version created.
-// 1.1        2022-11-14    Gabor Repasi    +    Task previous state added to task descriptor type
+// 1.0        2022-10-21    Ahmed Gazar     Initial version created.
+// 1.1        2022-11-14    Ahmed Gazar     +    Task previous state added to task descriptor type
 //                                          +    Dump signal sender enumerators added
-// 1.2        2022-11-15    Gabor Repasi    +    License added
-// 1.3        2022-12-03    Gabor Repasi    +    gos_kernelTaskRegisterTasks added
+// 1.2        2022-11-15    Ahmed Gazar     +    License added
+// 1.3        2022-12-03    Ahmed Gazar     +    gos_kernelTaskRegisterTasks added
 //                                          +    GOS_PARAM_IGNORE macro added
 //                                          +    taskIdEx added to gos_taskDescriptor_t
-// 1.4        2022-12-04    Gabor Repasi    *    Sleep, wake-up, suspend, resume, block, unblock,
+// 1.4        2022-12-04    Ahmed Gazar     *    Sleep, wake-up, suspend, resume, block, unblock,
 //                                               delete hook functions replaced with signals
-// 1.5        2022-12-08    Gabor Repasi    +    Task original priority added
+// 1.5        2022-12-08    Ahmed Gazar     +    Task original priority added
 //                                          +    Task priority setter and getter functions added
-// 1.6        2022-12-11    Gabor Repasi    -    GOS_PARAM_IGNORE removed
+// 1.6        2022-12-11    Ahmed Gazar     -    GOS_PARAM_IGNORE removed
 //                                          +    Interface descriptions added
-// 1.7        2022-12-15    Gabor Repasi    +    Task privilege levels and privilege control macros
+// 1.7        2022-12-15    Ahmed Gazar     +    Task privilege levels and privilege control macros
 //                                               and functions added
-// 1.8        2023-01-13    Gabor Repasi    +    Constant macro added
+// 1.8        2023-01-13    Ahmed Gazar     +    Constant macro added
 //                                          *    Scheduling disabled flag replaced with counter
-// 1.9        2023-05-04    Gabor Repasi    +    Task stack monitoring variables added
+// 1.9        2023-05-04    Ahmed Gazar     +    Task stack monitoring variables added
 // 1.10       2023-05-19    Ahmed Gazar     +    gos_kernelGetCpuUsage added
 // 1.11       2023-06-17    Ahmed Gazar     *    Kernel dump moved to function
+// 1.12       2023-06-18    Ahmed Gazar     -    Dump signal sender IDs removed
+// 1.13       2023-06-30    Ahmed Gazar     *    gos_kernelCalculateTaskCpuUsages reset required
+//                                               flag added
+//                                          +    gos_kernelSetMaxCpuLoad added
+//                                          +    gos_kernelGetMaxCpuLoad added
+//                                          +    gos_kernelIsCallerIsr added
+//                                          +    gos_kernelIsCallerPrivileged added
+//                                          +    gos_kernelTaskSetPrivileges  added
+// 1.14       2023-07-11    Ahmed Gazar     -    GOS_PRIVILEGED_ACCESS removed
+//                                          -    GOS_UNPRIVILEGED_ACCESS removed
+//                                          +    GOS_TASK_MAX_BLOCK_TIME_MS added
+//                                          -    GOS_IS_ACCESS_PRIVILEGED() removed
+//                                          -    GOS_PRIV_MODIFY removed
+//                                          +    gos_blockMaxTick_t added
+//                                          +    gos_sysTickHook_t added
+//                                          +    taskBlockMaxTicks added to gos_taskDescriptor_t
+//                                          +    gos_kernelTaskGetPrivileges added
+//                                          +    gos_kernelRegisterSysTickHook added
+//                                          -    GOS_IS_CALLER_ISR() removed
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -106,6 +125,11 @@
  * Idle task priority.
  */
 #define GOS_TASK_IDLE_PRIO             ( GOS_TASK_MAX_PRIO_LEVELS )
+
+/**
+ * Task maximum block time.
+ */
+#define GOS_TASK_MAX_BLOCK_TIME_MS     ( 0xFFFFFFFFu )
 
 /**
  * Static macro.
@@ -167,24 +191,7 @@
                                            if (schedDisableCntr > 0)                \
                                            { schedDisableCntr--; }                  \
                                        }
-/**
- * Request privileged access to next function.
- */
-#define GOS_PRIVILEGED_ACCESS          {                                            \
-                                           GOS_EXTERN u8_t privilegedAccess;        \
-                                           privilegedAccess++;                      \
-                                       }
 
-/**
- * Decrease privileged access requests.
- */
-#define GOS_UNPRIVILEGED_ACCESS        {                                            \
-                                           GOS_EXTERN u8_t privilegedAccess;        \
-                                           GOS_EXTERN u8_t inIsr;                   \
-                                           if (privilegedAccess > 0){               \
-                                               privilegedAccess--;                  \
-                                           }                                        \
-                                       }
 /**
  * Interrupt Service Routine enter.
  */
@@ -201,35 +208,23 @@
                                            if (inIsr > 0) { inIsr--; }              \
                                            if (inIsr == 0) { GOS_ENABLE_SCHED }     \
                                        }
-/**
- * Determine if caller is an ISR.
- */
-#define GOS_IS_CALLER_ISR(x)           {                                            \
-                                          GOS_EXTERN u8_t inIsr;                    \
-                                           x = inIsr > 0 ? GOS_TRUE : GOS_FALSE;    \
-                                       }
-/**
- * Determine if caller has privileged access.
- */
-#define GOS_IS_ACCESS_PRIVILEGED(x)    {                                                    \
-                                           GOS_EXTERN u8_t privilegedAccess;                \
-                                           x = privilegedAccess > 0 ? GOS_TRUE : GOS_FALSE; \
-                                       }
 
 /**
  * Atomic operation enter - disable interrupts and kernel rescheduling.
  */
-#define GOS_ATOMIC_ENTER               {                                            \
-                                           GOS_ASM( " cpsid i " ::: "memory" );     \
-                                           GOS_ASM( "dsb" ::: "memory" );           \
-                                           GOS_ASM( "isb" );                        \
+#define GOS_ATOMIC_ENTER               {                                        \
+										   GOS_DISABLE_SCHED                    \
+                                           GOS_ASM( " cpsid i " ::: "memory" ); \
+                                           GOS_ASM( "dsb" ::: "memory" );       \
+                                           GOS_ASM( "isb" );                    \
                                        }
 
 /**
  * Atomic operation exit - enable interrupts kernel rescheduling.
  */
-#define GOS_ATOMIC_EXIT                {                                            \
-                                           GOS_ASM( " cpsie i " ::: "memory" );     \
+#define GOS_ATOMIC_EXIT                {                                        \
+                                           GOS_ASM( " cpsie i " ::: "memory" ); \
+                                           GOS_ENABLE_SCHED                     \
                                        }
 
 /**
@@ -246,11 +241,6 @@
  * Tracing privilege flag.
  */
 #define GOS_PRIV_TRACE                 ( 1 << 13 )
-
-/**
- * Task privilege change privilege flag.
- */
-#define GOS_PRIV_MODIFY                ( 1 << 12 )
 
 /**
  * Task signal invoking privilege flag.
@@ -279,19 +269,19 @@
 /*
  * Basic data types.
  */
-typedef uint8_t  bool_t;    //!< Boolean logic type.
-typedef uint8_t  u8_t;      //!< 8-bit unsigned type.
-typedef uint16_t u16_t;     //!< 16-bit unsigned type.
-typedef uint32_t u32_t;     //!< 32-bit unsigned type.
-typedef uint64_t u64_t;     //!< 64-bit unsigned type.
-typedef int8_t   s8_t;      //!< 8-bit signed type.
-typedef int16_t  s16_t;     //!< 16-bit signed type.
-typedef int32_t  s32_t;     //!< 32-bit signed type.
-typedef int64_t  s64_t;     //!< 64-bit signed type.
-typedef char     char_t;    //!< 8-bit character type.
-typedef float    float_t;   //!< Single precision float type.
-typedef double   double_t;  //!< Double precision float type.
-typedef void     void_t;    //!< Void type.
+typedef uint8_t  bool_t;                                       //!< Boolean logic type.
+typedef uint8_t  u8_t;                                         //!< 8-bit unsigned type.
+typedef uint16_t u16_t;                                        //!< 16-bit unsigned type.
+typedef uint32_t u32_t;                                        //!< 32-bit unsigned type.
+typedef uint64_t u64_t;                                        //!< 64-bit unsigned type.
+typedef int8_t   s8_t;                                         //!< 8-bit signed type.
+typedef int16_t  s16_t;                                        //!< 16-bit signed type.
+typedef int32_t  s32_t;                                        //!< 32-bit signed type.
+typedef int64_t  s64_t;                                        //!< 64-bit signed type.
+typedef char     char_t;                                       //!< 8-bit character type.
+typedef float    float_t;                                      //!< Single precision float type.
+typedef double   double_t;                                     //!< Double precision float type.
+typedef void     void_t;                                       //!< Void type.
 
 /*
  * Task-related definitions.
@@ -301,6 +291,7 @@ typedef char_t   gos_taskName_t [CFG_TASK_MAX_NAME_LENGTH];    //!< Task name ty
 typedef void_t   (*gos_task_t)(void_t);                        //!< Task function type.
 typedef u8_t     gos_taskPrio_t;                               //!< Task priority type.
 typedef u32_t    gos_taskSleepTick_t;                          //!< Sleep tick type.
+typedef u32_t    gos_blockMaxTick_t;                           //!< Block max. tick type.
 typedef u32_t    gos_taskAddress_t;                            //!< Memory address type.
 typedef u32_t    gos_taskRunCounter_t;                         //!< Run counter type.
 typedef u64_t    gos_taskRunTime_t;                            //!< Run-time type.
@@ -354,6 +345,7 @@ typedef void_t    (*gos_taskResumeHook_t  )(gos_tid_t             );    //!< Tas
 typedef void_t    (*gos_taskBlockHook_t   )(gos_tid_t             );    //!< Task block hook type.
 typedef void_t    (*gos_taskUnblockHook_t )(gos_tid_t             );    //!< Task unblock hook type.
 typedef void_t    (*gos_taskDeleteHook_t  )(gos_tid_t             );    //!< Task delete hook type.
+typedef void_t    (*gos_sysTickHook_t     )(void_t                );    //!< System tick hook type.
 
 /**
  *  Result type enumerator.
@@ -416,32 +408,20 @@ typedef struct __attribute__((packed))
     gos_tid_t                taskId;                     //!< Task ID (internal).
     gos_tid_t*               taskIdEx;                   //!< Task ID (external).
     gos_taskSleepTick_t      taskSleepTicks;             //!< Task sleep ticks.
+    gos_blockMaxTick_t       taskBlockMaxTicks;          //!< Task block max. ticks.
     gos_taskAddress_t        taskPsp;                    //!< Task PSP.
     gos_taskRunCounter_t     taskRunCounter;             //!< Task run counter.
     gos_taskCSCounter_t      taskCsCounter;              //!< Task context-switch counter.
     gos_taskStackSize_t      taskStackSize;              //!< Task stack size.
     gos_runtime_t            taskRunTime;                //!< Task run-time.
-    u16_t                    taskCpuUsage;               //!< Task processor usage in [%].
+    u16_t                    taskCpuUsageLimit;          //!< Task CPU usage limit in [% x 100].
+    u16_t                    taskCpuUsageMax;            //!< Task CPU usage max value in [% x 100].
+    u16_t                    taskCpuUsage;               //!< Task processor usage in [% x 100].
+    u16_t                    taskCpuMonitoringUsage;     //!< Task CPU usage monitoring value in [% x 100].
     u32_t                    taskStackOverflowThreshold; //!< Task stack overflow threshold address.
     gos_taskStackSize_t      taskStackMaxUsage;          //!< Task max. stack usage.
-    u16_t                    taskStackUsage;             //!< Task stack usage in [%].
+    u16_t                    taskStackUsage;             //!< Task stack usage in [% x 100].
 }gos_taskDescriptor_t;
-
-/**
- * Dump signal sender enumerator.
- */
-typedef enum
-{
-    GOS_DUMP_SENDER_USER,    //!< Sender is user.
-    GOS_DUMP_SENDER_KERNEL,  //!< Sender is the kernel.
-    GOS_DUMP_SENDER_PROC,    //!< Sender is the process service.
-    GOS_DUMP_SENDER_QUEUE,   //!< Sender is the queue.
-    GOS_DUMP_SENDER_SIGNAL,  //!< Sender is the signal service.
-    GOS_DUMP_SENDER_MESSAGE, //!< Sender is the message service.
-    GOS_DUMP_SENDER_SHELL,   //!< Sender is the shell service.
-    GOS_DUMP_SENDER_TIME,    //!< Sender is the time service.
-    GOS_DUMP_SENDER_LAST     //!< Sender is the last one.
-}gos_dumpSignalSender_t;
 
 /*
  * Function prototypes
@@ -455,9 +435,11 @@ typedef enum
  * @return  Result of initialization.
  *
  * @retval  GOS_SUCCESS :    Kernel initialization successful.
- * @retval  GOS_ERROR   :    Kernel dump task or task suspension unsuccessful.
+ * @retval  GOS_ERROR   :    Kernel task suspension unsuccessful.
  */
-gos_result_t gos_kernelInit (void_t);
+gos_result_t gos_kernelInit (
+		void_t
+		);
 
 /**
  * @brief   This function registers an array of tasks for scheduling.
@@ -474,7 +456,10 @@ gos_result_t gos_kernelInit (void_t);
  *                            or stack size is not 4-byte-aligned) in one of the array elements or
  *                            task array is full.
  */
-gos_result_t gos_kernelTaskRegisterTasks (gos_taskDescriptor_t* taskDescriptors, u16_t arraySize);
+gos_result_t gos_kernelTaskRegisterTasks (
+		gos_taskDescriptor_t* taskDescriptors,
+		u16_t                 arraySize
+		);
 
 /**
  * @brief   This function registers a task for scheduling.
@@ -492,7 +477,10 @@ gos_result_t gos_kernelTaskRegisterTasks (gos_taskDescriptor_t* taskDescriptors,
  *                           invalid priority level, invalid stack size, idle task registration,
  *                           or stack size is not 4-byte-aligned) or task array is full.
  */
-gos_result_t gos_kernelTaskRegister (gos_taskDescriptor_t* taskDescriptor, gos_tid_t* taskId);
+gos_result_t gos_kernelTaskRegister (
+		gos_taskDescriptor_t* taskDescriptor,
+		gos_tid_t*            taskId
+		);
 
 /**
  * @brief   Sends the current task to sleeping state.
@@ -507,7 +495,9 @@ gos_result_t gos_kernelTaskRegister (gos_taskDescriptor_t* taskDescriptor, gos_t
  * @retval  GOS_SUCCESS : Task successfully sent to sleeping state.
  * @retval  GOS_ERROR   : Function called from idle task or task state is not ready.
  */
-gos_result_t gos_kernelTaskSleep (gos_taskSleepTick_t sleepTicks);
+gos_result_t gos_kernelTaskSleep (
+		gos_taskSleepTick_t sleepTicks
+		);
 
 /**
  * @brief   Wakes up the given task.
@@ -521,7 +511,9 @@ gos_result_t gos_kernelTaskSleep (gos_taskSleepTick_t sleepTicks);
  * @retval  GOS_SUCCESS : Task waken up successfully.
  * @retval  GOS_ERROR   : Task ID is invalid, or task is not sleeping.
  */
-gos_result_t gos_kernelTaskWakeup (gos_tid_t taskId);
+gos_result_t gos_kernelTaskWakeup (
+		gos_tid_t taskId
+		);
 
 /**
  * @brief   Sends the given task to suspended state.
@@ -536,7 +528,9 @@ gos_result_t gos_kernelTaskWakeup (gos_tid_t taskId);
  * @retval  GOS_SUCESS : Task suspended successfully.
  * @retval  GOS_ERROR  : Task ID is invalid, or task state is not ready or sleeping.
  */
-gos_result_t gos_kernelTaskSuspend (gos_tid_t taskId);
+gos_result_t gos_kernelTaskSuspend (
+		gos_tid_t taskId
+		);
 
 /**
  * @brief   Resumes the given task.
@@ -550,7 +544,9 @@ gos_result_t gos_kernelTaskSuspend (gos_tid_t taskId);
  * @retval  GOS_SUCESS : Task resumed successfully.
  * @retval  GOS_ERROR  : Task ID is invalid, or task is not suspended.
  */
-gos_result_t gos_kernelTaskResume (gos_tid_t taskId);
+gos_result_t gos_kernelTaskResume (
+		gos_tid_t taskId
+		);
 
 /**
  * @brief   Sends the given task to blocked state.
@@ -565,7 +561,10 @@ gos_result_t gos_kernelTaskResume (gos_tid_t taskId);
  * @retval  GOS_SUCESS : Task blocked successfully.
  * @retval  GOS_ERROR  : Task ID is invalid, or task state is not ready.
  */
-gos_result_t gos_kernelTaskBlock (gos_tid_t taskId);
+gos_result_t gos_kernelTaskBlock (
+		gos_tid_t          taskId,
+		gos_blockMaxTick_t blockTicks
+		);
 
 /**
  * @brief   Unblocks the given task.
@@ -579,7 +578,9 @@ gos_result_t gos_kernelTaskBlock (gos_tid_t taskId);
  * @retval  GOS_SUCESS : Task unblocked successfully.
  * @retval  GOS_ERROR  : Task ID is invalid, or task is not blocked.
  */
-gos_result_t gos_kernelTaskUnblock (gos_tid_t taskId);
+gos_result_t gos_kernelTaskUnblock (
+		gos_tid_t taskId
+		);
 
 /**
  * @brief   Deletes the given task from the scheduling array.
@@ -593,7 +594,9 @@ gos_result_t gos_kernelTaskUnblock (gos_tid_t taskId);
  * @retval  GOS_SUCCESS : Task deleted successfully.
  * @retval  GOS_ERROR   : Task is already a zombie.
  */
-gos_result_t gos_kernelTaskDelete (gos_tid_t taskId);
+gos_result_t gos_kernelTaskDelete (
+		gos_tid_t taskId
+		);
 
 /**
  * @brief   Sets the current priority of the given task to the given value (for temporary change).
@@ -607,7 +610,10 @@ gos_result_t gos_kernelTaskDelete (gos_tid_t taskId);
  * @retval  GOS_SUCCESS  : Current priority changed successfully.
  * @retval  GOS_ERROR    : Invalid task ID or priority.
  */
-gos_result_t gos_kernelTaskSetPriority (gos_tid_t taskId, gos_taskPrio_t taskPriority);
+gos_result_t gos_kernelTaskSetPriority (
+		gos_tid_t      taskId,
+		gos_taskPrio_t taskPriority
+		);
 
 /**
  * @brief   Sets the original priority of the given task to the given value (for permanent change).
@@ -621,7 +627,10 @@ gos_result_t gos_kernelTaskSetPriority (gos_tid_t taskId, gos_taskPrio_t taskPri
  * @retval  GOS_SUCCESS  : Original priority changed successfully.
  * @retval  GOS_ERROR    : Invalid task ID or priority.
  */
-gos_result_t gos_kernelTaskSetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t taskPriority);
+gos_result_t gos_kernelTaskSetOriginalPriority (
+		gos_tid_t      taskId,
+		gos_taskPrio_t taskPriority
+		);
 
 /**
  * @brief   Gets the current priority of the given task.
@@ -635,7 +644,10 @@ gos_result_t gos_kernelTaskSetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t
  * @retval  GOS_SUCCESS  : Current priority getting successfully.
  * @retval  GOS_ERROR    : Invalid task ID or priority variable is NULL.
  */
-gos_result_t gos_kernelTaskGetPriority (gos_tid_t taskId, gos_taskPrio_t* taskPriority);
+gos_result_t gos_kernelTaskGetPriority (
+		gos_tid_t       taskId,
+		gos_taskPrio_t* taskPriority
+		);
 
 /**
  * @brief   Gets the original priority of the given task.
@@ -649,7 +661,10 @@ gos_result_t gos_kernelTaskGetPriority (gos_tid_t taskId, gos_taskPrio_t* taskPr
  * @retval  GOS_SUCCESS  : Original priority getting successfully.
  * @retval  GOS_ERROR    : Invalid task ID or priority variable is NULL.
  */
-gos_result_t gos_kernelTaskGetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t* taskPriority);
+gos_result_t gos_kernelTaskGetOriginalPriority (
+		gos_tid_t       taskId,
+		gos_taskPrio_t* taskPriority
+		);
 
 /**
  * @brief   Adds the given privileges to the given task.
@@ -665,7 +680,10 @@ gos_result_t gos_kernelTaskGetOriginalPriority (gos_tid_t taskId, gos_taskPrio_t
  * @retval  GOS_ERROR   : Invalid task ID or caller does not have the privilege to modify task
  *                        privileges.
  */
-gos_result_t gos_kernelTaskAddPrivilege (gos_tid_t taskId, gos_taskPrivilegeLevel_t privileges);
+gos_result_t gos_kernelTaskAddPrivilege (
+		gos_tid_t                taskId,
+		gos_taskPrivilegeLevel_t privileges
+		);
 
 /**
  * @brief   Removes the given privileges from the given task.
@@ -681,7 +699,46 @@ gos_result_t gos_kernelTaskAddPrivilege (gos_tid_t taskId, gos_taskPrivilegeLeve
  * @retval  GOS_ERROR   : Invalid task ID or caller does not have the privilege to modify task
  *                        privileges.
  */
-gos_result_t gos_kernelTaskRemovePrivilege (gos_tid_t taskId, gos_taskPrivilegeLevel_t privileges);
+gos_result_t gos_kernelTaskRemovePrivilege (
+		gos_tid_t                taskId,
+		gos_taskPrivilegeLevel_t privileges
+		);
+
+/**
+ * @brief   Sets the given privileges for the given task.
+ * @details Checks the caller task if it has the privilege to modify task privileges and
+ *          if so, it sets the given privileges for the given task.
+ *
+ * @param   taskId      : ID of the task to set the privileges for.
+ * @param   privileges  : Privileges to be set.
+ *
+ * @return  Result of privilege setting.
+ *
+ * @retval  GOS_SUCCESS : Privileges set successfully.
+ * @retval  GOS_ERROR   : Invalid task ID or caller does not have the privilege to modify task
+ *                        privileges.
+ */
+gos_result_t gos_kernelTaskSetPrivileges (
+		gos_tid_t                taskId,
+		gos_taskPrivilegeLevel_t privileges
+		);
+
+/**
+ * @brief   Gets the privileges of the given task.
+ * @details Returns the privilege flags of the given task.
+ *
+ * @param   taskId      : ID of the task to get the privileges of.
+ * @param   privileges  : Variable to store the privilege flags.
+ *
+ * @return  Result of privilege getting.
+ *
+ * @retval  GOS_SUCCESS : Privileges get successful.
+ * @retval  GOS_ERROR   : Invalid task ID or privilege variable is NULL pointer.
+ */
+gos_result_t gos_kernelTaskGetPrivileges (
+		gos_tid_t                 taskId,
+		gos_taskPrivilegeLevel_t* privileges
+		);
 
 /**
  * @brief   Gets the task name of the task with the given ID.
@@ -695,7 +752,10 @@ gos_result_t gos_kernelTaskRemovePrivilege (gos_tid_t taskId, gos_taskPrivilegeL
  * @retval  GOS_SUCCESS : Task name found successfully.
  * @retval  GOS_ERROR   : Invalid task ID or task name variable is NULL.
  */
-gos_result_t gos_kernelTaskGetName (gos_tid_t taskId, gos_taskName_t taskName);
+gos_result_t gos_kernelTaskGetName (
+		gos_tid_t      taskId,
+		gos_taskName_t taskName
+		);
 
 /**
  * @brief   Gets the task ID of the task with the given name.
@@ -710,7 +770,10 @@ gos_result_t gos_kernelTaskGetName (gos_tid_t taskId, gos_taskName_t taskName);
  * @retval  GOS_SUCCESS : Task ID found successfully.
  * @retval  GOS_ERROR   : Task name not found.
  */
-gos_result_t gos_kernelTaskGetId (gos_taskName_t taskName, gos_tid_t* taskId);
+gos_result_t gos_kernelTaskGetId (
+		gos_taskName_t taskName,
+		gos_tid_t*     taskId
+		);
 
 /**
  * @brief   Returns the ID of the currently running task.
@@ -723,7 +786,9 @@ gos_result_t gos_kernelTaskGetId (gos_taskName_t taskName, gos_tid_t* taskId);
  * @retval  GOS_SUCCESS : Current task ID returned successfully.
  * @retval  GOS_ERROR   : Task ID pointer is NULL.
  */
-gos_result_t gos_kernelTaskGetCurrentId (gos_tid_t* taskId);
+gos_result_t gos_kernelTaskGetCurrentId (
+		gos_tid_t* taskId
+		);
 
 /**
  * @brief   Returns the task data of the given task.
@@ -738,7 +803,10 @@ gos_result_t gos_kernelTaskGetCurrentId (gos_tid_t* taskId);
  * @retval  GOS_SUCCESS : Task data copied successfully.
  * @retval  GOS_ERROR   : Invalid task ID or task data pointer is NULL.
  */
-gos_result_t gos_kernelTaskGetData (gos_tid_t taskId, gos_taskDescriptor_t* taskData);
+gos_result_t gos_kernelTaskGetData (
+		gos_tid_t             taskId,
+		gos_taskDescriptor_t* taskData
+		);
 
 /**
  * @brief   Yields the current task.
@@ -748,7 +816,9 @@ gos_result_t gos_kernelTaskGetData (gos_tid_t taskId, gos_taskDescriptor_t* task
  *
  * @retval  GOS_SUCCESS : Yield successful.
  */
-gos_result_t gos_kernelTaskYield (void_t);
+gos_result_t gos_kernelTaskYield (
+		void_t
+		);
 
 /**
  * @brief   Registers a task swap hook function.
@@ -762,7 +832,9 @@ gos_result_t gos_kernelTaskYield (void_t);
  * @retval  GOS_SUCCESS      : Registration successful.
  * @retval  GOS_ERROR        : Registration failed (hook function already exists or parameter is NULL).
  */
-gos_result_t gos_kernelRegisterSwapHook (gos_taskSwapHook_t swapHookFunction);
+gos_result_t gos_kernelRegisterSwapHook (
+		gos_taskSwapHook_t swapHookFunction
+		);
 
 /**
  * @brief   Registers an idle hook function.
@@ -776,7 +848,25 @@ gos_result_t gos_kernelRegisterSwapHook (gos_taskSwapHook_t swapHookFunction);
  * @retval  GOS_SUCCESS      : Registration successful.
  * @retval  GOS_ERROR        : Registration failed (hook function already exists or parameter is NULL).
  */
-gos_result_t gos_kernelRegisterIdleHook (gos_taskIdleHook_t idleHookFunction);
+gos_result_t gos_kernelRegisterIdleHook (
+		gos_taskIdleHook_t idleHookFunction
+		);
+
+/**
+ * @brief   Registers a system tick hook function.
+ * @details Checks whether the param is NULL pointer and a hook function is already
+ *          registered, and both conditions are false, it registers the hook function.
+ *
+ * @param   sysTickHookFunction : System tick hook function.
+ *
+ * @return  Result of registration.
+ *
+ * @retval  GOS_SUCCESS      : Registration successful.
+ * @retval  GOS_ERROR        : Registration failed (hook function already exists or parameter is NULL).
+ */
+gos_result_t gos_kernelRegisterSysTickHook (
+		gos_sysTickHook_t sysTickHookFunction
+		);
 
 /**
  * @brief   Subscribes the given handler to the task delete signal.
@@ -789,7 +879,9 @@ gos_result_t gos_kernelRegisterIdleHook (gos_taskIdleHook_t idleHookFunction);
  * @retval  GOS_SUCCESS         : Subscription successful.
  * @retval  GOS_ERROR           : Subscription failed or signal handler is NULL.
  */
-gos_result_t gos_kernelSubscribeTaskDeleteSignal (void_t (*deleteSignalHandler)(u16_t));
+gos_result_t gos_kernelSubscribeTaskDeleteSignal (
+		void_t (*deleteSignalHandler)(u16_t)
+		);
 
 /**
  * @brief   Subscribes the given handler to the dump ready signal.
@@ -802,7 +894,9 @@ gos_result_t gos_kernelSubscribeTaskDeleteSignal (void_t (*deleteSignalHandler)(
  * @retval  GOS_SUCCESS            : Subscription successful.
  * @retval  GOS_ERROR              : Subscription failed or signal handler is NULL.
  */
-gos_result_t gos_kernelSubscribeDumpReadySignal (void_t (*dumpReadySignalHandler)(u16_t));
+gos_result_t gos_kernelSubscribeDumpReadySignal (
+		void_t (*dumpReadySignalHandler)(u16_t)
+		);
 
 /**
  * @brief   Returns the system ticks.
@@ -810,7 +904,9 @@ gos_result_t gos_kernelSubscribeDumpReadySignal (void_t (*dumpReadySignalHandler
  *
  * @return  System ticks.
  */
-u32_t gos_kernelGetSysTicks (void_t);
+u32_t gos_kernelGetSysTicks (
+		void_t
+		);
 
 /**
  * @brief   Returns the CPU usage.
@@ -820,7 +916,9 @@ u32_t gos_kernelGetSysTicks (void_t);
  *
  * @return  Overall CPU usage.
  */
-u16_t gos_kernelGetCpuUsage (void_t);
+u16_t gos_kernelGetCpuUsage (
+		void_t
+		);
 
 /**
  * @brief   Starts the kernel.
@@ -831,7 +929,9 @@ u16_t gos_kernelGetCpuUsage (void_t);
  *
  * @retval  GOS_ERROR : First task terminated.
  */
-gos_result_t gos_kernelStart (void_t);
+gos_result_t gos_kernelStart (
+		void_t
+		);
 
 /**
  * @brief   Resets the microcontroller.
@@ -840,7 +940,9 @@ gos_result_t gos_kernelStart (void_t);
  *
  * @return    -
  */
-void_t gos_kernelReset (void_t);
+void_t gos_kernelReset (
+		void_t
+		);
 
 /**
  * @brief   Blocking delay in microsecond range.
@@ -851,7 +953,9 @@ void_t gos_kernelReset (void_t);
  *
  * @return    -
  */
-void_t gos_kernelDelayUs (u16_t microseconds);
+void_t gos_kernelDelayUs (
+		u16_t microseconds
+		);
 
 /**
  * @brief   Blocking delay in millisecond range.
@@ -862,16 +966,22 @@ void_t gos_kernelDelayUs (u16_t microseconds);
  *
  * @return  -
  */
-void_t gos_kernelDelayMs (u16_t milliseconds);
+void_t gos_kernelDelayMs (
+		u16_t milliseconds
+		);
 
 /**
  * @brief   Calculates the CPU usage for the tasks.
  * @details Based on the total system time range, it refreshes
  *          the CPU-usage statistics of tasks.
  *
+ * @param   isResetRequired : Flag to indicate whether the measurement should be reset.
+ *
  * @return  -
  */
-void_t gos_kernelCalculateTaskCpuUsages (void_t);
+void_t gos_kernelCalculateTaskCpuUsages (
+		bool_t isResetRequired
+		);
 
 /**
  * @brief   Kernel dump.
@@ -880,7 +990,54 @@ void_t gos_kernelCalculateTaskCpuUsages (void_t);
  *
  * @return  -
  */
-void_t gos_kernelDump (void_t);
+void_t gos_kernelDump (
+		void_t
+		);
+
+/**
+ * @brief  Sets the maximum (global) CPU load.
+ * @detail Sets the value of the global CPU load above which the scheduler
+ *         will start running the idle task until the CPU load falls below
+ *         the limit value.
+ *
+ * @param  maxCpuLoad : Desired maximum CPU load (0...10000 where 100 % = 10000).
+ *
+ * @return Result of maximum CPU load setting.
+ *
+ * @retval GOS_SUCCESS : Maximum CPU load setting successful.
+ * @retval GOS_ERROR   : Desired value is out of range.
+ */
+gos_result_t gos_kernelSetMaxCpuLoad (
+		u16_t maxCpuLoad
+		);
+
+/**
+ * @brief  Gets the maximum (global) CPU load.
+ * @detail Returns the value of the maximum CPU load (limit).
+ *
+ * @param  maxCpuLoad : Target variable to store the maximum CPU load.
+ *
+ * @return Result of maximum CPU load getting.
+ *
+ * @retval GOS_SUCCESS : Maximum CPU load getting successful.
+ * @retval GOS_ERROR   : Target variable is NULL.
+ */
+gos_result_t gos_kernelGetMaxCpuLoad (
+		u16_t* maxCpuLoad
+		);
+
+/**
+ * @brief  Returns if the current task is ISR.
+ * @detail Returns if the inIsr flag is greater than zero.
+ *
+ * @return Whether the caller is ISR (Interrupt Service Routine).
+ *
+ * @retval GOS_TRUE  : Caller is ISR.
+ * @retval GOS_FALSE : Caller is not ISR.
+ */
+bool_t gos_kernelIsCallerIsr (
+		void_t
+		);
 
 /**
  * @brief   Platform driver initializer. Used for the platform-specific driver initializations.

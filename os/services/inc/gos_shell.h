@@ -9,13 +9,13 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_shell.h
-//! @author     Gabor Repasi
-//! @date       2022-12-03
-//! @version    1.2
+//! @author     Ahmed Gazar
+//! @date       2023-07-12
+//! @version    1.3
 //!
 //! @brief      GOS shell service header.
 //! @details    The shell service provides an easy interface to receive and process commands in a
@@ -29,12 +29,14 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-11-04    Gabor Repasi    Initial version created
-// 1.1        2022-11-15    Gabor Repasi    +    License added
-// 1.2        2022-12-03    Gabor Repasi    +     gos_shellRegisterCommands added
+// 1.0        2022-11-04    Ahmed Gazar     Initial version created
+// 1.1        2022-11-15    Ahmed Gazar     +    License added
+// 1.2        2022-12-03    Ahmed Gazar     +    gos_shellRegisterCommands added
+// 1.3        2023-07-12    Ahmed Gazar     +    commandHandlerPrivileges added to
+//                                               gos_shellCommand_t
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -72,8 +74,9 @@ typedef void_t (*gos_shellFunction)(char_t* params);
  */
 typedef struct
 {
-    char_t            command  [CFG_SHELL_MAX_COMMAND_LENGTH]; //!< Command name.
-    gos_shellFunction commandHandler;                          //!< Command handler function.
+    char_t                   command  [CFG_SHELL_MAX_COMMAND_LENGTH]; //!< Command name.
+    gos_shellFunction        commandHandler;                          //!< Command handler function.
+    gos_taskPrivilegeLevel_t commandHandlerPrivileges;                //!< Command handler privileges.
 }gos_shellCommand_t;
 
 #if CFG_SHELL_MAX_COMMAND_NUMBER < 255
@@ -95,7 +98,9 @@ typedef u16_t gos_shellCommandIndex_t;    //!< Shell command index type.
  * @retval  GOS_SUCCESS : Shell initialization successful.
  * @retval  GOS_ERROR   : Shell daemon task registration failed.
  */
-gos_result_t gos_shellInit (void_t);
+gos_result_t gos_shellInit (
+		void_t
+		);
 
 /**
  * @brief   This function registers an array of commands in the shell.
@@ -110,7 +115,10 @@ gos_result_t gos_shellInit (void_t);
  * @retval  GOS_ERROR   : Command function or name is NULL or internal command
  *                        array is full.
  */
-gos_result_t gos_shellRegisterCommands (gos_shellCommand_t* commands, u16_t arraySize);
+gos_result_t gos_shellRegisterCommands (
+		gos_shellCommand_t* commands,
+		u16_t               arraySize
+		);
 
 /**
  * @brief   This function registers a command in the shell.
@@ -125,7 +133,9 @@ gos_result_t gos_shellRegisterCommands (gos_shellCommand_t* commands, u16_t arra
  * @retval  GOS_ERROR   : Command function or name is NULL or internal command
  *                        array is full.
  */
-gos_result_t gos_shellRegisterCommand (gos_shellCommand_t* command);
+gos_result_t gos_shellRegisterCommand (
+		gos_shellCommand_t* command
+		);
 
 /**
  * @brief   Suspends the shell daemon task.
@@ -136,7 +146,9 @@ gos_result_t gos_shellRegisterCommand (gos_shellCommand_t* command);
  * @retval  GOS_SUCCESS : Shell suspended successfully.
  * @retval  GOS_ERROR   : Task suspension failed.
  */
-gos_result_t gos_shellSuspend (void_t);
+gos_result_t gos_shellSuspend (
+		void_t
+		);
 
 /**
  * @brief   Resumes the shell daemon task.
@@ -147,7 +159,9 @@ gos_result_t gos_shellSuspend (void_t);
  * @retval  GOS_SUCCESS : Shell resumed successfully.
  * @retval  GOS_ERROR   : Task resumption failed.
  */
-gos_result_t gos_shellResume (void_t);
+gos_result_t gos_shellResume (
+		void_t
+		);
 
 /**
  * @brief   Turns the shell echoing on.
@@ -157,7 +171,9 @@ gos_result_t gos_shellResume (void_t);
  *
  * @retval  GOS_SUCCESS : Echoing turned on successfully.
  */
-gos_result_t gos_shellEchoOn (void_t);
+gos_result_t gos_shellEchoOn (
+		void_t
+		);
 
 /**
  * @brief   Turns the shell echoing off.
@@ -167,5 +183,7 @@ gos_result_t gos_shellEchoOn (void_t);
  *
  * @retval  GOS_SUCCESS : Echoing turned off successfully.
  */
-gos_result_t gos_shellEchoOff (void_t);
+gos_result_t gos_shellEchoOff (
+		void_t
+		);
 #endif

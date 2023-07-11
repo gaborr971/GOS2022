@@ -9,13 +9,13 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_time.c
-//! @author     Gabor Repasi
-//! @date       2023-01-31
-//! @version    1.3
+//! @author     Ahmed Gazar
+//! @date       2023-06-30
+//! @version    1.4
 //!
 //! @brief      GOS time service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_time.h
@@ -24,15 +24,16 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-24    Gabor Repasi    Initial version created
-// 1.1        2022-11-15    Gabor Repasi    +    License added
+// 1.0        2022-10-24    Ahmed Gazar     Initial version created
+// 1.1        2022-11-15    Ahmed Gazar     +    License added
 //                                          -    Elapsed sender ID getter API functions removed
 //                                          +    New elapsed sender ID enumerators are used
-// 1.2        2022-12-08    Gabor Repasi    +    Run-time handling added
-// 1.3        2023-01-31    Gabor Repasi    +    gos_runTimeAddMicroseconds added
+// 1.2        2022-12-08    Ahmed Gazar     +    Run-time handling added
+// 1.3        2023-01-31    Ahmed Gazar     +    gos_runTimeAddMicroseconds added
+// 1.4        2023-06-30    Ahmed Gazar     +    TIME_SLEEP_TIME_MS added
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -75,6 +76,11 @@
  */
 #define TIME_DEFAULT_DAY      ( 1 )
 
+/**
+ * Time task sleep time in [ms].
+ */
+#define TIME_SLEEP_TIME_MS    ( 1000u )
+
 /*
  * Static variables
  */
@@ -96,7 +102,7 @@ GOS_STATIC gos_runtime_t systemRunTime;
 /**
  * Number of days in each month - lookup table.
  */
-GOS_STATIC const gos_day_t dayLookupTable [GOS_TIME_NUMBER_OF_MONTHS] =
+GOS_STATIC GOS_CONST gos_day_t dayLookupTable [GOS_TIME_NUMBER_OF_MONTHS] =
 {
         [GOS_TIME_JANUARY   - 1]    = 31,
         [GOS_TIME_FEBRUARY  - 1]    = 28,
@@ -152,10 +158,15 @@ gos_result_t gos_timeInit (void_t)
     /*
      * Function code.
      */
-    if (gos_signalCreate(&timeSignalId) != GOS_SUCCESS ||
-        gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS)
+    if (gos_signalCreate(&timeSignalId)                                != GOS_SUCCESS ||
+        gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS
+		)
     {
         timeInitResult = GOS_ERROR;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return timeInitResult;
@@ -185,6 +196,10 @@ gos_result_t gos_timeGet (gos_time_t* pTime)
 
         timeGetResult = GOS_SUCCESS;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return timeGetResult;
 }
@@ -213,6 +228,10 @@ gos_result_t gos_timeSet (gos_time_t* pTime)
 
         timeSetResult = GOS_SUCCESS;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return timeSetResult;
 }
@@ -238,6 +257,10 @@ gos_result_t gos_runTimeGet (gos_runtime_t* pRunTime)
         pRunTime->days    = systemRunTime.days;
 
         runtimeGetResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return runtimeGetResult;
@@ -278,6 +301,10 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
             *result = GOS_TIME_LATER;
         }
         timeCompareResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return timeCompareResult;
@@ -334,6 +361,10 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds)
                             pTime->days = 1U;
                             pTime->months++;
                         }
+                        else
+                        {
+                        	// Nothing to do.
+                        }
 
                         // Check months.
                         if (pTime->months == 13)
@@ -341,11 +372,31 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds)
                             pTime->months = 1;
                             pTime->years++;
                         }
+                        else
+                        {
+                        	// Nothing to do.
+                        }
+                    }
+                    else
+                    {
+                    	// Nothing to do.
                     }
                 }
+                else
+                {
+                	// Nothing to do.
+                }
+            }
+            else
+            {
+            	// Nothing to do.
             }
         }
         timeAddSecondsResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return timeAddSecondsResult;
@@ -401,9 +452,29 @@ gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t
                                 pRunTime1->hours = 0U;
                                 pRunTime1->days++;
                             }
+                            else
+                            {
+                            	// Nothing to do.
+                            }
+                        }
+                        else
+                        {
+                        	// Nothing to do.
                         }
                     }
+                    else
+                    {
+                    	// Nothing to do.
+                    }
                 }
+                else
+                {
+                	// Nothing to do.
+                }
+            }
+            else
+            {
+            	// Nothing to do.
             }
 
             if (pRunTime2->microseconds >= 1000)
@@ -435,12 +506,36 @@ gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t
                                 pRunTime2->hours = 0U;
                                 pRunTime2->days++;
                             }
+                            else
+                            {
+                            	// Nothing to do.
+                            }
+                        }
+                        else
+                        {
+                        	// Nothing to do.
                         }
                     }
+                    else
+                    {
+                    	// Nothing to do.
+                    }
                 }
+                else
+                {
+                	// Nothing to do.
+                }
+            }
+            else
+            {
+            	// Nothing to do.
             }
         }
         runtimeAddMicrosecondsResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return runtimeAddMicrosecondsResult;
@@ -482,10 +577,26 @@ gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, u32_t seconds)
                         pRunTime->hours = 0U;
                         pRunTime->days++;
                     }
+                    else
+                    {
+                    	// Nothing to do.
+                    }
                 }
+                else
+                {
+                	// Nothing to do.
+                }
+            }
+            else
+            {
+            	// Nothing to do.
             }
         }
         runtimeAddSecondsResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return runtimeAddSecondsResult;
@@ -524,11 +635,19 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         {
             (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_SECOND_ELAPSED_SENDER_ID);
         }
+        else
+        {
+        	// Nothing to do.
+        }
 
         // Invoke minute elapsed signal.
         if (systemTime.minutes > previousTime.minutes)
         {
             (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_MINUTE_ELAPSED_SENDER_ID);
+        }
+        else
+        {
+        	// Nothing to do.
         }
 
         // Invoke hour elapsed signal.
@@ -536,11 +655,19 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         {
             (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_HOUR_ELAPSED_SENDER_ID);
         }
+        else
+        {
+        	// Nothing to do.
+        }
 
         // Invoke day elapsed signal.
         if (systemTime.days > previousTime.days)
         {
             (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_DAY_ELAPSED_SENDER_ID);
+        }
+        else
+        {
+        	// Nothing to do.
         }
 
         // Invoke month elapsed signal.
@@ -548,13 +675,21 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         {
             (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_MONTH_ELAPSED_SENDER_ID);
         }
+        else
+        {
+        	// Nothing to do.
+        }
 
         // Invoke year elapsed signal.
         if (systemTime.years > previousTime.years)
         {
             (void_t) gos_signalInvoke(timeSignalId, GOS_TIME_YEAR_ELAPSED_SENDER_ID);
         }
+        else
+        {
+        	// Nothing to do.
+        }
 
-        (void_t) gos_kernelTaskSleep(1000);
+        (void_t) gos_kernelTaskSleep(TIME_SLEEP_TIME_MS);
     }
 }

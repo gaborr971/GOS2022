@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_trace_driver.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2023-01-13
 //! @version    1.2
 //!
@@ -24,12 +24,12 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-11    Gabor Repasi    Initial version created.
-// 1.1        2022-12-13    Gabor Repasi    +    Unsafe transmit string function added
-// 1.2        2023-01-13    Gabor Repasi    *    Service renamed to trace
+// 1.0        2022-12-11    Ahmed Gazar     Initial version created.
+// 1.1        2022-12-13    Ahmed Gazar     +    Unsafe transmit string function added
+// 1.2        2023-01-13    Ahmed Gazar     *    Service renamed to trace
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without

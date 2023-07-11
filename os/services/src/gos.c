@@ -9,13 +9,13 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos.c
-//! @author     Gabor Repasi
-//! @date       2023-06-17
-//! @version    1.7
+//! @author     Ahmed Gazar
+//! @date       2023-06-28
+//! @version    1.8
 //!
 //! @brief      GOS source.
 //! @details    For a more detailed description of this service, please refer to @ref gos.h
@@ -24,23 +24,24 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-31    Gabor Repasi    Initial version created
-// 1.1        2022-11-14    Gabor Repasi    +    Initialization error flag setting modified
-// 1.2        2022-11-15    Gabor Repasi    +    License added
-// 1.3        2022-12-11    Gabor Repasi    +    main function added here
+// 1.0        2022-10-31    Ahmed Gazar     Initial version created
+// 1.1        2022-11-14    Ahmed Gazar     +    Initialization error flag setting modified
+// 1.2        2022-11-15    Ahmed Gazar     +    License added
+// 1.3        2022-12-11    Ahmed Gazar     +    main function added here
 //                                          *    gos_Init and gos_Start made local static functions
 //                                          +    platform and user initializers added
-// 1.4        2023-01-12    Gabor Repasi    *    OS service initialization and user application
+// 1.4        2023-01-12    Ahmed Gazar     *    OS service initialization and user application
 //                                               initialization moved to a new initializer task
-// 1.5        2023-01-31    Gabor Repasi    *    Initializer task renamed to system task
+// 1.5        2023-01-31    Ahmed Gazar     *    Initializer task renamed to system task
 //                                          +    Periodic CPU statistics calculation added to
 //                                               system task
-// 1.6        2023-05-04    Gabor Repasi    -    Lock and trigger service initialization removed
+// 1.6        2023-05-04    Ahmed Gazar     -    Lock and trigger service initialization removed
 // 1.7        2023-06-17    Ahmed Gazar     +    Dump added
 //                                          +    GOS_SYS_TASK_SLEEP_TIME added
+// 1.8        2023-06-28    Ahmed Gazar     +    Dump ready signal invoking added
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -69,7 +70,7 @@
 /**
  * System task sleep time.
  */
-#define GOS_SYS_TASK_SLEEP_TIME ( 500u )
+#define GOS_SYS_TASK_SLEEP_TIME ( 100u )
 
 /*
  * Type definitions
@@ -87,6 +88,11 @@ typedef struct
     char_t         initDesc [32]; //!< Initialization descriptor text.
     gos_initFunc_t initFunc;      //!< Initializer function.
 }gos_initStruct_t;
+
+/*
+ * External variables
+ */
+GOS_EXTERN gos_signalId_t kernelDumpReadySignal;
 
 /*
  * Static variables
@@ -157,7 +163,7 @@ int main (void_t)
     /*
      * Function code.
      */
-    GOS_DISABLE_SCHED
+     GOS_DISABLE_SCHED
 
     // Initialize platform drivers.
     platformDriverInitResult = gos_platformDriverInit();
@@ -168,11 +174,15 @@ int main (void_t)
     // Pre-initialize.
     (void_t) gos_errorTraceInit("Platform driver initialization", platformDriverInitResult);
 
-    // Initialize the kernel and register initializer task.
+    // Initialize teche kernel and register initializer task.
     if (gos_errorTraceInit("Kernel initialization", gos_kernelInit()) == GOS_SUCCESS &&
         gos_kernelTaskRegister(&systemTaskDesc, &systemTaskId) == GOS_SUCCESS)
     {
         initError = GOS_FALSE;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     // Start OS.
@@ -185,7 +195,7 @@ int main (void_t)
         (void_t) gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "Initializer task could not be registered.");
     }
 
-    for(;;);
+    for (;;);
 }
 
 /*
@@ -193,9 +203,24 @@ int main (void_t)
  */
 void_t gos_Dump (void_t)
 {
+	gos_taskPrivilegeLevel_t privileges = 0u;
+	gos_tid_t currentTaskId = GOS_INVALID_TASK_ID;
+
     dumpRequired = GOS_TRUE;
-    GOS_PRIVILEGED_ACCESS
-    gos_kernelTaskWakeup(systemTaskId);
+
+    (void_t) gos_kernelTaskGetCurrentId(&currentTaskId);
+    (void_t) gos_kernelTaskGetPrivileges(currentTaskId, &privileges);
+
+    if ((privileges & GOS_PRIV_TASK_MANIPULATE) != GOS_PRIV_TASK_MANIPULATE)
+    {
+    	(void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+        gos_kernelTaskWakeup(systemTaskId);
+    	(void_t) gos_kernelTaskRemovePrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+    }
+    else
+    {
+        gos_kernelTaskWakeup(systemTaskId);
+    }
 }
 
 /*
@@ -248,6 +273,10 @@ GOS_STATIC gos_result_t gos_Start (void_t)
     {
         startStatus = gos_kernelStart();
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return startStatus;
 }
@@ -283,6 +312,10 @@ GOS_STATIC void_t gos_systemTask (void_t)
     {
         sysInitResult = GOS_ERROR;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     // Trace overall result.
     (void_t) gos_errorTraceInit("System initialization", sysInitResult);
@@ -290,24 +323,32 @@ GOS_STATIC void_t gos_systemTask (void_t)
     GOS_ENABLE_SCHED
 
     // Set priority to kernel-level.
-    gos_kernelTaskSetOriginalPriority(systemTaskId, 201);
-    gos_kernelTaskSetPriority(systemTaskId, 201);
+    gos_kernelTaskSetOriginalPriority(systemTaskId, CFG_TASK_SYS_PRIO);
+    gos_kernelTaskSetPriority(systemTaskId, CFG_TASK_SYS_PRIO);
 
     for (;;)
     {
         // Refresh task statistics.
-        gos_kernelCalculateTaskCpuUsages();
+        gos_kernelCalculateTaskCpuUsages(GOS_TRUE);
 
         if (dumpRequired == GOS_TRUE)
         {
+        	(void_t) gos_kernelTaskSleep(100);
             gos_kernelDump();
 #if CFG_PROC_USE_SERVICE
             gos_procDump();
 #endif
             gos_queueDump();
+
+            // Invoke dump ready signal.
+            (void_t) gos_signalInvoke(kernelDumpReadySignal, 0u);
             dumpRequired = GOS_FALSE;
         }
+        else
+        {
+        	// Nothing to do.
+        }
 
-        gos_kernelTaskSleep(GOS_SYS_TASK_SLEEP_TIME);
+        (void_t) gos_kernelTaskSleep(GOS_SYS_TASK_SLEEP_TIME);
     }
 }

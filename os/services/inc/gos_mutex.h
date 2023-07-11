@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2023
+//                                      (c) Ahmed Gazar, 2023
 //
 //*************************************************************************************************
 //! @file       gos_mutex.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2023-05-04
 //! @version    1.0
 //!
@@ -28,10 +28,10 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2023-05-04    Gabor Repasi    Initial version created
+// 1.0        2023-05-04    Ahmed Gazar     Initial version created
 //*************************************************************************************************
 //
-// Copyright (c) 2023 Gabor Repasi
+// Copyright (c) 2023 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -87,7 +87,7 @@ typedef enum
 typedef struct
 {
     volatile gos_mutexState_t mutexState; //!< Mutex state.
-             gos_tid_t        owner;      //!< Mutex owner task.
+    volatile gos_tid_t        owner;      //!< Mutex owner task.
 }gos_mutex_t;
 
 /*
@@ -101,7 +101,9 @@ typedef struct
  *
  * @return  -
  */
-void_t gos_mutexInit (gos_mutex_t* pMutex);
+void_t gos_mutexInit (
+		gos_mutex_t* pMutex
+		);
 
 /**
  * @brief   Tries to lock the given mutex with the given timeout.
@@ -117,7 +119,10 @@ void_t gos_mutexInit (gos_mutex_t* pMutex);
  * @retval  GOS_SUCCESS : Mutex locked successfully.
  * @retval  GOS_ERROR   : Mutex could not be locked within the timeout value.
  */
-gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout);
+gos_result_t gos_mutexLock (
+		gos_mutex_t* pMutex,
+		u32_t        timeout
+		);
 
 /**
  * @brief   Unlocks the mutex instance.
@@ -127,6 +132,8 @@ gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout);
  *
  * @return  -
  */
-void_t gos_mutexUnlock (gos_mutex_t* pMutex);
+void_t gos_mutexUnlock (
+		gos_mutex_t* pMutex
+		);
 
 #endif

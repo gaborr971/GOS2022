@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_time.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2023-01-31
 //! @version    1.5
 //!
@@ -25,21 +25,21 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-24    Gabor Repasi    Initial version created
-// 1.1        2022-11-15    Gabor Repasi    +    License added
+// 1.0        2022-10-24    Ahmed Gazar     Initial version created
+// 1.1        2022-11-15    Ahmed Gazar     +    License added
 //                                          *    gos_monthEnum_t renamed to gos_timeMonthEnum_t
 //                                          +    gos_timeElapsedSenderId_t type added
 //                                          -    Elapsed sender ID getter API functions removed
-// 1.2        2022-12-03    Gabor Repasi    +    Function header skeletons added
-// 1.3        2022-12-08    Gabor Repasi    +    Run-time type added
-// 1.4        2022-12-11    Gabor Repasi    +    Function descriptions completed
-// 1.5        2023-01-31    Gabor Repasi    +    Millisecond and microsecond types added
+// 1.2        2022-12-03    Ahmed Gazar     +    Function header skeletons added
+// 1.3        2022-12-08    Ahmed Gazar     +    Run-time type added
+// 1.4        2022-12-11    Ahmed Gazar     +    Function descriptions completed
+// 1.5        2023-01-31    Ahmed Gazar     +    Millisecond and microsecond types added
 //                                          +    Milliseconds and microseconds fields added to
 //                                               run-time structure
 //                                          +    gos_runTimeAddMicroseconds added
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -136,7 +136,9 @@ typedef enum
  * @retval  GOS_SUCCESS : Initialization successful.
  * @retval  GOS_ERROR   : Time signal registration error or time daemon registration error.
  */
-gos_result_t gos_timeInit (void_t);
+gos_result_t gos_timeInit (
+		void_t
+		);
 
 /**
  * @brief   This function gets the system time.
@@ -149,7 +151,9 @@ gos_result_t gos_timeInit (void_t);
  * @retval  GOS_SUCCESS : Time getting successful.
  * @retval  GOS_ERROR   : Time variable is NULL pointer.
  */
-gos_result_t gos_timeGet (gos_time_t* pTime);
+gos_result_t gos_timeGet (
+		gos_time_t* pTime
+		);
 
 /**
  * @brief   This function sets the system time.
@@ -163,7 +167,9 @@ gos_result_t gos_timeGet (gos_time_t* pTime);
  * @retval  GOS_SUCCESS : Time setting successful.
  * @retval  GOS_ERROR   : Time structure is NULL pointer.
  */
-gos_result_t gos_timeSet (gos_time_t* pTime);
+gos_result_t gos_timeSet (
+		gos_time_t* pTime
+		);
 
 /**
  * @brief   This function compares two time structures.
@@ -178,7 +184,11 @@ gos_result_t gos_timeSet (gos_time_t* pTime);
  * @retval  GOS_SUCCESS : Time comparison successful.
  * @retval  GOS_ERROR   : Either time structure and/or result variable is NULL pointer.
  */
-gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeComprareResult_t* result);
+gos_result_t gos_timeCompare (
+		gos_time_t*               pTime1,
+		gos_time_t*               pTime2,
+		gos_timeComprareResult_t* result
+		);
 
 /**
  * @brief   This function adds the given number of seconds to the given time variable.
@@ -192,7 +202,10 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
  * @retval  GOS_SUCCESS : Seconds added successfully.
  * @retval  GOS_ERROR   : Time variable is NULL pointer.
  */
-gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds);
+gos_result_t gos_timeAddSeconds (
+		gos_time_t* pTime,
+		u32_t       seconds
+		);
 
 /**
  * @brief   This function adds the given number of microseconds to the given time variables.
@@ -207,7 +220,11 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds);
  * @retval  GOS_SUCCESS : Microseconds added successfully.
  * @retval  GOS_ERROR   : Time variable is NULL pointer.
  */
-gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t* pRunTime2, u16_t microseconds);
+gos_result_t gos_runTimeAddMicroseconds (
+		gos_runtime_t* pRunTime1,
+		gos_runtime_t* pRunTime2,
+		u16_t          microseconds
+		);
 
 /**
  * @brief   This function adds the given number of seconds to the given run-time variable.
@@ -221,7 +238,10 @@ gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t
  * @retval  GOS_SUCCESS : Seconds added successfully.
  * @retval  GOS_ERROR   : Run-time variable is NULL pointer.
  */
-gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, u32_t seconds);
+gos_result_t gos_runTimeAddSeconds (
+		gos_runtime_t* pRunTime,
+		u32_t          seconds
+		);
 
 /**
  * @brief   This function gets the system run-time.
@@ -234,6 +254,8 @@ gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, u32_t seconds);
  * @retval  GOS_SUCCESS : Run-time getting is successful.
  * @retval  GOS_ERROR   : Run-time variable is NULL pointer.
  */
-gos_result_t gos_runTimeGet (gos_runtime_t* pRunTime);
+gos_result_t gos_runTimeGet (
+		gos_runtime_t* pRunTime
+		);
 
 #endif

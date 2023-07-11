@@ -9,13 +9,13 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_process.h
-//! @author     Gabor Repasi
-//! @date       2023-06-17
-//! @version    1.3
+//! @author     Ahmed Gazar
+//! @date       2023-07-12
+//! @version    1.4
 //!
 //! @brief      GOS process service header.
 //! @details    Process service is an alternative of tasks in the GOS system. Processes are
@@ -30,16 +30,17 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-22    Gabor Repasi    Initial version created
-// 1.1        2022-11-15    Gabor Repasi    +    Function descriptions updated
+// 1.0        2022-10-22    Ahmed Gazar     Initial version created
+// 1.1        2022-11-15    Ahmed Gazar     +    Function descriptions updated
 //                                          +    Service description added
 //                                          +    License added
-// 1.2        2022-12-11    Gabor Repasi    +    Function descriptions completed
+// 1.2        2022-12-11    Ahmed Gazar     +    Function descriptions completed
 // 1.3        2023-06-17    Ahmed Gazar     *    Proces dump moved to function
 //                                          *    Process run-time type modified
+// 1.4        2023-07-12    Ahmed Gazar     +    procPrivileges added to gos_procDescriptor_t
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -111,15 +112,16 @@ typedef enum
  */
 typedef struct
 {
-    gos_proc_t           procFunction;   //!< Process function.
-    gos_procState_t      procState;      //!< Process state.
-    gos_procPrio_t       procPriority;   //!< Process priority.
-    gos_procName_t       procName;       //!< Process name.
-    gos_pid_t            procId;         //!< Process ID.
-    gos_procSleepTick_t  procSleepTicks; //!< Process sleep ticks.
-    gos_procRunCounter_t procRunCounter; //!< Process run counter.
-    gos_runtime_t        procRunTime;    //!< Process run-time.
-    u16_t                procCpuUsage;   //!< Process processor usage in [%].
+    gos_proc_t               procFunction;   //!< Process function.
+    gos_procState_t          procState;      //!< Process state.
+    gos_procPrio_t           procPriority;   //!< Process priority.
+    gos_procName_t           procName;       //!< Process name.
+    gos_pid_t                procId;         //!< Process ID.
+    gos_procSleepTick_t      procSleepTicks; //!< Process sleep ticks.
+    gos_procRunCounter_t     procRunCounter; //!< Process run counter.
+    gos_runtime_t            procRunTime;    //!< Process run-time.
+    u16_t                    procCpuUsage;   //!< Process processor usage in [%].
+    gos_taskPrivilegeLevel_t procPrivileges; //!< Process privileges.
 }gos_procDescriptor_t;
 
 /**
@@ -145,7 +147,9 @@ typedef void_t (*gos_procResumeHook_t  )(gos_pid_t            ); //!< Process re
  * @retval  GOS_SUCCESS : Initialization successful.
  * @retval  GOS_ERROR   : Daemon/dump task registration or task suspension error.
  */
-gos_result_t gos_procInit (void_t);
+gos_result_t gos_procInit (
+		void_t
+		);
 
 /**
  * @brief   Registers a new process for scheduling.
@@ -161,7 +165,10 @@ gos_result_t gos_procInit (void_t);
  * @retval  GOS_SUCCESS    : Registration successful.
  * @retval  GOS_ERROR      : Process descriptor invalid or NULL or process array is full.
  */
-gos_result_t gos_procRegister (gos_procDescriptor_t* procDescriptor, gos_pid_t* procId);
+gos_result_t gos_procRegister (
+		gos_procDescriptor_t* procDescriptor,
+		gos_pid_t*            procId
+		);
 
 /**
  * @brief   Sends the given process to sleeping state.
@@ -177,7 +184,9 @@ gos_result_t gos_procRegister (gos_procDescriptor_t* procDescriptor, gos_pid_t* 
  * @retval  GOS_SUCCESS : Process sent to sleeping state successfully.
  * @retval  GOS_ERROR   : Process is not in ready state or called from idle process.
  */
-gos_result_t gos_procSleep (gos_procSleepTick_t sleepTicks);
+gos_result_t gos_procSleep (
+		gos_procSleepTick_t sleepTicks
+		);
 
 /**
  * @brief   Wakes up a process.
@@ -191,7 +200,9 @@ gos_result_t gos_procSleep (gos_procSleepTick_t sleepTicks);
  * @retval  GOS_SUCCESS : Wake-up successful.
  * @retval  GOS_ERROR   : Invalid process ID or process is not in sleeping state.
  */
-gos_result_t gos_procWakeup (gos_pid_t procId);
+gos_result_t gos_procWakeup (
+		gos_pid_t procId
+		);
 
 /**
  * @brief   Sends the given process to suspended state.
@@ -205,7 +216,9 @@ gos_result_t gos_procWakeup (gos_pid_t procId);
  * @retval  GOS_SUCCESS : Suspending successful.
  * @retval  GOS_ERROR   : Invalid process ID or process is not ready or sleeping.
  */
-gos_result_t gos_procSuspend (gos_pid_t procId);
+gos_result_t gos_procSuspend (
+		gos_pid_t procId
+		);
 
 /**
  * @brief   Resumes a process.
@@ -219,7 +232,9 @@ gos_result_t gos_procSuspend (gos_pid_t procId);
  * @retval  GOS_SUCCESS : Resuming successful.
  * @retval  GOS_ERROR   : Invalid process ID or process is not suspended.
  */
-gos_result_t gos_procResume (gos_pid_t procId);
+gos_result_t gos_procResume (
+		gos_pid_t procId
+		);
 
 /**
  * @brief   Gets the process name.
@@ -234,7 +249,10 @@ gos_result_t gos_procResume (gos_pid_t procId);
  * @retval  GOS_SUCCESS : Name getting successful.
  * @retval  GOS_ERROR   : Invalid process ID or process name variable is NULL.
  */
-gos_result_t gos_procGetName (gos_pid_t procId, gos_procName_t procName);
+gos_result_t gos_procGetName (
+		gos_pid_t      procId,
+		gos_procName_t procName
+		);
 
 /**
  * @brief   Gets the process ID.
@@ -253,7 +271,10 @@ gos_result_t gos_procGetName (gos_pid_t procId, gos_procName_t procName);
  * @remark  It is possible that multiple processes have the same name.
  *          In that case the process ID of the first match will be returned.
  */
-gos_result_t gos_procGetId (gos_procName_t procName, gos_pid_t* procId);
+gos_result_t gos_procGetId (
+		gos_procName_t procName,
+		gos_pid_t*     procId
+		);
 
 /**
  * @brief   Gets the process data.
@@ -267,7 +288,10 @@ gos_result_t gos_procGetId (gos_procName_t procName, gos_pid_t* procId);
  * @retval  GOS_SUCCESS : Data getting successful.
  * @retval  GOS_ERROR   : Invalid process ID or NULL pointer to data structure.
  */
-gos_result_t gos_procGetData (gos_pid_t procId, gos_procDescriptor_t* procData);
+gos_result_t gos_procGetData (
+		gos_pid_t             procId,
+		gos_procDescriptor_t* procData
+		);
 
 /**
  * @brief   Registers a swap hook.
@@ -281,7 +305,9 @@ gos_result_t gos_procGetData (gos_pid_t procId, gos_procDescriptor_t* procData);
  * @retval  GOS_SUCCESS      : Hook registration successful.
  * @retval  GOS_ERROR        : Hook already exists or given hook function is NULL pointer.
  */
-gos_result_t gos_procRegisterSwapHook (gos_procSwapHook_t swapHookFunction);
+gos_result_t gos_procRegisterSwapHook (
+		gos_procSwapHook_t swapHookFunction
+		);
 
 /**
  * @brief   Registers an idle hook.
@@ -295,7 +321,9 @@ gos_result_t gos_procRegisterSwapHook (gos_procSwapHook_t swapHookFunction);
  * @retval  GOS_SUCCESS      : Hook registration successful.
  * @retval  GOS_ERROR        : Hook already exists or given hook function is NULL pointer.
  */
-gos_result_t gos_procRegisterIdleHook (gos_procIdleHook_t idleHookFunction);
+gos_result_t gos_procRegisterIdleHook (
+		gos_procIdleHook_t idleHookFunction
+		);
 
 /**
  * @brief   Registers a sleep hook.
@@ -309,7 +337,9 @@ gos_result_t gos_procRegisterIdleHook (gos_procIdleHook_t idleHookFunction);
  * @retval  GOS_SUCCESS       : Hook registration successful.
  * @retval  GOS_ERROR         : Hook already exists or given hook function is NULL pointer.
  */
-gos_result_t gos_procRegisterSleepHook (gos_procSleepHook_t sleepHookFunction);
+gos_result_t gos_procRegisterSleepHook (
+		gos_procSleepHook_t sleepHookFunction
+		);
 
 /**
  * @brief   Registers a wake-up hook.
@@ -323,7 +353,9 @@ gos_result_t gos_procRegisterSleepHook (gos_procSleepHook_t sleepHookFunction);
  * @retval  GOS_SUCCESS        : Hook registration successful.
  * @retval  GOS_ERROR          : Hook already exists or given hook function is NULL pointer.
  */
-gos_result_t gos_procRegisterWakeupHook (gos_procWakeupHook_t wakeupHookFunction);
+gos_result_t gos_procRegisterWakeupHook (
+		gos_procWakeupHook_t wakeupHookFunction
+		);
 
 /**
  * @brief   Registers a suspend hook.
@@ -337,7 +369,9 @@ gos_result_t gos_procRegisterWakeupHook (gos_procWakeupHook_t wakeupHookFunction
  * @retval  GOS_SUCCESS         : Hook registration successful.
  * @retval  GOS_ERROR           : Hook already exists or given hook function is NULL pointer.
  */
-gos_result_t gos_procRegisterSuspendHook (gos_procSuspendHook_t suspendHookFunction);
+gos_result_t gos_procRegisterSuspendHook (
+		gos_procSuspendHook_t suspendHookFunction
+		);
 
 /**
  * @brief   Registers a resume hook.
@@ -351,7 +385,9 @@ gos_result_t gos_procRegisterSuspendHook (gos_procSuspendHook_t suspendHookFunct
  * @retval  GOS_SUCCESS        : Hook registration successful.
  * @retval  GOS_ERROR          : Hook already exists or given hook function is NULL pointer.
  */
-gos_result_t gos_procRegisterResumeHook (gos_procResumeHook_t resumeHookFunction);
+gos_result_t gos_procRegisterResumeHook (
+		gos_procResumeHook_t resumeHookFunction
+		);
 
 /**
  * @brief   Process dump.
@@ -359,7 +395,9 @@ gos_result_t gos_procRegisterResumeHook (gos_procResumeHook_t resumeHookFunction
  *
  * @return  -
  */
-void_t gos_procDump (void_t);
+void_t gos_procDump (
+		void_t
+		);
 
 #endif
 #endif

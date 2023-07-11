@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_message.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2022-11-15
 //! @version    1.2
 //!
@@ -38,13 +38,13 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-27    Gabor Repasi    Initial version created
-// 1.1        2022-11-05    Gabor Repasi    +    Service description modified to match with the
+// 1.0        2022-10-27    Ahmed Gazar     Initial version created
+// 1.1        2022-11-05    Ahmed Gazar     +    Service description modified to match with the
 //                                               FIFO implementation
-// 1.2        2022-11-15    Gabor Repasi    +    License added
+// 1.2        2022-11-15    Ahmed Gazar     +    License added
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -142,7 +142,9 @@ typedef struct
  * @retval  GOS_SUCCESS : Initialization successful.
  * @retval  GOS_ERROR   : Message daemon task registration failed.
  */
-gos_result_t gos_messageInit (void_t);
+gos_result_t gos_messageInit (
+		void_t
+		);
 
 /**
  * @brief   Receives the selected messages.
@@ -163,7 +165,11 @@ gos_result_t gos_messageInit (void_t);
  * @retval  GOS_SUCCESS    : Reception successful, data placed in the target structure.
  * @retval  GOS_ERROR      : Reception failed because of invalid parameters or timeout.
  */
-gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_message_t* target, gos_messageTimeout_t tmo);
+gos_result_t gos_messageRx (
+		gos_messageId_t*     messageIdArray,
+		gos_message_t*       target,
+		gos_messageTimeout_t tmo
+		);
 
 /**
  * @brief   Transmits a message.
@@ -177,6 +183,8 @@ gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_message_t* targ
  * @retval  GOS_SUCCESS : Message transmission initiated successfully.
  * @retval  GOS_ERROR   : Invalid message pointer or data or message array is full.
  */
-gos_result_t gos_messageTx (gos_message_t* message);
+gos_result_t gos_messageTx (
+		gos_message_t* message
+		);
 
 #endif

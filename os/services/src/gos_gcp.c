@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_gcp.c
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2023-05-04
 //! @version    2.1
 //!
@@ -24,14 +24,14 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-10    Gabor Repasi    Initial version created
-// 1.1        2022-12-15    Gabor Repasi    *    Frame number calculation bugfix
+// 1.0        2022-12-10    Ahmed Gazar     Initial version created
+// 1.1        2022-12-15    Ahmed Gazar     *    Frame number calculation bugfix
 //                                          +    Multiple channel handling added
-// 2.0        2022-12-20    Gabor Repasi    Released
-// 2.1        2023-05-04    Gabor Repasi    * Lock calls replaced with mutex calls
+// 2.0        2022-12-20    Ahmed Gazar     Released
+// 2.1        2023-05-04    Ahmed Gazar     * Lock calls replaced with mutex calls
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -163,7 +163,11 @@ gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpChannelNumber_t channelNumber
     {
         channelFunctions[channelNumber].gcpReceiveFunction  = receiveFunction;
         channelFunctions[channelNumber].gcpTransmitFunction = transmitFunction;
-        registerPhysicalDriverResult = GOS_SUCCESS;
+        registerPhysicalDriverResult                        = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return registerPhysicalDriverResult;
@@ -184,21 +188,32 @@ gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel,
     /*
      * Function code.
      */
-    if (gos_mutexLock(&gcpMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS &&
-        pMessageHeader != NULL &&
-        (pMessagePayload != NULL || (pMessagePayload == NULL && pMessageHeader->payloadSize == 0u)) &&
-        channel < CFG_GCP_CHANNELS_MAX_NUMBER &&
-        channelFunctions[channel].gcpTransmitFunction != NULL)
+    if (gos_mutexLock(&gcpMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS                 &&
+        pMessageHeader                                  != NULL                        &&
+        (pMessagePayload                                != NULL                        ||
+        (pMessagePayload                                == NULL                        &&
+        pMessageHeader->payloadSize                     == 0u))                        &&
+        channel                                         <  CFG_GCP_CHANNELS_MAX_NUMBER &&
+        channelFunctions[channel].gcpTransmitFunction   != NULL)
     {
         // Calculate payload CRC.
         pMessageHeader->payloadCrc = gos_crcDriverGetCrc((u8_t*)pMessagePayload, pMessageHeader->payloadSize);
 
         // Transmit message header and payload.
         if (gos_gcpTransmitFrames(channel, (u8_t*)pMessageHeader, (u16_t)sizeof(*pMessageHeader)) == GOS_SUCCESS &&
-            gos_gcpTransmitFrames(channel, (u8_t*)pMessagePayload, pMessageHeader->payloadSize) == GOS_SUCCESS)
+            gos_gcpTransmitFrames(channel, (u8_t*)pMessagePayload, pMessageHeader->payloadSize)   == GOS_SUCCESS
+			)
         {
             transmitMessageResult = GOS_SUCCESS;
         }
+        else
+        {
+        	// Nothing to do.
+        }
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     gos_mutexUnlock(&gcpMutex);
@@ -221,18 +236,28 @@ gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel,
     /*
      * Function code.
      */
-    if (gos_mutexLock(&gcpMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS &&
-        pTargetMessageHeader != NULL && pPayloadTarget != NULL &&
-        channel < CFG_GCP_CHANNELS_MAX_NUMBER &&
-        channelFunctions[channel].gcpReceiveFunction != NULL)
+    if (gos_mutexLock(&gcpMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS                 &&
+        pTargetMessageHeader                            != NULL                        &&
+		pPayloadTarget                                  != NULL                        &&
+        channel                                         <  CFG_GCP_CHANNELS_MAX_NUMBER &&
+        channelFunctions[channel].gcpReceiveFunction    != NULL
+		)
     {
         // Receive header and frames, check CRC.
         if (gos_gcpReceiveFrames(channel, (u8_t*)pTargetMessageHeader, (u16_t)sizeof(*pTargetMessageHeader)) == GOS_SUCCESS &&
-            gos_gcpReceiveFrames(channel, (u8_t*)pPayloadTarget, pTargetMessageHeader->payloadSize) == GOS_SUCCESS &&
+            gos_gcpReceiveFrames(channel, (u8_t*)pPayloadTarget,       pTargetMessageHeader->payloadSize)    == GOS_SUCCESS &&
             pTargetMessageHeader->payloadCrc == gos_crcDriverGetCrc((u8_t*)pPayloadTarget, (u32_t)pTargetMessageHeader->payloadSize))
         {
             receiveMessageResult = GOS_SUCCESS;
         }
+        else
+        {
+        	// Nothing to do.
+        }
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     gos_mutexUnlock(&gcpMutex);
@@ -293,13 +318,29 @@ GOS_STATIC gos_result_t gos_gcpTransmitFrames (gos_gcpChannelNumber_t channel,
                 {
                     break;
                 }
+                else
+                {
+                	// Nothing to do.
+                }
             }
 
             if (frameCounter == frameNumber)
             {
                 transmitFramesResult = GOS_SUCCESS;
             }
+            else
+            {
+            	// Nothing to do.
+            }
         }
+        else
+        {
+        	// Nothing to do.
+        }
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return transmitFramesResult;
@@ -352,6 +393,10 @@ GOS_STATIC gos_result_t gos_gcpReceiveFrames (gos_gcpChannelNumber_t channel, u8
                 {
                     break;
                 }
+                else
+                {
+                	// Nothing to do.
+                }
             }
 
             // Check data integrity.
@@ -360,7 +405,19 @@ GOS_STATIC gos_result_t gos_gcpReceiveFrames (gos_gcpChannelNumber_t channel, u8
             {
                 receiveFramesResult = GOS_SUCCESS;
             }
+            else
+            {
+            	// Nothing to do.
+            }
         }
+        else
+        {
+        	// Nothing to do.
+        }
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return receiveFramesResult;

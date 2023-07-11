@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_driver.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2022-12-13
 //! @version    1.1
 //!
@@ -24,11 +24,11 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-09    Gabor Repasi    Initial version created.
-// 1.1        2022-12-13    Gabor Repasi    +    Unsafe log driver transmit function added
+// 1.0        2022-12-09    Ahmed Gazar     Initial version created.
+// 1.1        2022-12-13    Ahmed Gazar     +    Unsafe log driver transmit function added
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without

@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_tmr.c
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2022-11-15
 //! @version    1.1
 //!
@@ -25,11 +25,11 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-11-10    Gabor Repasi    Initial version created.
-// 1.1        2022-11-15    Gabor Repasi    +    License added
+// 1.0        2022-11-10    Ahmed Gazar     Initial version created.
+// 1.1        2022-11-15    Ahmed Gazar     +    License added
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without

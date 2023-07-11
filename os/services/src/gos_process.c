@@ -9,13 +9,13 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_process.c
-//! @author     Gabor Repasi
-//! @date       2023-06-17
-//! @version    1.4
+//! @author     Ahmed Gazar
+//! @date       2023-07-12
+//! @version    1.6
 //!
 //! @brief      GOS process service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_process.h
@@ -24,17 +24,22 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-22    Gabor Repasi    Initial version created
-// 1.1        2022-10-24    Gabor Repasi    +    Dump mechanism changed: it is now handled by a
+// 1.0        2022-10-22    Ahmed Gazar     Initial version created
+// 1.1        2022-10-24    Ahmed Gazar     +    Dump mechanism changed: it is now handled by a
 //                                               dedicated task (gos_procDumpTask)
-// 1.2        2022-11-14    Gabor Repasi    +    If service is off, dump signal handler invokes the
+// 1.2        2022-11-14    Ahmed Gazar     +    If service is off, dump signal handler invokes the
 //                                               signal with its own sender ID
-// 1.3        2022-11-15    Gabor Repasi    +    License added
+// 1.3        2022-11-15    Ahmed Gazar     +    License added
 // 1.4        2023-06-17    Ahmed Gazar     *    Process dump moved to function
-//                                          +    System process addded for statistics calculation
+//                                          +    System process added for statistics calculation
+// 1.5        2023-06-30    Ahmed Gazar     *    PROC_SYS_POLL_TIME -> PROC_SYS_POLL_TIME_MS
+//                                          *    PROC_DAEMON_POLL_TIME -> PROC_DAEMON_POLL_TIME_MS
+// 1.6        2023-07-12    Ahmed Gazar     +    System process forced scheduling added for the
+//                                               case of an overloaded system
+//                                          *    Process privilege handling rework
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -57,6 +62,7 @@
  */
 #include <gos_process.h>
 #include <gos_signal.h>
+#include <gos_shell_driver.h>
 #include <gos_time.h>
 #include <gos_timer_driver.h>
 #include <gos_trace.h>
@@ -74,12 +80,12 @@
 /**
  * Process daemon poll time [ms].
  */
-#define PROC_DAEMON_POLL_TIME    ( 100u )
+#define PROC_DAEMON_POLL_TIME_MS ( 20u )
 
 /**
  * System process poll time [ms].
  */
-#define PROC_SYS_POLL_TIME       ( 500u )
+#define PROC_SYS_POLL_TIME_MS    ( 500u )
 
 /*
  * Type definitions
@@ -138,6 +144,11 @@ GOS_STATIC gos_tid_t             procDaemonTaskId        = GOS_INVALID_TASK_ID;
  */
 GOS_STATIC gos_runtime_t         monitoringTime          = {0};
 
+/**
+ * System process last run tick value.
+ */
+GOS_STATIC u32_t                 systemProcLastRunTick   = 0u;
+
 /*
  * Function prototypes
  */
@@ -178,7 +189,7 @@ GOS_STATIC gos_taskDescriptor_t processDaemonTaskDesc =
     .taskName            = "gos_process_daemon",
     .taskStackSize       = CFG_TASK_PROC_DAEMON_STACK,
     .taskPriority        = CFG_TASK_PROC_DAEMON_PRIO,
-    .taskPrivilegeLevel  = GOS_TASK_PRIVILEGE_USER
+    .taskPrivilegeLevel  = GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -207,6 +218,10 @@ gos_result_t gos_procInit (void_t)
     if (gos_kernelTaskRegister(&processDaemonTaskDesc, &procDaemonTaskId) == GOS_SUCCESS)
     {
         initResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return initResult;
@@ -240,6 +255,10 @@ gos_result_t gos_procRegister (gos_procDescriptor_t* procDescriptor, gos_pid_t* 
             {
                 break;
             }
+            else
+            {
+            	// Nothing to do.
+            }
         }
         // Check if empty slot was found.
         if (procIndex >= CFG_PROC_MAX_NUMBER)
@@ -260,12 +279,20 @@ gos_result_t gos_procRegister (gos_procDescriptor_t* procDescriptor, gos_pid_t* 
             {
                 (void_t) strcpy(procDescriptors[procIndex].procName, procDescriptor->procName);
             }
+            else
+            {
+            	// Nothing to do.
+            }
 
             // Set process ID.
             procDescriptor->procId = procDescriptors[procIndex].procId;
             if (procId != NULL)
             {
                 *procId = procDescriptors[procIndex].procId;
+            }
+            else
+            {
+            	// Nothing to do.
             }
         }
     }
@@ -296,6 +323,10 @@ gos_result_t gos_procSleep (gos_procSleepTick_t sleepTicks)
                 procDescriptors[currentProcIndex].procSleepTicks = gos_kernelGetSysTicks() + sleepTicks;
                 procSleepResult = GOS_SUCCESS;
             }
+            else
+            {
+            	// Nothing to do.
+            }
         }
         GOS_ENABLE_SCHED
 
@@ -304,7 +335,16 @@ gos_result_t gos_procSleep (gos_procSleepTick_t sleepTicks)
         {
             procSleepHookFunction((GOS_DEFAULT_PROC_ID + currentProcIndex));
         }
+        else
+        {
+        	// Nothing to do.
+        }
     }
+    else
+    {
+    	// Nothing to do.
+    }
+
     return procSleepResult;
 }
 
@@ -333,6 +373,10 @@ gos_result_t gos_procWakeup (gos_pid_t procId)
                 procDescriptors[procIndex].procState = GOS_PROC_READY;
                 procWakeupResult = GOS_SUCCESS;
             }
+            else
+            {
+            	// Nothing to do.
+            }
         }
         GOS_ENABLE_SCHED
 
@@ -341,7 +385,16 @@ gos_result_t gos_procWakeup (gos_pid_t procId)
         {
             procWakeupHookFunction(procId);
         }
+        else
+        {
+        	// Nothing to do.
+        }
     }
+    else
+    {
+    	// Nothing to do.
+    }
+
     return procWakeupResult;
 }
 
@@ -371,6 +424,10 @@ gos_result_t gos_procSuspend (gos_pid_t procId)
                 procDescriptors[procIndex].procState = GOS_PROC_SUSPENDED;
                 procSuspendResult = GOS_SUCCESS;
             }
+            else
+            {
+            	// Nothing to do.
+            }
         }
         GOS_ENABLE_SCHED
 
@@ -379,6 +436,14 @@ gos_result_t gos_procSuspend (gos_pid_t procId)
         {
             procSuspendHookFunction(procId);
         }
+        else
+        {
+        	// Nothing to do.
+        }
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return procSuspendResult;
@@ -409,6 +474,10 @@ gos_result_t gos_procResume (gos_pid_t procId)
                 procDescriptors[procIndex].procState = GOS_PROC_READY;
                 procResumeResult = GOS_SUCCESS;
             }
+            else
+            {
+            	// Nothing to do.
+            }
         }
         GOS_ENABLE_SCHED
 
@@ -416,6 +485,10 @@ gos_result_t gos_procResume (gos_pid_t procId)
         if (procResumeResult == GOS_SUCCESS && procResumeHookFunction != NULL)
         {
             procResumeHookFunction(procId);
+        }
+        else
+        {
+        	// Nothing to do.
         }
     }
 
@@ -445,6 +518,10 @@ gos_result_t gos_procGetName (gos_pid_t procId, gos_procName_t procName)
 
         procGetNameResult = GOS_SUCCESS;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return procGetNameResult;
 }
@@ -470,6 +547,10 @@ gos_result_t gos_procGetId (gos_procName_t procName, gos_pid_t* procId)
             *procId = procDescriptors[procIndex].procId;
             procGetIdResult = GOS_SUCCESS;
             break;
+        }
+        else
+        {
+        	// Nothing to do.
         }
     }
 
@@ -499,6 +580,10 @@ gos_result_t gos_procGetData (gos_pid_t procId, gos_procDescriptor_t* procData)
 
         procGetDataResult = GOS_SUCCESS;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return procGetDataResult;
 }
@@ -520,6 +605,10 @@ gos_result_t gos_procRegisterSwapHook (gos_procSwapHook_t swapHookFunction)
     {
         procSwapHookFunction = swapHookFunction;
         hookRegisterResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return hookRegisterResult;
@@ -543,6 +632,10 @@ gos_result_t gos_procRegisterIdleHook (gos_procIdleHook_t idleHookFunction)
         procIdleHookFunction = idleHookFunction;
         hookRegisterResult = GOS_SUCCESS;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return hookRegisterResult;
 }
@@ -564,6 +657,10 @@ gos_result_t gos_procRegisterSleepHook (gos_procSleepHook_t sleepHookFunction)
     {
         procSleepHookFunction = sleepHookFunction;
         hookRegisterResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return hookRegisterResult;
@@ -587,6 +684,10 @@ gos_result_t gos_procRegisterWakeupHook (gos_procWakeupHook_t wakeupHookFunction
         procWakeupHookFunction = wakeupHookFunction;
         hookRegisterResult = GOS_SUCCESS;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return hookRegisterResult;
 }
@@ -608,6 +709,10 @@ gos_result_t gos_procRegisterSuspendHook (gos_procSuspendHook_t suspendHookFunct
     {
         procSuspendHookFunction = suspendHookFunction;
         hookRegisterResult = GOS_SUCCESS;
+    }
+    else
+    {
+    	// Nothing to do.
     }
 
     return hookRegisterResult;
@@ -631,6 +736,10 @@ gos_result_t gos_procRegisterResumeHook (gos_procResumeHook_t resumeHookFunction
         procResumeHookFunction = resumeHookFunction;
         hookRegisterResult = GOS_SUCCESS;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return hookRegisterResult;
 }
@@ -649,11 +758,10 @@ void_t gos_procDump (void_t)
     /*
      * Function code.
      */
-    (void_t) gos_traceTrace(GOS_FALSE, "Process dump:\r\n");
-    (void_t) gos_traceTrace(GOS_FALSE, DUMP_SEPARATOR);
-    (void_t) gos_traceTraceFormatted(
-            GOS_FALSE,
-            "| %6s | %28s | %13s | %6s | %9s |\r\n",
+    (void_t) gos_shellDriverTransmitString("Process dump:\r\n");
+    (void_t) gos_shellDriverTransmitString(DUMP_SEPARATOR);
+    (void_t) gos_shellDriverTransmitString(
+            "| %6s | %28s | %13s | %7s | %9s |\r\n",
             "pid",
             "name",
             "prio",
@@ -661,7 +769,7 @@ void_t gos_procDump (void_t)
             "state"
         );
 
-    (void_t) gos_traceTrace(GOS_FALSE, DUMP_SEPARATOR);
+    (void_t) gos_shellDriverTransmitString(DUMP_SEPARATOR);
 
     for (procIndex = 0u; procIndex < CFG_PROC_MAX_NUMBER; procIndex++)
     {
@@ -669,20 +777,20 @@ void_t gos_procDump (void_t)
         {
             break;
         }
-
-        (void_t) gos_traceTraceFormatted(
-                GOS_FALSE,
-                "| 0x%04X | %28s | %13d | %4u.%02u | %9s "TRACE_FORMAT_RESET"|\r\n",
-                procDescriptors[procIndex].procId,
-                procDescriptors[procIndex].procName,
-                procDescriptors[procIndex].procPriority,
-                procDescriptors[procIndex].procCpuUsage / 100,
-                procDescriptors[procIndex].procCpuUsage % 100,
-                gos_procGetProcStateString(procDescriptors[procIndex].procState)
-                );
-        (void_t) gos_kernelTaskSleep(15);
+        else
+        {
+        	(void_t) gos_shellDriverTransmitString(
+        			"| 0x%04X | %28s | %13d | %4u.%02u | %9s "TRACE_FORMAT_RESET"|\r\n",
+					procDescriptors[procIndex].procId,
+					procDescriptors[procIndex].procName,
+					procDescriptors[procIndex].procPriority,
+					procDescriptors[procIndex].procCpuUsage / 100,
+					procDescriptors[procIndex].procCpuUsage % 100,
+					gos_procGetProcStateString(procDescriptors[procIndex].procState)
+                	);
+        }
     }
-    (void_t) gos_traceTraceFormatted(GOS_FALSE, DUMP_SEPARATOR"\n");
+    (void_t) gos_shellDriverTransmitString(DUMP_SEPARATOR"\n");
 }
 
 #if CFG_PROC_USE_SERVICE == 1
@@ -715,6 +823,10 @@ GOS_STATIC gos_result_t gos_procCheckProcDescriptor    (gos_procDescriptor_t* pr
     {
         procDescCheckResult = GOS_ERROR;
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     return procDescCheckResult;
 }
@@ -735,6 +847,10 @@ GOS_STATIC void_t gos_idleProc (void_t)
     if (procIdleHookFunction != NULL)
     {
         procIdleHookFunction();
+    }
+    else
+    {
+    	// Nothing to do.
     }
 }
 
@@ -772,30 +888,39 @@ GOS_STATIC void_t gos_systemProc (void_t)
         if (systemConvertedTime > 0)
         {
             // Calculate CPU usage and then reset runtime counter.
-            procDescriptors[procIndex].procCpuUsage = (u16_t)((u32_t)(10000 * procConvertedTime) / systemConvertedTime);
-            procDescriptors[procIndex].procRunTime.days = 0;
-            procDescriptors[procIndex].procRunTime.hours = 0;
-            procDescriptors[procIndex].procRunTime.minutes = 0;
-            procDescriptors[procIndex].procRunTime.seconds = 0;
-            procDescriptors[procIndex].procRunTime.milliseconds = 0;
-            procDescriptors[procIndex].procRunTime.microseconds = 0;
+            procDescriptors[procIndex].procCpuUsage = (u16_t)(((u32_t)10000 * procConvertedTime) / systemConvertedTime);
+            procDescriptors[procIndex].procRunTime.days         = 0u;
+            procDescriptors[procIndex].procRunTime.hours        = 0u;
+            procDescriptors[procIndex].procRunTime.minutes      = 0u;
+            procDescriptors[procIndex].procRunTime.seconds      = 0u;
+            procDescriptors[procIndex].procRunTime.milliseconds = 0u;
+            procDescriptors[procIndex].procRunTime.microseconds = 0u;
+        }
+        else
+        {
+        	// Nothing to do.
         }
 
         if (procDescriptors[procIndex].procFunction == NULL)
         {
             break;
         }
+        else
+        {
+        	// Nothing to do.
+        }
     }
 
     // Reset monitoring time.
-    monitoringTime.days = 0;
-    monitoringTime.hours = 0;
-    monitoringTime.minutes = 0;
-    monitoringTime.seconds = 0;
-    monitoringTime.milliseconds = 0;
-    monitoringTime.microseconds = 0;
+    monitoringTime.days         = 0u;
+    monitoringTime.hours        = 0u;
+    monitoringTime.minutes      = 0u;
+    monitoringTime.seconds      = 0u;
+    monitoringTime.milliseconds = 0u;
+    monitoringTime.microseconds = 0u;
 
-    gos_procSleep(PROC_SYS_POLL_TIME);
+    systemProcLastRunTick = gos_kernelGetSysTicks();
+    gos_procSleep(PROC_SYS_POLL_TIME_MS);
 }
 
 /**
@@ -816,7 +941,7 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
     u16_t           nextProc        = 0u;
     u16_t           sysTimerInitial = 0u;
     u16_t           sysTimerCurrVal = 0u;
-    u64_t           currentRunTime  = 0u;
+    u16_t           currentRunTime  = 0u;
 
     /*
      * Function code.
@@ -835,6 +960,10 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
             {
                 procDescriptors[procIndex].procState = GOS_PROC_READY;
             }
+            else
+            {
+            	// Nothing to do.
+            }
 
             // Choose the highest priority process - that is not the current one, and is ready - to run.
             if (procIndex != currentProc &&
@@ -845,6 +974,10 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
                 nextProc = procIndex;
                 lowestPrio = procDescriptors[procIndex].procPriority;
             }
+            else
+            {
+            	// Nothing to do.
+            }
         }
 
         // If there was a process-swap, call the hook function.
@@ -852,19 +985,48 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
         {
             procSwapHookFunction(procDescriptors[currentProc].procId, procDescriptors[nextProc].procId);
         }
+        else
+        {
+        	// Nothing to do.
+        }
+
+        // Check if system process has not been scheduled for 4 poll periods.
+        // If so, force schedule it to update process statistics.
+        if ((gos_kernelGetSysTicks() - systemProcLastRunTick) > (4 * PROC_SYS_POLL_TIME_MS))
+        {
+        	nextProc = 1u;
+        }
 
         currentProcIndex = nextProc;
 
+        // Prepare for run-time measuring.
+        (void_t) gos_timerDriverSysTimerGet(&sysTimerInitial);
+
+        // Set privileges.
+        (void_t) gos_kernelTaskSetPrivileges(
+        		procDaemonTaskId,
+        		procDescriptors[currentProcIndex].procPrivileges
+				);
+
         // Call selected process.
-        gos_timerDriverSysTimerGet(&sysTimerInitial);
         procDescriptors[currentProcIndex].procFunction();
+
+        // Restore privileges.
+        (void_t) gos_kernelTaskSetPrivileges(
+        		procDaemonTaskId,
+        		GOS_TASK_PRIVILEGE_KERNEL
+				);
+
         procDescriptors[currentProcIndex].procRunCounter++;
-        gos_timerDriverSysTimerGet(&sysTimerCurrVal);
+        (void_t) gos_timerDriverSysTimerGet(&sysTimerCurrVal);
         currentRunTime = sysTimerInitial - sysTimerCurrVal;
         // Increase monitoring system time and current task runtime.
-        gos_runTimeAddMicroseconds(&monitoringTime, &procDescriptors[currentProcIndex].procRunTime, currentRunTime);
+        (void_t) gos_runTimeAddMicroseconds(
+        		&monitoringTime,
+        		&procDescriptors[currentProcIndex].procRunTime,
+				currentRunTime);
 
-        (void_t) gos_kernelTaskSleep(PROC_DAEMON_POLL_TIME);
+        (void_t) gos_kernelTaskSleep(PROC_DAEMON_POLL_TIME_MS);
     }
 }
 
@@ -886,15 +1048,15 @@ GOS_STATIC char_t* gos_procGetProcStateString (gos_procState_t procState)
         case GOS_PROC_READY:
         {
             return TRACE_FG_GREEN_START"ready    ";
-        }break;
+        }
         case GOS_PROC_SLEEPING:
         {
             return TRACE_FG_YELLOW_START"sleeping " ;
-        }break;
+        }
         case GOS_PROC_SUSPENDED:
         {
             return TRACE_FG_MAGENTA_START"suspended";
-        }break;
+        }
         default:
         {
             return "";

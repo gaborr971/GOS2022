@@ -9,11 +9,11 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_error.h
-//! @author     Gabor Repasi
+//! @author     Ahmed Gazar
 //! @date       2022-12-20
 //! @version    2.0
 //!
@@ -25,12 +25,12 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-11    Gabor Repasi    Initial version created
-// 1.1        2022-12-20    Gabor Repasi    * Function descriptions modified
-// 2.0        2022-12-20    Gabor Repasi    Released
+// 1.0        2022-12-11    Ahmed Gazar     Initial version created
+// 1.1        2022-12-20    Ahmed Gazar     * Function descriptions modified
+// 2.0        2022-12-20    Ahmed Gazar     Released
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -97,10 +97,11 @@ void_t gos_printStartupLogo (void_t);
  */
 void_t gos_errorHandler (
         gos_errorLevel_t errorLevel,
-        const char_t* function,
-        u32_t line,
-        const char_t* errorMessage,
-        ...);
+        const char_t*    function,
+        u32_t            line,
+        const char_t*    errorMessage,
+        ...
+		);
 
 /**
  * @brief   Traces an initialization message.
@@ -113,7 +114,7 @@ void_t gos_errorHandler (
  */
 gos_result_t gos_errorTraceInit (
         const char_t* initDescription,
-        gos_result_t initResult
+        gos_result_t  initResult
         );
 
 #endif

@@ -9,13 +9,13 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Gabor Repasi, 2022
+//                                      (c) Ahmed Gazar, 2022
 //
 //*************************************************************************************************
 //! @file       gos_error.c
-//! @author     Gabor Repasi
-//! @date       2023-01-12
-//! @version    2.1
+//! @author     Ahmed Gazar
+//! @date       2023-06-30
+//! @version    2.2
 //!
 //! @brief      GOS error handler service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_error.h
@@ -24,15 +24,17 @@
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-12-10    Gabor Repasi    Initial version created
-// 1.1        2022-12-13    Gabor Repasi    *    Continuous scheduling disabling added to error
+// 1.0        2022-12-10    Ahmed Gazar     Initial version created
+// 1.1        2022-12-13    Ahmed Gazar     *    Continuous scheduling disabling added to error
 //                                               handler
-// 2.0        2022-12-20    Gabor Repasi    Released
-// 2.1        2023-01-12    Gabor Repasi    +    gos_traceResultToString added
+// 2.0        2022-12-20    Ahmed Gazar     Released
+// 2.1        2023-01-12    Ahmed Gazar     +    gos_traceResultToString added
 //                                               Logo printing simplified
+// 2.2        2023-06-30    Ahmed Gazar     *    Logo printing modified
+//                                          +    CFG_RESET_ON_ERROR check added
 //*************************************************************************************************
 //
-// Copyright (c) 2022 Gabor Repasi
+// Copyright (c) 2022 Ahmed Gazar
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without
@@ -114,9 +116,8 @@ void_t gos_printStartupLogo (void_t)
     (void_t) gos_traceTraceFormattedUnsafe("             ##     #####      ##         ##           #####              \r\n");
     (void_t) gos_traceTraceFormattedUnsafe("              ##       ##       ##       ##                ##             \r\n");
     (void_t) gos_traceTraceFormattedUnsafe("               #########         #########         #########              \r\n");
-    (void_t) gos_traceTraceFormattedUnsafe("                 #####             #####             #####                \r\n");
-    (void_t) gos_traceTraceFormattedUnsafe("\r\n");
-    (void_t) gos_traceTraceFormattedUnsafe("                           (c) Gabor Repasi, 2023                         \r\n\r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("                 #####             #####             #####                \r\n\r\n");
+    (void_t) gos_traceTraceFormattedUnsafe("                           (c) Ahmed Gazar, 2023                          \r\n\r\n");
     (void_t) gos_traceTraceFormattedUnsafe("**************************************************************************\r\n");
 }
 
@@ -133,7 +134,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
     /*
      * Function code.
      */
-    (void_t) gos_traceTraceFormattedUnsafe(SEPARATOR_LINE);
+    (void_t) gos_traceTraceFormattedUnsafe(TRACE_FORMAT_RESET"\r\n"SEPARATOR_LINE);
 
     if (errorLevel == GOS_ERROR_LEVEL_OS_FATAL)
     {
@@ -167,6 +168,10 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
                 TRACE_FORMAT_RESET
                 );
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     if (function != NULL)
     {
@@ -184,6 +189,10 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
                                   TRACE_FORMAT_RESET
                                   ">, line: %d\r\n", line);
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     if (errorMessage != NULL)
     {
@@ -193,15 +202,30 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
 
         (void_t) gos_traceTraceFormattedUnsafe("%s\r\n", errorBuffer);
     }
+    else
+    {
+    	// Nothing to do.
+    }
 
     (void_t) gos_traceTraceFormattedUnsafe(SEPARATOR_LINE);
 
     if (errorLevel == GOS_ERROR_LEVEL_OS_FATAL || errorLevel == GOS_ERROR_LEVEL_USER_FATAL)
     {
-        for(;;)
+    	GOS_DISABLE_SCHED
+    	GOS_ATOMIC_ENTER
+        for (;;)
         {
-            GOS_DISABLE_SCHED
+        	GOS_NOP;
+#if CFG_RESET_ON_ERROR == 1
+
+        	gos_kernelDelayMs(CFG_RESET_ON_ERROR_DELAY_MS);
+        	gos_kernelReset();
+#endif
         }
+    }
+    else
+    {
+    	// Nothing to do.
     }
 }
 
