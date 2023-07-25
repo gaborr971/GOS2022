@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.c
 //! @author     Ahmed Gazar
-//! @date       2023-06-30
-//! @version    1.10
+//! @date       2023-07-25
+//! @version    1.12
 //!
 //! @brief      GOS kernel source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -56,6 +56,8 @@
 //                                          +    kernelSysTickHookFunction added
 //                                          -    Privileged access concept removed
 //                                          +    Task block timeout introduced
+// 1.12       2023-07-25    Ahmed Gazar     +    gos_kernelTaskGetDataByIndex added
+//                                          *    Ported function calls added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -285,7 +287,7 @@ GOS_STATIC gos_taskDescriptor_t taskDescriptors [CFG_TASK_MAX_NUMBER] =
             .taskState          = GOS_TASK_READY,
             .taskStackSize      = CFG_IDLE_TASK_STACK_SIZE,
             .taskPrivilegeLevel = GOS_TASK_PRIVILEGE_KERNEL,
-			.taskCpuUsageLimit  = 10000
+            .taskCpuUsageLimit  = 10000
         }
 };
 
@@ -495,11 +497,11 @@ gos_result_t gos_kernelTaskRegister (gos_taskDescriptor_t* taskDescriptor, gos_t
 
             if (taskDescriptor->taskCpuUsageLimit == 0u)
             {
-            	taskDescriptors[taskIndex].taskCpuUsageLimit = 10000u;
+                taskDescriptors[taskIndex].taskCpuUsageLimit = 10000u;
             }
             else
             {
-            	taskDescriptors[taskIndex].taskCpuUsageLimit = taskDescriptor->taskCpuUsageLimit;
+                taskDescriptors[taskIndex].taskCpuUsageLimit = taskDescriptor->taskCpuUsageLimit;
             }
 
             // Copy task name.
@@ -544,7 +546,7 @@ GOS_INLINE gos_result_t gos_kernelTaskSleep (gos_taskSleepTick_t sleepTicks)
      */
     if (currentTaskIndex > 0u)
     {
-		GOS_ATOMIC_ENTER
+        GOS_ATOMIC_ENTER
         {
             if (taskDescriptors[currentTaskIndex].taskState == GOS_TASK_READY)
             {
@@ -553,7 +555,7 @@ GOS_INLINE gos_result_t gos_kernelTaskSleep (gos_taskSleepTick_t sleepTicks)
                 taskSleepResult = GOS_SUCCESS;
             }
         }
-		GOS_ATOMIC_EXIT
+        GOS_ATOMIC_EXIT
 
         if (taskSleepResult == GOS_SUCCESS)
         {
@@ -578,7 +580,7 @@ GOS_INLINE gos_result_t gos_kernelTaskWakeup (gos_tid_t taskId)
     /*
      * Function code.
      */
-	GOS_ATOMIC_ENTER
+    GOS_ATOMIC_ENTER
     if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER)
     {
         taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
@@ -595,7 +597,7 @@ GOS_INLINE gos_result_t gos_kernelTaskWakeup (gos_tid_t taskId)
         }
         else
         {
-        	GOS_ATOMIC_EXIT
+            GOS_ATOMIC_EXIT
             gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "<%s> has no privilege to wake up <%s>!",
                 taskDescriptors[currentTaskIndex].taskName,
                 taskDescriptors[taskIndex].taskName
@@ -603,7 +605,7 @@ GOS_INLINE gos_result_t gos_kernelTaskWakeup (gos_tid_t taskId)
         }
     }
 
-	GOS_ATOMIC_EXIT
+    GOS_ATOMIC_EXIT
 
     return taskWakeupResult;
 }
@@ -650,7 +652,7 @@ GOS_INLINE gos_result_t gos_kernelTaskSuspend (gos_tid_t taskId)
         }
         else
         {
-        	GOS_ATOMIC_EXIT
+            GOS_ATOMIC_EXIT
             gos_errorHandler(GOS_ERROR_LEVEL_OS_FATAL, __func__, __LINE__, "<%s> has no privilege to suspend <%s>!",
                 taskDescriptors[currentTaskIndex].taskName,
                 taskDescriptors[taskIndex].taskName
@@ -737,18 +739,18 @@ GOS_INLINE gos_result_t gos_kernelTaskBlock (gos_tid_t taskId, gos_blockMaxTick_
 
                 if (blockTicks != GOS_TASK_MAX_BLOCK_TIME_MS)
                 {
-                	if ((sysTicks + blockTicks) == GOS_TASK_MAX_BLOCK_TIME_MS)
-                	{
-                		taskDescriptors[taskIndex].taskBlockMaxTicks = GOS_TASK_MAX_BLOCK_TIME_MS + 1;
-                	}
-                	else
-                	{
-                		taskDescriptors[taskIndex].taskBlockMaxTicks = sysTicks + blockTicks;
-                	}
+                    if ((sysTicks + blockTicks) == GOS_TASK_MAX_BLOCK_TIME_MS)
+                    {
+                        taskDescriptors[taskIndex].taskBlockMaxTicks = GOS_TASK_MAX_BLOCK_TIME_MS + 1;
+                    }
+                    else
+                    {
+                        taskDescriptors[taskIndex].taskBlockMaxTicks = sysTicks + blockTicks;
+                    }
                 }
                 else
                 {
-                	taskDescriptors[taskIndex].taskBlockMaxTicks = GOS_TASK_MAX_BLOCK_TIME_MS;
+                    taskDescriptors[taskIndex].taskBlockMaxTicks = GOS_TASK_MAX_BLOCK_TIME_MS;
                 }
 
                 taskBlockResult = GOS_SUCCESS;
@@ -865,13 +867,13 @@ GOS_INLINE gos_result_t gos_kernelTaskDelete (gos_tid_t taskId)
                 // Invoke signal.
                 if ((taskDescriptors[currentTaskIndex].taskPrivilegeLevel & GOS_PRIV_SIGNALING) != GOS_PRIV_SIGNALING)
                 {
-                	taskDescriptors[currentTaskIndex].taskPrivilegeLevel |= GOS_PRIV_SIGNALING;
-                	(void_t) gos_signalInvoke(kernelTaskDeleteSignal, taskId);
-                	taskDescriptors[currentTaskIndex].taskPrivilegeLevel &= ~GOS_PRIV_SIGNALING;
+                    taskDescriptors[currentTaskIndex].taskPrivilegeLevel |= GOS_PRIV_SIGNALING;
+                    (void_t) gos_signalInvoke(kernelTaskDeleteSignal, taskId);
+                    taskDescriptors[currentTaskIndex].taskPrivilegeLevel &= ~GOS_PRIV_SIGNALING;
                 }
                 else
                 {
-                	(void_t) gos_signalInvoke(kernelTaskDeleteSignal, taskId);
+                    (void_t) gos_signalInvoke(kernelTaskDeleteSignal, taskId);
                 }
             }
         }
@@ -1133,12 +1135,12 @@ GOS_INLINE gos_result_t gos_kernelTaskGetPrivileges (gos_tid_t taskId, gos_taskP
      */
     GOS_ATOMIC_ENTER
     if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER &&
-    	privileges != NULL)
+        privileges != NULL)
     {
         taskIndex = (u32_t)(taskId - GOS_DEFAULT_TASK_ID);
 
-    	*privileges = taskDescriptors[taskIndex].taskPrivilegeLevel;
-    	taskGetPrivilegesResult = GOS_SUCCESS;
+        *privileges = taskDescriptors[taskIndex].taskPrivilegeLevel;
+        taskGetPrivilegesResult = GOS_SUCCESS;
     }
     GOS_ATOMIC_EXIT
 
@@ -1270,6 +1272,33 @@ gos_result_t gos_kernelTaskGetData (gos_tid_t taskId, gos_taskDescriptor_t* task
 }
 
 /*
+ * Function: gos_kernelTaskGetDataByIndex
+ */
+gos_result_t gos_kernelTaskGetDataByIndex (u16_t taskIndex, gos_taskDescriptor_t* taskData)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t taskGetDataResult = GOS_ERROR;
+
+    /*
+     * Function code.
+     */
+    GOS_ATOMIC_ENTER
+    if (taskIndex < CFG_TASK_MAX_NUMBER &&
+        taskData != NULL &&
+        (taskDescriptors[currentTaskIndex].taskPrivilegeLevel & GOS_TASK_PRIVILEGE_KERNEL) == GOS_TASK_PRIVILEGE_KERNEL)
+    {
+        memcpy((void*)taskData, (void*)&taskDescriptors[taskIndex], sizeof(*taskData));
+
+        taskGetDataResult = GOS_SUCCESS;
+    }
+    GOS_ATOMIC_EXIT
+
+    return taskGetDataResult;
+}
+
+/*
  * Function: gos_kernelRegisterSwapHook
  */
 gos_result_t gos_kernelRegisterSwapHook (gos_taskSwapHook_t swapHookFunction)
@@ -1328,7 +1357,7 @@ gos_result_t gos_kernelRegisterSysTickHook (gos_sysTickHook_t sysTickHookFunctio
      */
     if (sysTickHookFunction != NULL && kernelSysTickHookFunction == NULL)
     {
-    	kernelSysTickHookFunction = sysTickHookFunction;
+        kernelSysTickHookFunction = sysTickHookFunction;
         hookRegisterResult = GOS_SUCCESS;
     }
 
@@ -1351,10 +1380,10 @@ gos_result_t gos_kernelSubscribeTaskDeleteSignal (gos_signalHandler_t deleteSign
     if (deleteSignalHandler != NULL)
     {
         subscriptionResult = gos_signalSubscribe(
-        		kernelTaskDeleteSignal,
-				deleteSignalHandler,
-				GOS_TASK_PRIVILEGED_USER
-				);
+                kernelTaskDeleteSignal,
+                deleteSignalHandler,
+                GOS_TASK_PRIVILEGED_USER
+                );
     }
 
     return subscriptionResult;
@@ -1404,7 +1433,7 @@ void_t gos_ported_sysTickInterrupt (void_t)
 
     if (kernelSysTickHookFunction != NULL)
     {
-    	kernelSysTickHookFunction();
+        kernelSysTickHookFunction();
     }
 }
 
@@ -1483,6 +1512,7 @@ GOS_INLINE void_t gos_kernelDelayMs (u16_t milliseconds)
 /*
  * Function: gos_kernelCalculateTaskCpuUsages
  */
+#include <gos_time.h>
 GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
 {
     /*
@@ -1503,31 +1533,55 @@ GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
 
     for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
     {
-        taskConvertedTime   = taskDescriptors[taskIndex].taskRunTime.minutes * 60 * 1000 * 1000 +
+        /*taskConvertedTime   = taskDescriptors[taskIndex].taskRunTime.minutes * 60 * 1000 * 1000 +
                               taskDescriptors[taskIndex].taskRunTime.seconds * 1000 * 1000 +
                               taskDescriptors[taskIndex].taskRunTime.milliseconds * 1000 +
-                              taskDescriptors[taskIndex].taskRunTime.microseconds;
+                              taskDescriptors[taskIndex].taskRunTime.microseconds;*/
+        taskConvertedTime   = taskDescriptors[taskIndex].taskMonitoringRunTime.minutes * 60 * 1000 * 1000 +
+                              taskDescriptors[taskIndex].taskMonitoringRunTime.seconds * 1000 * 1000 +
+                              taskDescriptors[taskIndex].taskMonitoringRunTime.milliseconds * 1000 +
+                              taskDescriptors[taskIndex].taskMonitoringRunTime.microseconds;
+
 
         if (systemConvertedTime > 0)
         {
             // Calculate CPU usage and then reset runtime counter.
-        	taskDescriptors[taskIndex].taskCpuMonitoringUsage = (u16_t)(((u32_t)10000 * taskConvertedTime) / systemConvertedTime);
+            taskDescriptors[taskIndex].taskCpuMonitoringUsage = (u16_t)(((u32_t)10000 * taskConvertedTime) / systemConvertedTime);
 
             if (isResetRequired == GOS_TRUE || monitoringTime.seconds > 0)
             {
-            	taskDescriptors[taskIndex].taskCpuUsage = (u16_t)((u32_t)(10000 * taskConvertedTime) / systemConvertedTime);
-                taskDescriptors[taskIndex].taskRunTime.days         = 0u;
+                taskDescriptors[taskIndex].taskCpuUsage = (u16_t)((u32_t)(10000 * taskConvertedTime) / systemConvertedTime);
+                /*taskDescriptors[taskIndex].taskRunTime.days         = 0u;
                 taskDescriptors[taskIndex].taskRunTime.hours        = 0u;
                 taskDescriptors[taskIndex].taskRunTime.minutes      = 0u;
                 taskDescriptors[taskIndex].taskRunTime.seconds      = 0u;
                 taskDescriptors[taskIndex].taskRunTime.milliseconds = 0u;
-                taskDescriptors[taskIndex].taskRunTime.microseconds = 0u;
+                taskDescriptors[taskIndex].taskRunTime.microseconds = 0u;*/
 
-            	// Store the highest CPU usage value.
-            	if (taskDescriptors[taskIndex].taskCpuUsage > taskDescriptors[taskIndex].taskCpuUsageMax)
-            	{
-            		taskDescriptors[taskIndex].taskCpuUsageMax = taskDescriptors[taskIndex].taskCpuUsage;
-            	}
+                // Increase runtime microseconds.
+                gos_runTimeAddMicroseconds(
+                        &taskDescriptors[taskIndex].taskRunTime,
+                        NULL,
+                        (u16_t)taskDescriptors[taskIndex].taskMonitoringRunTime.microseconds);
+
+                // Increase runtime milliseconds.
+                gos_runTimeAddMilliseconds(
+                        &taskDescriptors[taskIndex].taskRunTime,
+                        (u32_t)(taskDescriptors[taskIndex].taskMonitoringRunTime.milliseconds +
+                        taskDescriptors[taskIndex].taskMonitoringRunTime.seconds * 1000));
+
+                taskDescriptors[taskIndex].taskMonitoringRunTime.days         = 0u;
+                taskDescriptors[taskIndex].taskMonitoringRunTime.hours        = 0u;
+                taskDescriptors[taskIndex].taskMonitoringRunTime.minutes      = 0u;
+                taskDescriptors[taskIndex].taskMonitoringRunTime.seconds      = 0u;
+                taskDescriptors[taskIndex].taskMonitoringRunTime.milliseconds = 0u;
+                taskDescriptors[taskIndex].taskMonitoringRunTime.microseconds = 0u;
+
+                // Store the highest CPU usage value.
+                if (taskDescriptors[taskIndex].taskCpuUsage > taskDescriptors[taskIndex].taskCpuUsageMax)
+                {
+                    taskDescriptors[taskIndex].taskCpuUsageMax = taskDescriptors[taskIndex].taskCpuUsage;
+                }
             }
         }
 
@@ -1657,21 +1711,21 @@ void_t gos_kernelDump (void_t)
  */
 gos_result_t gos_kernelSetMaxCpuLoad (u16_t maxCpuLoad)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t setMaxCpuLoadResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t setMaxCpuLoadResult = GOS_ERROR;
 
     /*
      * Function code.
      */
-	if (maxCpuLoad > 0 && maxCpuLoad <= 10000)
-	{
-		cpuUseLimit = maxCpuLoad;
-		setMaxCpuLoadResult = GOS_SUCCESS;
-	}
+    if (maxCpuLoad > 0 && maxCpuLoad <= 10000)
+    {
+        cpuUseLimit = maxCpuLoad;
+        setMaxCpuLoadResult = GOS_SUCCESS;
+    }
 
-	return setMaxCpuLoadResult;
+    return setMaxCpuLoadResult;
 }
 
 /*
@@ -1679,21 +1733,21 @@ gos_result_t gos_kernelSetMaxCpuLoad (u16_t maxCpuLoad)
  */
 gos_result_t gos_kernelGetMaxCpuLoad (u16_t* maxCpuLoad)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t getMaxCpuLoadResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t getMaxCpuLoadResult = GOS_ERROR;
 
     /*
      * Function code.
      */
-	if (maxCpuLoad != NULL)
-	{
-		*maxCpuLoad = cpuUseLimit;
-		getMaxCpuLoadResult = GOS_SUCCESS;
-	}
+    if (maxCpuLoad != NULL)
+    {
+        *maxCpuLoad = cpuUseLimit;
+        getMaxCpuLoadResult = GOS_SUCCESS;
+    }
 
-	return getMaxCpuLoadResult;
+    return getMaxCpuLoadResult;
 }
 
 /*
@@ -1704,7 +1758,7 @@ bool_t gos_kernelIsCallerIsr (void_t)
     /*
      * Function code.
      */
-	return inIsr > 0u ? GOS_TRUE : GOS_FALSE;
+    return inIsr > 0u ? GOS_TRUE : GOS_FALSE;
 }
 
 /*
@@ -1715,7 +1769,7 @@ void_t gos_ported_svcHandler (void_t)
     /*
      * Function code.
      */
-	gos_ported_handleSVC();
+    gos_ported_handleSVC();
 }
 
 /*
@@ -1726,7 +1780,7 @@ void_t gos_ported_svcHandlerMain (u32_t* sp)
     /*
      * Function code.
      */
-	gos_ported_handleSVCMain(sp);
+    gos_ported_handleSVCMain(sp);
 }
 
 /*
@@ -1737,7 +1791,7 @@ void_t gos_ported_pendSVHandler (void_t)
     /*
      * Function code.
      */
-	gos_ported_doContextSwitch();
+    gos_ported_doContextSwitch();
 }
 
 /**
@@ -1837,7 +1891,7 @@ GOS_STATIC_INLINE void_t gos_kernelReschedule (gos_kernel_privilege_t privilege)
     /*
      * Function code.
      */
-	gos_ported_reschedule(privilege);
+    gos_ported_reschedule(privilege);
 }
 
 /**
@@ -1881,7 +1935,6 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSaveCurrentPsp (u32_t psp)
  *
  * @return    -
  */
-#include <gos_time.h>
 GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
 {
     /*
@@ -1911,10 +1964,10 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
             }
             // Unblock tasks if their timeout time has elapsed.
             else if (taskDescriptors[taskIndex].taskState == GOS_TASK_BLOCKED &&
-            		taskDescriptors[taskIndex].taskBlockMaxTicks != GOS_TASK_MAX_BLOCK_TIME_MS &&
-					sysTicks > taskDescriptors[taskIndex].taskBlockMaxTicks)
+                    taskDescriptors[taskIndex].taskBlockMaxTicks != GOS_TASK_MAX_BLOCK_TIME_MS &&
+                    sysTicks > taskDescriptors[taskIndex].taskBlockMaxTicks)
             {
-            	taskDescriptors[taskIndex].taskState = GOS_TASK_READY;
+                taskDescriptors[taskIndex].taskState = GOS_TASK_READY;
             }
 
             // Choose the highest priority task - that is not the current one, and is ready - to run.
@@ -1922,8 +1975,8 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
             if (taskIndex != currentTaskIndex &&
                 taskDescriptors[taskIndex].taskState == GOS_TASK_READY &&
                 taskDescriptors[taskIndex].taskPriority < lowestPrio &&
-				taskDescriptors[taskIndex].taskCpuMonitoringUsage < taskDescriptors[taskIndex].taskCpuUsageLimit &&
-				taskDescriptors[taskIndex].taskCpuUsage < taskDescriptors[taskIndex].taskCpuUsageLimit)
+                taskDescriptors[taskIndex].taskCpuMonitoringUsage < taskDescriptors[taskIndex].taskCpuUsageLimit &&
+                taskDescriptors[taskIndex].taskCpuUsage < taskDescriptors[taskIndex].taskCpuUsageLimit)
             {
                 nextTask = taskIndex;
                 lowestPrio = taskDescriptors[taskIndex].taskPriority;
@@ -1933,11 +1986,11 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
         // If CPU limit exceeded, override scheduling, and select the idle task to run.
         if (gos_kernelGetCpuUsage() > cpuUseLimit)
         {
-        	nextTask = 0u;
+            nextTask = 0u;
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         // If there was a task-swap, call the hook function.
@@ -1955,7 +2008,7 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
         currentRunTime = sysTimerActVal - sysTimerValue;
 
         // Increase monitoring system time and current task runtime.
-        gos_runTimeAddMicroseconds(&monitoringTime, &taskDescriptors[currentTaskIndex].taskRunTime, currentRunTime);
+        gos_runTimeAddMicroseconds(&monitoringTime, &taskDescriptors[currentTaskIndex].taskMonitoringRunTime, currentRunTime);
 
         // Refresh system timer value.
         gos_timerDriverSysTimerGet(&sysTimerValue);
@@ -2051,7 +2104,7 @@ GOS_STATIC void_t gos_kernelProcessorReset (void_t)
      * Function code.
      */
     // Reset processor.
-	gos_ported_procReset();
+    gos_ported_procReset();
 
     // Wait for reset.
     for (;;)
