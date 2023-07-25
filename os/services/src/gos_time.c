@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_time.c
 //! @author     Ahmed Gazar
-//! @date       2023-06-30
-//! @version    1.4
+//! @date       2023-07-25
+//! @version    1.5
 //!
 //! @brief      GOS time service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_time.h
@@ -31,6 +31,7 @@
 // 1.2        2022-12-08    Ahmed Gazar     +    Run-time handling added
 // 1.3        2023-01-31    Ahmed Gazar     +    gos_runTimeAddMicroseconds added
 // 1.4        2023-06-30    Ahmed Gazar     +    TIME_SLEEP_TIME_MS added
+// 1.5        2023-07-25    Ahmed Gazar     +    gos_runTimeAddMilliseconds added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -160,13 +161,13 @@ gos_result_t gos_timeInit (void_t)
      */
     if (gos_signalCreate(&timeSignalId)                                != GOS_SUCCESS ||
         gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS
-		)
+        )
     {
         timeInitResult = GOS_ERROR;
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return timeInitResult;
@@ -198,7 +199,7 @@ gos_result_t gos_timeGet (gos_time_t* pTime)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return timeGetResult;
@@ -230,7 +231,7 @@ gos_result_t gos_timeSet (gos_time_t* pTime)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return timeSetResult;
@@ -260,7 +261,7 @@ gos_result_t gos_runTimeGet (gos_runtime_t* pRunTime)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return runtimeGetResult;
@@ -304,7 +305,7 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return timeCompareResult;
@@ -363,7 +364,7 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds)
                         }
                         else
                         {
-                        	// Nothing to do.
+                            // Nothing to do.
                         }
 
                         // Check months.
@@ -374,29 +375,29 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds)
                         }
                         else
                         {
-                        	// Nothing to do.
+                            // Nothing to do.
                         }
                     }
                     else
                     {
-                    	// Nothing to do.
+                        // Nothing to do.
                     }
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
         timeAddSecondsResult = GOS_SUCCESS;
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return timeAddSecondsResult;
@@ -416,129 +417,204 @@ gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t
     /*
      * Function code.
      */
-    if (pRunTime1 != NULL && pRunTime2 != NULL)
+    if (pRunTime1 != NULL || pRunTime2 != NULL)
     {
         while (microsecondCounter++ < microseconds)
         {
-            pRunTime1->microseconds++;
-            pRunTime2->microseconds++;
-
-            if (pRunTime1->microseconds >= 1000)
+            if (pRunTime1 != NULL)
             {
-                pRunTime1->microseconds = 0U;
-                pRunTime1->milliseconds++;
+                pRunTime1->microseconds++;
 
-                // Check milliseconds.
-                if (pRunTime1->milliseconds >= 1000)
+                if (pRunTime1->microseconds >= 1000)
                 {
-                    pRunTime1->milliseconds = 0U;
-                    pRunTime1->seconds++;
+                    pRunTime1->microseconds = 0U;
+                    pRunTime1->milliseconds++;
 
-                    // Check seconds.
-                    if (pRunTime1->seconds >= 60)
+                    // Check milliseconds.
+                    if (pRunTime1->milliseconds >= 1000)
                     {
-                        pRunTime1->seconds = 0U;
-                        pRunTime1->minutes++;
+                        pRunTime1->milliseconds = 0U;
+                        pRunTime1->seconds++;
 
-                        // Check minutes.
-                        if (pRunTime1->minutes >= 60)
+                        // Check seconds.
+                        if (pRunTime1->seconds >= 60)
                         {
-                            pRunTime1->minutes = 0U;
-                            pRunTime1->hours++;
+                            pRunTime1->seconds = 0U;
+                            pRunTime1->minutes++;
 
-                            // Check hours.
-                            if (pRunTime1->hours >= 24)
+                            // Check minutes.
+                            if (pRunTime1->minutes >= 60)
                             {
-                                pRunTime1->hours = 0U;
-                                pRunTime1->days++;
+                                pRunTime1->minutes = 0U;
+                                pRunTime1->hours++;
+
+                                // Check hours.
+                                if (pRunTime1->hours >= 24)
+                                {
+                                    pRunTime1->hours = 0U;
+                                    pRunTime1->days++;
+                                }
+                                else
+                                {
+                                    // Nothing to do.
+                                }
                             }
                             else
                             {
-                            	// Nothing to do.
+                                // Nothing to do.
                             }
                         }
                         else
                         {
-                        	// Nothing to do.
+                            // Nothing to do.
                         }
                     }
                     else
                     {
-                    	// Nothing to do.
+                        // Nothing to do.
                     }
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
-            else
-            {
-            	// Nothing to do.
-            }
 
-            if (pRunTime2->microseconds >= 1000)
+            if (pRunTime2 != NULL)
             {
-                pRunTime2->microseconds = 0U;
-                pRunTime2->milliseconds++;
+                pRunTime2->microseconds++;
 
-                // Check milliseconds.
-                if (pRunTime2->milliseconds >= 1000)
+                if (pRunTime2->microseconds >= 1000)
                 {
-                    pRunTime2->milliseconds = 0U;
-                    pRunTime2->seconds++;
+                    pRunTime2->microseconds = 0U;
+                    pRunTime2->milliseconds++;
 
-                    // Check seconds.
-                    if (pRunTime2->seconds >= 60)
+                    // Check milliseconds.
+                    if (pRunTime2->milliseconds >= 1000)
                     {
-                        pRunTime2->seconds = 0U;
-                        pRunTime2->minutes++;
+                        pRunTime2->milliseconds = 0U;
+                        pRunTime2->seconds++;
 
-                        // Check minutes.
-                        if (pRunTime2->minutes >= 60)
+                        // Check seconds.
+                        if (pRunTime2->seconds >= 60)
                         {
-                            pRunTime2->minutes = 0U;
-                            pRunTime2->hours++;
+                            pRunTime2->seconds = 0U;
+                            pRunTime2->minutes++;
 
-                            // Check hours.
-                            if (pRunTime2->hours >= 24)
+                            // Check minutes.
+                            if (pRunTime2->minutes >= 60)
                             {
-                                pRunTime2->hours = 0U;
-                                pRunTime2->days++;
+                                pRunTime2->minutes = 0U;
+                                pRunTime2->hours++;
+
+                                // Check hours.
+                                if (pRunTime2->hours >= 24)
+                                {
+                                    pRunTime2->hours = 0U;
+                                    pRunTime2->days++;
+                                }
+                                else
+                                {
+                                    // Nothing to do.
+                                }
                             }
                             else
                             {
-                            	// Nothing to do.
+                                // Nothing to do.
                             }
                         }
                         else
                         {
-                        	// Nothing to do.
+                            // Nothing to do.
                         }
                     }
                     else
                     {
-                    	// Nothing to do.
+                        // Nothing to do.
                     }
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
-            }
-            else
-            {
-            	// Nothing to do.
             }
         }
         runtimeAddMicrosecondsResult = GOS_SUCCESS;
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return runtimeAddMicrosecondsResult;
+}
+
+/*
+ * Function: gos_runTimeAddMilliseconds
+ */
+gos_result_t gos_runTimeAddMilliseconds (gos_runtime_t* pRunTime, u32_t milliseconds)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t runtimeAddMillisecondsResult = GOS_ERROR;
+    u32_t        millisecondCounter           = 0u;
+
+    /*
+     * Function code.
+     */
+    if (pRunTime != NULL)
+    {
+        while (millisecondCounter++ < milliseconds)
+        {
+            pRunTime->milliseconds++;
+
+            if (pRunTime->milliseconds >= 1000u)
+            {
+                pRunTime->milliseconds = 0u;
+
+                pRunTime->seconds++;
+                if (pRunTime->seconds >= 60)
+                {
+                    pRunTime->seconds = 0U;
+                    pRunTime->minutes++;
+
+                    // Check minutes.
+                    if (pRunTime->minutes >= 60)
+                    {
+                        pRunTime->minutes = 0U;
+                        pRunTime->hours++;
+
+                        // Check hours.
+                        if (pRunTime->hours >= 24)
+                        {
+                            pRunTime->hours = 0U;
+                            pRunTime->days++;
+                        }
+                        else
+                        {
+                            // Nothing to do.
+                        }
+                    }
+                    else
+                    {
+                        // Nothing to do.
+                    }
+                }
+                else
+                {
+                    // Nothing to do.
+                }
+            }
+        }
+        runtimeAddMillisecondsResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Nothing to do.
+    }
+
+    return runtimeAddMillisecondsResult;
 }
 
 /*
@@ -579,24 +655,24 @@ gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, u32_t seconds)
                     }
                     else
                     {
-                    	// Nothing to do.
+                        // Nothing to do.
                     }
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
         runtimeAddSecondsResult = GOS_SUCCESS;
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return runtimeAddSecondsResult;
@@ -637,7 +713,7 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         // Invoke minute elapsed signal.
@@ -647,7 +723,7 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         // Invoke hour elapsed signal.
@@ -657,7 +733,7 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         // Invoke day elapsed signal.
@@ -667,7 +743,7 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         // Invoke month elapsed signal.
@@ -677,7 +753,7 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         // Invoke year elapsed signal.
@@ -687,7 +763,7 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         (void_t) gos_kernelTaskSleep(TIME_SLEEP_TIME_MS);

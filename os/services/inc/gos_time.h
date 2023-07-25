@@ -137,8 +137,8 @@ typedef enum
  * @retval  GOS_ERROR   : Time signal registration error or time daemon registration error.
  */
 gos_result_t gos_timeInit (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   This function gets the system time.
@@ -152,8 +152,8 @@ gos_result_t gos_timeInit (
  * @retval  GOS_ERROR   : Time variable is NULL pointer.
  */
 gos_result_t gos_timeGet (
-		gos_time_t* pTime
-		);
+        gos_time_t* pTime
+        );
 
 /**
  * @brief   This function sets the system time.
@@ -168,8 +168,8 @@ gos_result_t gos_timeGet (
  * @retval  GOS_ERROR   : Time structure is NULL pointer.
  */
 gos_result_t gos_timeSet (
-		gos_time_t* pTime
-		);
+        gos_time_t* pTime
+        );
 
 /**
  * @brief   This function compares two time structures.
@@ -185,10 +185,10 @@ gos_result_t gos_timeSet (
  * @retval  GOS_ERROR   : Either time structure and/or result variable is NULL pointer.
  */
 gos_result_t gos_timeCompare (
-		gos_time_t*               pTime1,
-		gos_time_t*               pTime2,
-		gos_timeComprareResult_t* result
-		);
+        gos_time_t*               pTime1,
+        gos_time_t*               pTime2,
+        gos_timeComprareResult_t* result
+        );
 
 /**
  * @brief   This function adds the given number of seconds to the given time variable.
@@ -203,9 +203,9 @@ gos_result_t gos_timeCompare (
  * @retval  GOS_ERROR   : Time variable is NULL pointer.
  */
 gos_result_t gos_timeAddSeconds (
-		gos_time_t* pTime,
-		u32_t       seconds
-		);
+        gos_time_t* pTime,
+        u32_t       seconds
+        );
 
 /**
  * @brief   This function adds the given number of microseconds to the given time variables.
@@ -221,10 +221,28 @@ gos_result_t gos_timeAddSeconds (
  * @retval  GOS_ERROR   : Time variable is NULL pointer.
  */
 gos_result_t gos_runTimeAddMicroseconds (
-		gos_runtime_t* pRunTime1,
-		gos_runtime_t* pRunTime2,
-		u16_t          microseconds
-		);
+        gos_runtime_t* pRunTime1,
+        gos_runtime_t* pRunTime2,
+        u16_t          microseconds
+        );
+
+/**
+ * @brief   This function adds the given number of milliseconds to the given time variables.
+ * @details This function adds the given number of milliseconds to the given time variables.
+ *
+ * @param   pRunTime1    : Pointer to the time variable.
+ * @param   pRunTime2    : Pointer to the time variable.
+ * @param   milliseconds : Number of milliseconds to add.
+ *
+ * @return  Result of time increasing.
+ *
+ * @retval  GOS_SUCCESS : Milliseconds added successfully.
+ * @retval  GOS_ERROR   : Time variable is NULL pointer.
+ */
+gos_result_t gos_runTimeAddMilliseconds (
+        gos_runtime_t* pRunTime,
+        u32_t          milliseconds
+        );
 
 /**
  * @brief   This function adds the given number of seconds to the given run-time variable.
@@ -239,9 +257,9 @@ gos_result_t gos_runTimeAddMicroseconds (
  * @retval  GOS_ERROR   : Run-time variable is NULL pointer.
  */
 gos_result_t gos_runTimeAddSeconds (
-		gos_runtime_t* pRunTime,
-		u32_t          seconds
-		);
+        gos_runtime_t* pRunTime,
+        u32_t          seconds
+        );
 
 /**
  * @brief   This function gets the system run-time.
@@ -255,7 +273,7 @@ gos_result_t gos_runTimeAddSeconds (
  * @retval  GOS_ERROR   : Run-time variable is NULL pointer.
  */
 gos_result_t gos_runTimeGet (
-		gos_runtime_t* pRunTime
-		);
+        gos_runtime_t* pRunTime
+        );
 
 #endif
