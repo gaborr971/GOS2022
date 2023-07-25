@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_config.h
 //! @author     Ahmed Gazar
-//! @date       2023-05-19
-//! @version    1.5
+//! @date       2023-07-12
+//! @version    1.7
 //!
 //! @brief      GOS configuration header.
 //! @details    This header contains the kernel and service configurations of the operating system.
@@ -36,6 +36,9 @@
 // 1.6        2023-07-12    Ahmed Gazar     +    CFG_RESET_ON_ERROR and CFG_RESET_ON_ERROR_DELAY_MS
 //                                               added
 //                                          +    ARM_CORTEX_M4 and CFG_TARGET_CPU added
+// 1.7        2023-07-25    Ahmed Gazar     +    CFG_TASK_SYSMON_DAEMON_STACK added
+//                                          +    CFG_TASK_SYSMON_DAEMON_PRIO added
+//                                          +    CFG_SYSMON_USE_SERVICE added
 //*************************************************************************************************
 #ifndef GOS_CONFIG_H
 #define GOS_CONFIG_H
@@ -127,6 +130,10 @@
  * Log daemon task stack size.
  */
 #define CFG_TASK_TRACE_DAEMON_STACK     ( 0x300 )
+/**
+ * Sysmon daemon task stack size.
+ */
+#define CFG_TASK_SYSMON_DAEMON_STACK    ( 0x300 )
 
 /*
  * OS task priorities.
@@ -159,6 +166,10 @@
  * System task priority.
  */
 #define CFG_TASK_SYS_PRIO               ( 195 )
+/**
+ * Sysmon daemon task priority.
+ */
+#define CFG_TASK_SYSMON_DAEMON_PRIO     40//( 192 )
 
 /*
  * Process service parameters.
@@ -271,7 +282,7 @@
 /**
  * GCP maximum number of channels.
  */
-#define CFG_GCP_CHANNELS_MAX_NUMBER     ( 2 )
+#define CFG_GCP_CHANNELS_MAX_NUMBER     ( 3 )
 
 /*
  * Trace service parameters.
@@ -280,6 +291,18 @@
  * Trace maximum (line) length.
  */
 #define CFG_TRACE_MAX_LENGTH            ( 200 )
+
+/*
+ * Sysmon service parameters.
+ */
+/**
+ * Sysmon use service flag.
+ */
+#define CFG_SYSMON_USE_SERVICE          ( 0 )
+/**
+ * Define sysmon GCP channel number.
+ */
+#define CFG_SYSMON_GCP_CHANNEL_NUM      ( 0 )
 
 /*
  * Error handling parameters.
