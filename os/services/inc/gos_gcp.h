@@ -76,7 +76,7 @@ typedef gos_result_t (*gos_gcpReceiveFunction_t) (u8_t*, u16_t);
 /**
  * GCP message header.
  */
-typedef struct
+typedef struct __attribute__ ((packed))
 {
     u16_t protocolVersion; //!< Message protocol version.
     u16_t messageId;       //!< Message ID.
@@ -97,8 +97,8 @@ typedef struct
  * @retval  GOS_ERROR   : Lock creation error.
  */
 gos_result_t gos_gcpInit (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   Registers the physical-layer transmit and receive driver functions.
@@ -114,10 +114,10 @@ gos_result_t gos_gcpInit (
  * @retval  GOS_ERROR        : Transmit or receive function is NULL.
  */
 gos_result_t gos_gcpRegisterPhysicalDriver (
-		gos_gcpChannelNumber_t    channel,
-		gos_gcpTransmitFunction_t transmitFunction,
-		gos_gcpReceiveFunction_t  receiveFunction
-		);
+        gos_gcpChannelNumber_t    channel,
+        gos_gcpTransmitFunction_t transmitFunction,
+        gos_gcpReceiveFunction_t  receiveFunction
+        );
 
 /**
  * @brief   Transmits the given message via the GCP protocol.
@@ -135,10 +135,10 @@ gos_result_t gos_gcpRegisterPhysicalDriver (
  *                            frame transmission error occurred.
  */
 gos_result_t gos_gcpTransmitMessage (
-		gos_gcpChannelNumber_t  channel,
-		gos_gcpMessageHeader_t* pMessageHeader,
-		void_t*                 pMessagePayload
-		);
+        gos_gcpChannelNumber_t  channel,
+        gos_gcpMessageHeader_t* pMessageHeader,
+        void_t*                 pMessagePayload
+        );
 
 /**
  * @brief   Receives the given message via the GCP protocol.
@@ -156,8 +156,8 @@ gos_result_t gos_gcpTransmitMessage (
  *                                 frame reception error occurred.
  */
 gos_result_t gos_gcpReceiveMessage (
-		gos_gcpChannelNumber_t  channel,
-		gos_gcpMessageHeader_t* pTargetMessageHeader,
-		void_t*                 pPayloadTarget
-		);
+        gos_gcpChannelNumber_t  channel,
+        gos_gcpMessageHeader_t* pTargetMessageHeader,
+        void_t*                 pPayloadTarget
+        );
 #endif

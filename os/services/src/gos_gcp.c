@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_gcp.c
 //! @author     Ahmed Gazar
-//! @date       2023-05-04
-//! @version    2.1
+//! @date       2023-07-25
+//! @version    2.3
 //!
 //! @brief      GOS General Communication Protocol handler service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_gcp.h
@@ -28,7 +28,10 @@
 // 1.1        2022-12-15    Ahmed Gazar     *    Frame number calculation bugfix
 //                                          +    Multiple channel handling added
 // 2.0        2022-12-20    Ahmed Gazar     Released
-// 2.1        2023-05-04    Ahmed Gazar     * Lock calls replaced with mutex calls
+// 2.1        2023-05-04    Ahmed Gazar     *    Lock calls replaced with mutex calls
+// 2.2        2023-07-12    Ahmed Gazar     *    Channel blocking bug fixed
+// 2.3        2023-07-25    Ahmed Gazar     *    TX and RX mutexes separated and added for each
+//                                               channel
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -116,9 +119,14 @@ typedef struct
 GOS_STATIC gos_gcpChannelFunctions_t channelFunctions [CFG_GCP_CHANNELS_MAX_NUMBER];
 
 /**
- * GCP mutex.
+ * GCP RX mutex array.
  */
-GOS_STATIC gos_mutex_t  gcpMutex;
+GOS_STATIC gos_mutex_t gcpRxMutexes [CFG_GCP_CHANNELS_MAX_NUMBER];
+
+/**
+ * GCP TX mutex array.
+ */
+GOS_STATIC gos_mutex_t gcpTxMutexes [CFG_GCP_CHANNELS_MAX_NUMBER];
 
 /*
  * Function prototypes
@@ -135,11 +143,16 @@ gos_result_t gos_gcpInit (void_t)
      * Local variables.
      */
     gos_result_t gcpInitResult = GOS_SUCCESS;
+    u16_t        mutexIdx      = 0u;
 
     /*
      * Function code.
      */
-    gos_mutexInit(&gcpMutex);
+    for (mutexIdx = 0u; mutexIdx < CFG_GCP_CHANNELS_MAX_NUMBER; mutexIdx++)
+    {
+        gos_mutexInit(&gcpRxMutexes[mutexIdx]);
+        gos_mutexInit(&gcpTxMutexes[mutexIdx]);
+    }
 
     return gcpInitResult;
 }
@@ -167,7 +180,7 @@ gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpChannelNumber_t channelNumber
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return registerPhysicalDriverResult;
@@ -176,9 +189,9 @@ gos_result_t gos_gcpRegisterPhysicalDriver (gos_gcpChannelNumber_t channelNumber
 /*
  * Function: gos_gcpTransmitMessage
  */
-gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel,
-                                     gos_gcpMessageHeader_t* pMessageHeader,
-                                     void_t* pMessagePayload)
+GOS_INLINE gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel,
+                                                gos_gcpMessageHeader_t* pMessageHeader,
+                                                void_t* pMessagePayload)
 {
     /*
      * Local variables.
@@ -188,7 +201,7 @@ gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel,
     /*
      * Function code.
      */
-    if (gos_mutexLock(&gcpMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS                 &&
+    if (gos_mutexLock(&gcpTxMutexes[channel], GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS    &&
         pMessageHeader                                  != NULL                        &&
         (pMessagePayload                                != NULL                        ||
         (pMessagePayload                                == NULL                        &&
@@ -202,21 +215,21 @@ gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel,
         // Transmit message header and payload.
         if (gos_gcpTransmitFrames(channel, (u8_t*)pMessageHeader, (u16_t)sizeof(*pMessageHeader)) == GOS_SUCCESS &&
             gos_gcpTransmitFrames(channel, (u8_t*)pMessagePayload, pMessageHeader->payloadSize)   == GOS_SUCCESS
-			)
+            )
         {
             transmitMessageResult = GOS_SUCCESS;
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
-    gos_mutexUnlock(&gcpMutex);
+    gos_mutexUnlock(&gcpTxMutexes[channel]);
 
     return transmitMessageResult;
 }
@@ -224,9 +237,9 @@ gos_result_t gos_gcpTransmitMessage (gos_gcpChannelNumber_t channel,
 /*
  * Function: gos_gcpReceiveMessage
  */
-gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel,
-                                    gos_gcpMessageHeader_t* pTargetMessageHeader,
-                                    void_t* pPayloadTarget)
+GOS_INLINE gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel,
+                                               gos_gcpMessageHeader_t* pTargetMessageHeader,
+                                               void_t* pPayloadTarget)
 {
     /*
      * Local variables.
@@ -236,12 +249,12 @@ gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel,
     /*
      * Function code.
      */
-    if (gos_mutexLock(&gcpMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS                 &&
+    if (gos_mutexLock(&gcpRxMutexes[channel], GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS    &&
         pTargetMessageHeader                            != NULL                        &&
-		pPayloadTarget                                  != NULL                        &&
+        pPayloadTarget                                  != NULL                        &&
         channel                                         <  CFG_GCP_CHANNELS_MAX_NUMBER &&
         channelFunctions[channel].gcpReceiveFunction    != NULL
-		)
+        )
     {
         // Receive header and frames, check CRC.
         if (gos_gcpReceiveFrames(channel, (u8_t*)pTargetMessageHeader, (u16_t)sizeof(*pTargetMessageHeader)) == GOS_SUCCESS &&
@@ -252,15 +265,15 @@ gos_result_t gos_gcpReceiveMessage (gos_gcpChannelNumber_t channel,
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
-    gos_mutexUnlock(&gcpMutex);
+    gos_mutexUnlock(&gcpRxMutexes[channel]);
 
     return receiveMessageResult;
 }
@@ -320,7 +333,7 @@ GOS_STATIC gos_result_t gos_gcpTransmitFrames (gos_gcpChannelNumber_t channel,
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
 
@@ -330,17 +343,17 @@ GOS_STATIC gos_result_t gos_gcpTransmitFrames (gos_gcpChannelNumber_t channel,
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return transmitFramesResult;
@@ -395,29 +408,30 @@ GOS_STATIC gos_result_t gos_gcpReceiveFrames (gos_gcpChannelNumber_t channel, u8
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
 
             // Check data integrity.
             if (frameCounter == frameNumber &&
-                frameHeader.dataCrc == gos_crcDriverGetCrc(pTarget, (u32_t)frameHeader.dataSize))
+                (frameHeader.dataCrc == gos_crcDriverGetCrc(pTarget, (u32_t)frameHeader.dataSize) ||
+                frameHeader.dataSize == 0u))
             {
                 receiveFramesResult = GOS_SUCCESS;
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return receiveFramesResult;
