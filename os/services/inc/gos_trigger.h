@@ -94,8 +94,8 @@ typedef struct
  * @return  -
  */
 void_t gos_triggerReset (
-		gos_trigger_t* pTrigger
-		);
+        gos_trigger_t* pTrigger
+        );
 
 /**
  * @brief   Waits for the trigger instance to reach the given trigger value.
@@ -112,10 +112,10 @@ void_t gos_triggerReset (
  * @retval  GOS_ERROR   : Trigger value was not reached within the timeout value.
  */
 gos_result_t gos_triggerWait (
-		gos_trigger_t* pTrigger,
-		u32_t          value,
-		u32_t          timeout
-		);
+        gos_trigger_t* pTrigger,
+        u32_t          value,
+        u32_t          timeout
+        );
 
 /**
  * @brief   Increments the trigger value of the given trigger.
@@ -126,7 +126,7 @@ gos_result_t gos_triggerWait (
  * @return  -
  */
 void_t gos_triggerIncrement (
-		gos_trigger_t* pTrigger
-		);
+        gos_trigger_t* pTrigger
+        );
 
 #endif

@@ -102,8 +102,8 @@ typedef struct
  * @return  -
  */
 void_t gos_mutexInit (
-		gos_mutex_t* pMutex
-		);
+        gos_mutex_t* pMutex
+        );
 
 /**
  * @brief   Tries to lock the given mutex with the given timeout.
@@ -120,9 +120,9 @@ void_t gos_mutexInit (
  * @retval  GOS_ERROR   : Mutex could not be locked within the timeout value.
  */
 gos_result_t gos_mutexLock (
-		gos_mutex_t* pMutex,
-		u32_t        timeout
-		);
+        gos_mutex_t* pMutex,
+        u32_t        timeout
+        );
 
 /**
  * @brief   Unlocks the mutex instance.
@@ -133,7 +133,7 @@ gos_result_t gos_mutexLock (
  * @return  -
  */
 void_t gos_mutexUnlock (
-		gos_mutex_t* pMutex
-		);
+        gos_mutex_t* pMutex
+        );
 
 #endif

@@ -137,7 +137,7 @@ GOS_STATIC gos_shellCommand_t shellCommand =
 {
     .command        = "shell",
     .commandHandler = gos_shellCommandHandler,
-	.commandHandlerPrivileges = GOS_TASK_PRIVILEGE_KERNEL
+    .commandHandlerPrivileges = GOS_TASK_PRIVILEGE_KERNEL
 };
 
 /*
@@ -168,7 +168,7 @@ gos_result_t gos_shellInit (void_t)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return shellInitResult;
@@ -201,7 +201,7 @@ gos_result_t gos_shellRegisterCommands (gos_shellCommand_t* commands, u16_t arra
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
 
@@ -211,12 +211,12 @@ gos_result_t gos_shellRegisterCommands (gos_shellCommand_t* commands, u16_t arra
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return registerResult;
@@ -250,7 +250,7 @@ gos_result_t gos_shellRegisterCommand (gos_shellCommand_t* command)
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
     }
@@ -361,7 +361,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
 
             /*
@@ -383,7 +383,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
 
                 commandBuffer[commandBufferIndex] = '\0';
@@ -412,19 +412,19 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
                     {
                         if (shellCommands[index].commandHandler != NULL)
                         {
-                        	gos_kernelTaskSetPrivileges(shellDaemonTaskId, shellCommands[index].commandHandlerPrivileges);
+                            gos_kernelTaskSetPrivileges(shellDaemonTaskId, shellCommands[index].commandHandlerPrivileges);
                             shellCommands[index].commandHandler(commandParams);
                             gos_kernelTaskSetPrivileges(shellDaemonTaskId, GOS_TASK_PRIVILEGE_KERNEL);
                         }
                         else
                         {
-                        	// Nothing to do.
+                            // Nothing to do.
                         }
                         break;
                     }
                     else
                     {
-                    	// Nothing to do.
+                        // Nothing to do.
                     }
                 }
 
@@ -435,7 +435,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
 
                 (void_t) memset((void_t*)commandBuffer, '\0', CFG_SHELL_COMMAND_BUFFER_SIZE);
@@ -452,7 +452,7 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
         }
@@ -497,7 +497,7 @@ GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
             }
             else
             {
-            	gos_shellDriverTransmitString("\t- %s\r\n", shellCommands[commandIndex].command);
+                gos_shellDriverTransmitString("\t- %s\r\n", shellCommands[commandIndex].command);
             }
         }
     }
@@ -605,7 +605,7 @@ GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
 }

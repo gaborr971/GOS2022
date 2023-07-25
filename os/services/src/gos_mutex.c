@@ -120,18 +120,18 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
         {
             if (ownerPrio > currentPrio)
             {
-				(void_t) gos_kernelTaskGetPrivileges(currentId, &privileges);
+                (void_t) gos_kernelTaskGetPrivileges(currentId, &privileges);
 
                 if ((privileges & GOS_PRIV_TASK_PRIO_CHANGE) != GOS_PRIV_TASK_PRIO_CHANGE)
                 {
-                	(void_t) gos_kernelTaskAddPrivilege(currentId, GOS_PRIV_TASK_PRIO_CHANGE);
+                    (void_t) gos_kernelTaskAddPrivilege(currentId, GOS_PRIV_TASK_PRIO_CHANGE);
                     if (gos_kernelTaskSetPriority(pMutex->owner, currentPrio) == GOS_SUCCESS)
                     {
                         ownerPrio = currentPrio;
                     }
                     else
                     {
-                    	// Nothing to do.
+                        // Nothing to do.
                     }
                     (void_t) gos_kernelTaskRemovePrivilege(currentId, GOS_PRIV_TASK_PRIO_CHANGE);
                 }
@@ -143,13 +143,13 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
                     }
                     else
                     {
-                    	// Nothing to do.
+                        // Nothing to do.
                     }
                 }
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
 #endif
@@ -161,17 +161,17 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         if ((timeout != GOS_MUTEX_ENDLESS_TMO) &&
-        	((gos_kernelGetSysTicks() - sysTickInitial) >= timeout))
+            ((gos_kernelGetSysTicks() - sysTickInitial) >= timeout))
         {
             break;
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
 
@@ -183,11 +183,11 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
  */
 GOS_INLINE void_t gos_mutexUnlock (gos_mutex_t* pMutex)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_tid_t                currentTaskId     = GOS_INVALID_TASK_ID;
-	gos_taskPrivilegeLevel_t privileges        = 0u;
+    /*
+     * Local variables.
+     */
+    gos_tid_t                currentTaskId     = GOS_INVALID_TASK_ID;
+    gos_taskPrivilegeLevel_t privileges        = 0u;
 #if CFG_USE_PRIO_INHERITANCE
     gos_taskPrio_t           ownerOriginalPrio = GOS_TASK_MAX_PRIO_LEVELS;
     gos_taskPrio_t           ownerCurrentPrio  = GOS_TASK_MAX_PRIO_LEVELS;
@@ -204,22 +204,22 @@ GOS_INLINE void_t gos_mutexUnlock (gos_mutex_t* pMutex)
 
     if (ownerCurrentPrio != ownerOriginalPrio)
     {
-		(void_t) gos_kernelTaskGetPrivileges(currentTaskId, &privileges);
+        (void_t) gos_kernelTaskGetPrivileges(currentTaskId, &privileges);
 
         if ((privileges & GOS_PRIV_TASK_PRIO_CHANGE) != GOS_PRIV_TASK_PRIO_CHANGE)
         {
-        	(void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_PRIO_CHANGE);
-        	(void_t) gos_kernelTaskSetPriority(pMutex->owner, ownerOriginalPrio);
+            (void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_PRIO_CHANGE);
+            (void_t) gos_kernelTaskSetPriority(pMutex->owner, ownerOriginalPrio);
             (void_t) gos_kernelTaskRemovePrivilege(currentTaskId, GOS_PRIV_TASK_PRIO_CHANGE);
         }
         else
         {
-        	(void_t) gos_kernelTaskSetPriority(pMutex->owner, ownerOriginalPrio);
+            (void_t) gos_kernelTaskSetPriority(pMutex->owner, ownerOriginalPrio);
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 #endif
 
@@ -231,7 +231,7 @@ GOS_INLINE void_t gos_mutexUnlock (gos_mutex_t* pMutex)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     GOS_ATOMIC_EXIT

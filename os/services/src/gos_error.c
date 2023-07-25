@@ -170,7 +170,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     if (function != NULL)
@@ -191,7 +191,7 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     if (errorMessage != NULL)
@@ -204,28 +204,28 @@ void_t gos_errorHandler (gos_errorLevel_t errorLevel, const char_t* function, u3
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     (void_t) gos_traceTraceFormattedUnsafe(SEPARATOR_LINE);
 
     if (errorLevel == GOS_ERROR_LEVEL_OS_FATAL || errorLevel == GOS_ERROR_LEVEL_USER_FATAL)
     {
-    	GOS_DISABLE_SCHED
-    	GOS_ATOMIC_ENTER
+        GOS_DISABLE_SCHED
+        GOS_ATOMIC_ENTER
         for (;;)
         {
-        	GOS_NOP;
+            GOS_NOP;
 #if CFG_RESET_ON_ERROR == 1
 
-        	gos_kernelDelayMs(CFG_RESET_ON_ERROR_DELAY_MS);
-        	gos_kernelReset();
+            gos_kernelDelayMs(CFG_RESET_ON_ERROR_DELAY_MS);
+            gos_kernelReset();
 #endif
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 }
 

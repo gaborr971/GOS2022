@@ -99,8 +99,8 @@ typedef u16_t gos_shellCommandIndex_t;    //!< Shell command index type.
  * @retval  GOS_ERROR   : Shell daemon task registration failed.
  */
 gos_result_t gos_shellInit (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   This function registers an array of commands in the shell.
@@ -116,9 +116,9 @@ gos_result_t gos_shellInit (
  *                        array is full.
  */
 gos_result_t gos_shellRegisterCommands (
-		gos_shellCommand_t* commands,
-		u16_t               arraySize
-		);
+        gos_shellCommand_t* commands,
+        u16_t               arraySize
+        );
 
 /**
  * @brief   This function registers a command in the shell.
@@ -134,8 +134,8 @@ gos_result_t gos_shellRegisterCommands (
  *                        array is full.
  */
 gos_result_t gos_shellRegisterCommand (
-		gos_shellCommand_t* command
-		);
+        gos_shellCommand_t* command
+        );
 
 /**
  * @brief   Suspends the shell daemon task.
@@ -147,8 +147,8 @@ gos_result_t gos_shellRegisterCommand (
  * @retval  GOS_ERROR   : Task suspension failed.
  */
 gos_result_t gos_shellSuspend (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   Resumes the shell daemon task.
@@ -160,8 +160,8 @@ gos_result_t gos_shellSuspend (
  * @retval  GOS_ERROR   : Task resumption failed.
  */
 gos_result_t gos_shellResume (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   Turns the shell echoing on.
@@ -172,8 +172,8 @@ gos_result_t gos_shellResume (
  * @retval  GOS_SUCCESS : Echoing turned on successfully.
  */
 gos_result_t gos_shellEchoOn (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   Turns the shell echoing off.
@@ -184,6 +184,6 @@ gos_result_t gos_shellEchoOn (
  * @retval  GOS_SUCCESS : Echoing turned off successfully.
  */
 gos_result_t gos_shellEchoOff (
-		void_t
-		);
+        void_t
+        );
 #endif

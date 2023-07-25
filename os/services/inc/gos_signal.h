@@ -99,8 +99,8 @@ typedef void_t (*gos_signalHandler_t)(gos_signalSenderId_t);
  * @return  -
  */
 gos_result_t gos_signalInit (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   Creates a new signal.
@@ -115,8 +115,8 @@ gos_result_t gos_signalInit (
  * @retval  GOS_ERROR   : Signal array full.
  */
 gos_result_t gos_signalCreate (
-		gos_signalId_t* pSignal
-		);
+        gos_signalId_t* pSignal
+        );
 
 /**
  * @brief   Subscribes to the given signal.
@@ -134,10 +134,10 @@ gos_result_t gos_signalCreate (
  *                          handler array full.
  */
 gos_result_t gos_signalSubscribe (
-		gos_signalId_t           signalId,
-		gos_signalHandler_t      signalHandler,
-		gos_taskPrivilegeLevel_t signalHandlerPrivileges
-		);
+        gos_signalId_t           signalId,
+        gos_signalHandler_t      signalHandler,
+        gos_taskPrivilegeLevel_t signalHandlerPrivileges
+        );
 
 /**
  * @brief   Invokes the given signal.
@@ -153,8 +153,8 @@ gos_result_t gos_signalSubscribe (
  * @retval  GOS_ERROR   : Invalid signal ID or signal unused.
  */
 gos_result_t gos_signalInvoke (
-		gos_signalId_t       signalId,
-		gos_signalSenderId_t senderId
-		);
+        gos_signalId_t       signalId,
+        gos_signalSenderId_t senderId
+        );
 
 #endif

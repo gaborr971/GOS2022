@@ -139,8 +139,8 @@ typedef struct
  * @retval  GOS_ERROR   : Lock creation, task registration or task suspension error.
  */
 gos_result_t gos_queueInit (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   This function creates a new queue.
@@ -155,8 +155,8 @@ gos_result_t gos_queueInit (
  * @retval  GOS_ERROR        : Queue descriptor is NULL pointer or queue array is full.
  */
 gos_result_t gos_queueCreate (
-		gos_queueDescriptor_t* pQueueDescriptor
-		);
+        gos_queueDescriptor_t* pQueueDescriptor
+        );
 
 /**
  * @brief   This function puts an element in the given queue.
@@ -174,9 +174,9 @@ gos_result_t gos_queueCreate (
  * @retval  GOS_ERROR   : Invalid queue ID, invalid element size or queue is full.
  */
 gos_result_t gos_queuePut (
-		gos_queueId_t     queueId,     void_t* element,
-		gos_queueLength_t elementSize, u32_t   timeout
-		);
+        gos_queueId_t     queueId,     void_t* element,
+        gos_queueLength_t elementSize, u32_t   timeout
+        );
 
 /**
  * @brief   This function gets the next element from the given queue.
@@ -193,9 +193,9 @@ gos_result_t gos_queuePut (
  * @retval  GOS_ERROR   : Invalid queue ID, invalid target size or queue is empty.
  */
 gos_result_t gos_queueGet (
-		gos_queueId_t     queueId,    void_t* target,
-		gos_queueLength_t targetSize, u32_t   timeout
-		);
+        gos_queueId_t     queueId,    void_t* target,
+        gos_queueLength_t targetSize, u32_t   timeout
+        );
 
 /**
  * @brief   This function gets the next element from the given queue without removing it.
@@ -213,9 +213,9 @@ gos_result_t gos_queueGet (
  * @retval  GOS_ERROR   : Invalid queue ID, invalid target size or queue is empty.
  */
 gos_result_t gos_queuePeek (
-		gos_queueId_t     queueId,    void_t* target,
-		gos_queueLength_t targetSize, u32_t   timeout
-		);
+        gos_queueId_t     queueId,    void_t* target,
+        gos_queueLength_t targetSize, u32_t   timeout
+        );
 
 /**
  * @brief   This function registers a queue full hook function.
@@ -230,8 +230,8 @@ gos_result_t gos_queuePeek (
  * @retval  GOS_ERROR   : Hook already exists or parameter is NULL pointer.
  */
 gos_result_t gos_queueRegisterFullHook (
-		gos_queueFullHook fullHook
-		);
+        gos_queueFullHook fullHook
+        );
 
 /**
  * @brief   This function registers a queue empty hook function.
@@ -246,8 +246,8 @@ gos_result_t gos_queueRegisterFullHook (
  * @retval  GOS_ERROR   : Hook already exists or parameter is NULL pointer.
  */
 gos_result_t gos_queueRegisterEmptyHook (
-		gos_queueEmptyHook emptyHook
-		);
+        gos_queueEmptyHook emptyHook
+        );
 
 /**
  * @brief   This function gets the name of the given queue.
@@ -263,9 +263,9 @@ gos_result_t gos_queueRegisterEmptyHook (
  * @retval  GOS_ERROR   : Invalid queue ID or queue name variable is NULL.
  */
 gos_result_t gos_queueGetName (
-		gos_queueId_t   queueId,
-		gos_queueName_t queueName
-		);
+        gos_queueId_t   queueId,
+        gos_queueName_t queueName
+        );
 
 /**
  * @brief   This function gets the number of elements in the given queue.
@@ -281,9 +281,9 @@ gos_result_t gos_queueGetName (
  * @retval  GOS_ERROR     : Invalid queue ID or element number variable is NULL.
  */
 gos_result_t gos_queueGetElementNumber (
-		gos_queueId_t     queueId,
-		gos_queueIndex_t* elementNumber
-		);
+        gos_queueId_t     queueId,
+        gos_queueIndex_t* elementNumber
+        );
 
 /**
  * @brief    Queue dump.
@@ -292,7 +292,7 @@ gos_result_t gos_queueGetElementNumber (
  * @return    -
  */
 void_t gos_queueDump (
-		void_t
-		);
+        void_t
+        );
 
 #endif

@@ -149,14 +149,14 @@ gos_result_t gos_signalInit (void_t)
     // Register signal daemon and create kernel task delete signal.
     if (gos_kernelTaskRegister(&signalDaemonTaskDescriptor, NULL) != GOS_SUCCESS ||
         gos_signalCreate(&kernelTaskDeleteSignal)                 != GOS_SUCCESS ||
-		gos_signalCreate(&kernelDumpReadySignal)                  != GOS_SUCCESS
+        gos_signalCreate(&kernelDumpReadySignal)                  != GOS_SUCCESS
     )
     {
         signalInitResult = GOS_ERROR;
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return signalInitResult;
@@ -189,7 +189,7 @@ gos_result_t gos_signalCreate (gos_signalId_t* pSignal)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
 
@@ -200,10 +200,10 @@ gos_result_t gos_signalCreate (gos_signalId_t* pSignal)
  * Function: gos_signalSubscribe
  */
 gos_result_t gos_signalSubscribe (
-		gos_signalId_t           signalId,
-		gos_signalHandler_t      signalHandler,
-		gos_taskPrivilegeLevel_t signalHandlerPrivileges
-		)
+        gos_signalId_t           signalId,
+        gos_signalHandler_t      signalHandler,
+        gos_taskPrivilegeLevel_t signalHandlerPrivileges
+        )
 {
     /*
      * Local variables.
@@ -227,13 +227,13 @@ gos_result_t gos_signalSubscribe (
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return signalSubscribeResult;
@@ -260,7 +260,7 @@ GOS_INLINE gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSen
             (gos_kernelTaskGetCurrentId(&callerTaskId)               == GOS_SUCCESS &&
             gos_kernelTaskGetData(callerTaskId, &callerTaskDesc)     == GOS_SUCCESS &&
             (callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_SIGNALING) == GOS_PRIV_SIGNALING))
-        	)
+            )
         {
             signalArray[signalId].senderId       = senderId;
             signalArray[signalId].invokeRequired = GOS_TRUE;
@@ -275,7 +275,7 @@ GOS_INLINE gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSen
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return signalInvokeResult;
@@ -313,11 +313,11 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
                     }
                     else
                     {
-                    	// Switch to signal handler privilege.
-                    	gos_kernelTaskSetPrivileges(
-                    			signalDaemonTaskDescriptor.taskId,
-								signalArray[signalIndex].handlerPrvileges[signalHandlerIndex]
-								);
+                        // Switch to signal handler privilege.
+                        gos_kernelTaskSetPrivileges(
+                                signalDaemonTaskDescriptor.taskId,
+                                signalArray[signalIndex].handlerPrvileges[signalHandlerIndex]
+                                );
                         // Call signal handler.
                         signalArray[signalIndex].handlers[signalHandlerIndex](signalArray[signalIndex].senderId);
 
@@ -329,7 +329,7 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
 

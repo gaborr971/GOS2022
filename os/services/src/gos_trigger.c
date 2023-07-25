@@ -114,7 +114,7 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
         GOS_ATOMIC_EXIT
 
@@ -124,17 +124,17 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         if ((timeout != GOS_TRIGGER_ENDLESS_TMO) &&
-        	((gos_kernelGetSysTicks() - sysTickInitial) >= timeout))
+            ((gos_kernelGetSysTicks() - sysTickInitial) >= timeout))
         {
             break;
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
 

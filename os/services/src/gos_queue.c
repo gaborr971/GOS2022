@@ -209,13 +209,13 @@ gos_result_t gos_queueCreate (gos_queueDescriptor_t* pQueueDescriptor)
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return queueCreateResult;
@@ -225,9 +225,9 @@ gos_result_t gos_queueCreate (gos_queueDescriptor_t* pQueueDescriptor)
  * Function: gos_queuePut
  */
 GOS_INLINE gos_result_t gos_queuePut (
-		gos_queueId_t     queueId,     void_t* element,
-		gos_queueLength_t elementSize, u32_t   timeout
-		)
+        gos_queueId_t     queueId,     void_t* element,
+        gos_queueLength_t elementSize, u32_t   timeout
+        )
 {
     /*
      * Local variables.
@@ -244,7 +244,7 @@ GOS_INLINE gos_result_t gos_queuePut (
         element                                          != NULL                 &&
         elementSize                                      <= CFG_QUEUE_MAX_LENGTH &&
         queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID
-		)
+        )
     {
         queueIndex = (gos_queueIndex_t)(queueId - GOS_DEFAULT_QUEUE_ID);
 
@@ -253,10 +253,10 @@ GOS_INLINE gos_result_t gos_queuePut (
             ((readCounters[queueIndex] == 0) && writeCounters[queueIndex] != CFG_QUEUE_MAX_ELEMENTS - 1))
         {
             (void_t) memcpy(
-            		queues[queueIndex].queueElements[writeCounters[queueIndex]].queueElementBytes,
-            		element,
-					elementSize
-					);
+                    queues[queueIndex].queueElements[writeCounters[queueIndex]].queueElementBytes,
+                    element,
+                    elementSize
+                    );
             queues[queueIndex].queueElements[writeCounters[queueIndex]].elementLength = elementSize;
             writeCounters[queueIndex]++;
             queues[queueIndex].actualElementNumber++;
@@ -267,31 +267,31 @@ GOS_INLINE gos_result_t gos_queuePut (
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
 
             // If queue gets full and there is a registered hook function, call it.
             if (queues[queueIndex].actualElementNumber == CFG_QUEUE_MAX_ELEMENTS - 1 &&
                 queueFullHook != NULL)
             {
-            	gos_mutexUnlock(&queueMutex);
+                gos_mutexUnlock(&queueMutex);
                 queueFullHook(queueId);
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
 
             queuePutResult = GOS_SUCCESS;
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     // Unlock mutex.
@@ -304,9 +304,9 @@ GOS_INLINE gos_result_t gos_queuePut (
  * Function: gos_queueGet
  */
 GOS_INLINE gos_result_t gos_queueGet (
-		gos_queueId_t     queueId,    void_t* target,
-		gos_queueLength_t targetSize, u32_t   timeout
-		)
+        gos_queueId_t     queueId,    void_t* target,
+        gos_queueLength_t targetSize, u32_t   timeout
+        )
 {
     /*
      * Local variables.
@@ -318,13 +318,13 @@ GOS_INLINE gos_result_t gos_queueGet (
      * Function code.
      */
     if (gos_mutexLock(&queueMutex, timeout)              == GOS_SUCCESS          &&
-    	target                                           != NULL                 &&
+        target                                           != NULL                 &&
         queueId                                          >= GOS_DEFAULT_QUEUE_ID &&
         (queueId - GOS_DEFAULT_QUEUE_ID)                 <  CFG_QUEUE_MAX_NUMBER &&
         queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID &&
         targetSize                                       >=
-		queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueElements[readCounters[(queueId - GOS_DEFAULT_QUEUE_ID)]].elementLength
-		)
+        queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueElements[readCounters[(queueId - GOS_DEFAULT_QUEUE_ID)]].elementLength
+        )
     {
         queueIndex = (gos_queueIndex_t)(queueId - GOS_DEFAULT_QUEUE_ID);
 
@@ -342,31 +342,31 @@ GOS_INLINE gos_result_t gos_queueGet (
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
 
             // If queue is empty now and empty hook function is registered, call it.
             if (queues[queueIndex].actualElementNumber == 0u &&
                 queueEmptyHook != NULL)
             {
-            	gos_mutexUnlock(&queueMutex);
+                gos_mutexUnlock(&queueMutex);
                 queueEmptyHook(queueId);
             }
             else
             {
-            	// Nothing to do.
+                // Nothing to do.
             }
 
             queueGetResult = GOS_SUCCESS;
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     // Unlock mutex.
@@ -379,9 +379,9 @@ GOS_INLINE gos_result_t gos_queueGet (
  * Function: gos_queuePeek
  */
 GOS_INLINE gos_result_t gos_queuePeek (
-		gos_queueId_t     queueId,    void_t* target,
-		gos_queueLength_t targetSize, u32_t   timeout
-		)
+        gos_queueId_t     queueId,    void_t* target,
+        gos_queueLength_t targetSize, u32_t   timeout
+        )
 {
     /*
      * Local variables.
@@ -393,13 +393,13 @@ GOS_INLINE gos_result_t gos_queuePeek (
      * Function code.
      */
     if (gos_mutexLock(&queueMutex, timeout)              == GOS_SUCCESS          &&
-    	target                                           != NULL                 &&
+        target                                           != NULL                 &&
         queueId                                          >= GOS_DEFAULT_QUEUE_ID &&
         (queueId - GOS_DEFAULT_QUEUE_ID)                 <  CFG_QUEUE_MAX_NUMBER &&
         queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID &&
         targetSize                                       >=
-		queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueElements[readCounters[(queueId - GOS_DEFAULT_QUEUE_ID)]].elementLength
-		)
+        queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueElements[readCounters[(queueId - GOS_DEFAULT_QUEUE_ID)]].elementLength
+        )
     {
         queueIndex = (gos_queueIndex_t)(queueId - GOS_DEFAULT_QUEUE_ID);
 
@@ -411,12 +411,12 @@ GOS_INLINE gos_result_t gos_queuePeek (
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     // Unlock mutex.
@@ -445,7 +445,7 @@ gos_result_t gos_queueRegisterFullHook (gos_queueFullHook fullHook)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return queueRegisterFullHookResult;
@@ -471,7 +471,7 @@ gos_result_t gos_queueRegisterEmptyHook (gos_queueEmptyHook emptyHook)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return queueRegisterEmptyHookResult;
@@ -494,7 +494,7 @@ gos_result_t gos_queueGetName (gos_queueId_t queueId, gos_queueName_t queueName)
     if (queueId                                          >= GOS_DEFAULT_QUEUE_ID &&
         (queueId - GOS_DEFAULT_QUEUE_ID)                 <  CFG_QUEUE_MAX_NUMBER &&
         queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID
-		)
+        )
     {
         queueIndex = (gos_queueIndex_t)(queueId - GOS_DEFAULT_QUEUE_ID);
 
@@ -505,12 +505,12 @@ gos_result_t gos_queueGetName (gos_queueId_t queueId, gos_queueName_t queueName)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return queueGetNameResult;
@@ -533,9 +533,9 @@ gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t*
      */
     if (queueId                                          >= GOS_DEFAULT_QUEUE_ID &&
         (queueId - GOS_DEFAULT_QUEUE_ID)                 <  CFG_QUEUE_MAX_NUMBER &&
-		elementNumber                                    != NULL                 &&
+        elementNumber                                    != NULL                 &&
         queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId != GOS_INVALID_QUEUE_ID
-		)
+        )
     {
         queueIndex = (gos_queueIndex_t)(queueId - GOS_DEFAULT_QUEUE_ID);
 
@@ -544,7 +544,7 @@ gos_result_t gos_queueGetElementNumber (gos_queueId_t queueId, gos_queueIndex_t*
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return queueGetElementNumberResult;
@@ -591,18 +591,18 @@ void_t gos_queueDump (void_t)
         else
         {
 #if CFG_QUEUE_USE_NAME == 1
-        	(void_t) gos_shellDriverTransmitString(
-        			"| 0x%04X | %28s | %13d |\r\n",
-					queues[queueIndex].queueId,
-					queues[queueIndex].queueName,
-					queues[queueIndex].actualElementNumber
-                	);
+            (void_t) gos_shellDriverTransmitString(
+                    "| 0x%04X | %28s | %13d |\r\n",
+                    queues[queueIndex].queueId,
+                    queues[queueIndex].queueName,
+                    queues[queueIndex].actualElementNumber
+                    );
 #else
-        	(void_t) gos_shellDriverTransmitString(
-        			"| 0x%04X | %28d |\r\n",
-					queues[queueIndex].queueId,
-					queues[queueIndex].actualElementNumber
-                	);
+            (void_t) gos_shellDriverTransmitString(
+                    "| 0x%04X | %28d |\r\n",
+                    queues[queueIndex].queueId,
+                    queues[queueIndex].actualElementNumber
+                    );
 #endif
         }
     }

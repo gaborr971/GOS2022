@@ -125,6 +125,11 @@ GOS_STATIC char_t formattedBuffer [CFG_TRACE_MAX_LENGTH];
  */
 GOS_STATIC char_t timeStampBuffer [GOS_TRACE_TIMESTAMP_LENGTH];
 
+/**
+ * Trace mutex.
+ */
+GOS_STATIC gos_mutex_t traceMutex;
+
 /*
  * Function prototypes
  */
@@ -142,8 +147,6 @@ GOS_STATIC gos_taskDescriptor_t traceDaemonTaskDesc =
     .taskPrivilegeLevel  = GOS_TASK_PRIVILEGE_KERNEL
 };
 
-gos_mutex_t traceMutex;
-
 /*
  * Function: gos_traceInit
  */
@@ -160,10 +163,11 @@ gos_result_t gos_traceInit (void_t)
     // Create trace queue and register trace daemon task.
     if (gos_queueCreate(&traceQueue)                       != GOS_SUCCESS ||
         gos_kernelTaskRegister(&traceDaemonTaskDesc, NULL) != GOS_SUCCESS
-		)
+        )
     {
         traceInitResult = GOS_ERROR;
     }
+
     gos_mutexInit(&traceMutex);
 
     return traceInitResult;
@@ -186,17 +190,17 @@ GOS_INLINE gos_result_t gos_traceTrace (bool_t addTimeStamp, char_t* traceMessag
     /*
      * Function code.
      */
-	if ((traceMessage                                          != NULL           ) &&
-		(gos_kernelTaskGetCurrentId(&callerTaskId)             == GOS_SUCCESS    ) &&
-		(gos_kernelTaskGetData(callerTaskId, &callerTaskDesc)  == GOS_SUCCESS    ) &&
-		(((callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE ) ||
-		(gos_kernelIsCallerIsr()                               == GOS_TRUE       )) &&
-		(gos_mutexLock(&traceMutex, GOS_TRACE_MUTEX_TMO_MS)    == GOS_SUCCESS    )
-		)
-	{
+    if ((traceMessage                                          != NULL           ) &&
+        (gos_kernelTaskGetCurrentId(&callerTaskId)             == GOS_SUCCESS    ) &&
+        (gos_kernelTaskGetData(callerTaskId, &callerTaskDesc)  == GOS_SUCCESS    ) &&
+        (((callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE ) ||
+        (gos_kernelIsCallerIsr()                               == GOS_TRUE       )) &&
+        (gos_mutexLock(&traceMutex, GOS_TRACE_MUTEX_TMO_MS)    == GOS_SUCCESS    )
+        )
+    {
         if (addTimeStamp == GOS_TRUE)
         {
-        	traceResult &= gos_timeGet(&sysTime);
+            traceResult &= gos_timeGet(&sysTime);
             (void_t) sprintf(timeStampBuffer, GOS_TRACE_TIMESTAMP_FORMAT,
                     sysTime.years,
                     sysTime.months,
@@ -207,11 +211,11 @@ GOS_INLINE gos_result_t gos_traceTrace (bool_t addTimeStamp, char_t* traceMessag
                     );
             // Add timestamp to queue.
             traceResult &= gos_queuePut(
-            		traceQueue.queueId,
-					(void_t*)timeStampBuffer,
-					strlen(timeStampBuffer) + 1,
-					GOS_TRACE_QUEUE_TMO_MS
-					);
+                    traceQueue.queueId,
+                    (void_t*)timeStampBuffer,
+                    strlen(timeStampBuffer) + 1,
+                    GOS_TRACE_QUEUE_TMO_MS
+                    );
         }
         else
         {
@@ -220,44 +224,44 @@ GOS_INLINE gos_result_t gos_traceTrace (bool_t addTimeStamp, char_t* traceMessag
 
         // Add trace message to queue.
         traceResult &= gos_queuePut(
-        		traceQueue.queueId,
-				(void_t*)traceMessage,
-				strlen(traceMessage) + 1,
-				GOS_TRACE_QUEUE_TMO_MS
-				);
+                traceQueue.queueId,
+                (void_t*)traceMessage,
+                strlen(traceMessage) + 1,
+                GOS_TRACE_QUEUE_TMO_MS
+                );
 
-		if (traceResult != GOS_SUCCESS)
-		{
-			traceResult = GOS_ERROR;
-		}
+        if (traceResult != GOS_SUCCESS)
+        {
+            traceResult = GOS_ERROR;
+        }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
-		GOS_ATOMIC_ENTER
+        GOS_ATOMIC_ENTER
 
-		// Get task privileges.
-		(void_t) gos_kernelTaskGetPrivileges(callerTaskId, &privileges);
+        // Get task privileges.
+        (void_t) gos_kernelTaskGetPrivileges(callerTaskId, &privileges);
 
-		if ((privileges & GOS_PRIV_TASK_MANIPULATE) != GOS_PRIV_TASK_MANIPULATE)
-		{
-			// If task has no privilege to manipulate other tasks, add it temporarily.
-			(void_t) gos_kernelTaskAddPrivilege(callerTaskId, GOS_PRIV_TASK_MANIPULATE);
-	        (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
-	        (void_t) gos_kernelTaskRemovePrivilege(callerTaskId, GOS_PRIV_TASK_MANIPULATE);
-		}
-		else
-		{
-	        (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
-		}
-		GOS_ATOMIC_EXIT
+        if ((privileges & GOS_PRIV_TASK_MANIPULATE) != GOS_PRIV_TASK_MANIPULATE)
+        {
+            // If task has no privilege to manipulate other tasks, add it temporarily.
+            (void_t) gos_kernelTaskAddPrivilege(callerTaskId, GOS_PRIV_TASK_MANIPULATE);
+            (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
+            (void_t) gos_kernelTaskRemovePrivilege(callerTaskId, GOS_PRIV_TASK_MANIPULATE);
+        }
+        else
+        {
+            (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
+        }
+        GOS_ATOMIC_EXIT
 
         gos_mutexUnlock(&traceMutex);
-	}
+    }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return traceResult;
@@ -281,17 +285,17 @@ gos_result_t gos_traceTraceFormatted (bool_t addTimeStamp, GOS_CONST char_t* tra
     /*
      * Function code.
      */
-	if ((traceFormat                                           != NULL           ) &&
-		(gos_kernelTaskGetCurrentId(&callerTaskId)             == GOS_SUCCESS    ) &&
-		(gos_kernelTaskGetData(callerTaskId, &callerTaskDesc)  == GOS_SUCCESS    ) &&
-		(((callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE ) ||
-		(gos_kernelIsCallerIsr()                               == GOS_TRUE       )) &&
-		(gos_mutexLock(&traceMutex, GOS_TRACE_MUTEX_TMO_MS)    == GOS_SUCCESS    )
-		)
-	{
+    if ((traceFormat                                           != NULL           ) &&
+        (gos_kernelTaskGetCurrentId(&callerTaskId)             == GOS_SUCCESS    ) &&
+        (gos_kernelTaskGetData(callerTaskId, &callerTaskDesc)  == GOS_SUCCESS    ) &&
+        (((callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE ) ||
+        (gos_kernelIsCallerIsr()                               == GOS_TRUE       )) &&
+        (gos_mutexLock(&traceMutex, GOS_TRACE_MUTEX_TMO_MS)    == GOS_SUCCESS    )
+        )
+    {
         if (addTimeStamp == GOS_TRUE)
         {
-        	traceResult &= gos_timeGet(&sysTime);
+            traceResult &= gos_timeGet(&sysTime);
             (void_t) sprintf(timeStampBuffer, GOS_TRACE_TIMESTAMP_FORMAT,
                     sysTime.years,
                     sysTime.months,
@@ -302,11 +306,11 @@ gos_result_t gos_traceTraceFormatted (bool_t addTimeStamp, GOS_CONST char_t* tra
                     );
             // Add timestamp to queue.
             traceResult &= gos_queuePut(
-            		traceQueue.queueId,
-					(void_t*)timeStampBuffer,
-					strlen(timeStampBuffer) + 1,
-					GOS_TRACE_QUEUE_TMO_MS
-					);
+                    traceQueue.queueId,
+                    (void_t*)timeStampBuffer,
+                    strlen(timeStampBuffer) + 1,
+                    GOS_TRACE_QUEUE_TMO_MS
+                    );
         }
         else
         {
@@ -318,44 +322,44 @@ gos_result_t gos_traceTraceFormatted (bool_t addTimeStamp, GOS_CONST char_t* tra
         (void_t) vsprintf(formattedBuffer, traceFormat, args);
         va_end(args);
         traceResult &= gos_queuePut(
-        		traceQueue.queueId,
-				(void_t*)formattedBuffer,
-				strlen(formattedBuffer) + 1,
-				GOS_TRACE_QUEUE_TMO_MS
-				);
+                traceQueue.queueId,
+                (void_t*)formattedBuffer,
+                strlen(formattedBuffer) + 1,
+                GOS_TRACE_QUEUE_TMO_MS
+                );
 
-		if (traceResult != GOS_SUCCESS)
-		{
-			traceResult = GOS_ERROR;
-		}
+        if (traceResult != GOS_SUCCESS)
+        {
+            traceResult = GOS_ERROR;
+        }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
-		GOS_ATOMIC_ENTER
+        GOS_ATOMIC_ENTER
 
-		// Get task privileges.
-		(void_t) gos_kernelTaskGetPrivileges(callerTaskId, &privileges);
+        // Get task privileges.
+        (void_t) gos_kernelTaskGetPrivileges(callerTaskId, &privileges);
 
-		if ((privileges & GOS_PRIV_TASK_MANIPULATE) != GOS_PRIV_TASK_MANIPULATE)
-		{
-			// If task has no privilege to manipulate other tasks, add it temporarily.
-			(void_t) gos_kernelTaskAddPrivilege(callerTaskId, GOS_PRIV_TASK_MANIPULATE);
-	        (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
-	        (void_t) gos_kernelTaskRemovePrivilege(callerTaskId, GOS_PRIV_TASK_MANIPULATE);
-		}
-		else
-		{
-	        (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
-		}
-		GOS_ATOMIC_EXIT
+        if ((privileges & GOS_PRIV_TASK_MANIPULATE) != GOS_PRIV_TASK_MANIPULATE)
+        {
+            // If task has no privilege to manipulate other tasks, add it temporarily.
+            (void_t) gos_kernelTaskAddPrivilege(callerTaskId, GOS_PRIV_TASK_MANIPULATE);
+            (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
+            (void_t) gos_kernelTaskRemovePrivilege(callerTaskId, GOS_PRIV_TASK_MANIPULATE);
+        }
+        else
+        {
+            (void_t) gos_kernelTaskResume(traceDaemonTaskDesc.taskId);
+        }
+        GOS_ATOMIC_EXIT
 
         gos_mutexUnlock(&traceMutex);
-	}
+    }
     else
     {
-    	traceResult = GOS_ERROR;
+        traceResult = GOS_ERROR;
     }
 
     return traceResult;
@@ -389,7 +393,7 @@ gos_result_t gos_traceTraceFormattedUnsafe (GOS_CONST char_t* traceFormat, ...)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return traceResult;
@@ -409,22 +413,22 @@ GOS_STATIC void_t gos_traceDaemonTask (void_t)
      */
     for (;;)
     {
-    	if (gos_mutexLock(&traceMutex, GOS_TRACE_MUTEX_TMO_MS) == GOS_SUCCESS)
-    	{
-    		while (gos_queueGet(
-    				traceQueue.queueId,
-					(void_t*)traceLine,
-					sizeof(traceLine),
-					GOS_TRACE_QUEUE_TMO_MS) == GOS_SUCCESS)
-    		{
-    			(void_t) gos_traceDriverTransmitString(traceLine);
-    		}
-    	}
+        if (gos_mutexLock(&traceMutex, GOS_TRACE_MUTEX_TMO_MS) == GOS_SUCCESS)
+        {
+            while (gos_queueGet(
+                    traceQueue.queueId,
+                    (void_t*)traceLine,
+                    sizeof(traceLine),
+                    GOS_TRACE_QUEUE_TMO_MS) == GOS_SUCCESS)
+            {
+                (void_t) gos_traceDriverTransmitString(traceLine);
+            }
+        }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
-    	gos_mutexUnlock(&traceMutex);
+        gos_mutexUnlock(&traceMutex);
         (void_t) gos_kernelTaskSuspend(traceDaemonTaskDesc.taskId);
     }
 }

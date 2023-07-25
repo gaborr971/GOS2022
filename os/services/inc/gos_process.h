@@ -148,8 +148,8 @@ typedef void_t (*gos_procResumeHook_t  )(gos_pid_t            ); //!< Process re
  * @retval  GOS_ERROR   : Daemon/dump task registration or task suspension error.
  */
 gos_result_t gos_procInit (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   Registers a new process for scheduling.
@@ -166,9 +166,9 @@ gos_result_t gos_procInit (
  * @retval  GOS_ERROR      : Process descriptor invalid or NULL or process array is full.
  */
 gos_result_t gos_procRegister (
-		gos_procDescriptor_t* procDescriptor,
-		gos_pid_t*            procId
-		);
+        gos_procDescriptor_t* procDescriptor,
+        gos_pid_t*            procId
+        );
 
 /**
  * @brief   Sends the given process to sleeping state.
@@ -185,8 +185,8 @@ gos_result_t gos_procRegister (
  * @retval  GOS_ERROR   : Process is not in ready state or called from idle process.
  */
 gos_result_t gos_procSleep (
-		gos_procSleepTick_t sleepTicks
-		);
+        gos_procSleepTick_t sleepTicks
+        );
 
 /**
  * @brief   Wakes up a process.
@@ -201,8 +201,8 @@ gos_result_t gos_procSleep (
  * @retval  GOS_ERROR   : Invalid process ID or process is not in sleeping state.
  */
 gos_result_t gos_procWakeup (
-		gos_pid_t procId
-		);
+        gos_pid_t procId
+        );
 
 /**
  * @brief   Sends the given process to suspended state.
@@ -217,8 +217,8 @@ gos_result_t gos_procWakeup (
  * @retval  GOS_ERROR   : Invalid process ID or process is not ready or sleeping.
  */
 gos_result_t gos_procSuspend (
-		gos_pid_t procId
-		);
+        gos_pid_t procId
+        );
 
 /**
  * @brief   Resumes a process.
@@ -233,8 +233,8 @@ gos_result_t gos_procSuspend (
  * @retval  GOS_ERROR   : Invalid process ID or process is not suspended.
  */
 gos_result_t gos_procResume (
-		gos_pid_t procId
-		);
+        gos_pid_t procId
+        );
 
 /**
  * @brief   Gets the process name.
@@ -250,9 +250,9 @@ gos_result_t gos_procResume (
  * @retval  GOS_ERROR   : Invalid process ID or process name variable is NULL.
  */
 gos_result_t gos_procGetName (
-		gos_pid_t      procId,
-		gos_procName_t procName
-		);
+        gos_pid_t      procId,
+        gos_procName_t procName
+        );
 
 /**
  * @brief   Gets the process ID.
@@ -272,9 +272,9 @@ gos_result_t gos_procGetName (
  *          In that case the process ID of the first match will be returned.
  */
 gos_result_t gos_procGetId (
-		gos_procName_t procName,
-		gos_pid_t*     procId
-		);
+        gos_procName_t procName,
+        gos_pid_t*     procId
+        );
 
 /**
  * @brief   Gets the process data.
@@ -289,9 +289,9 @@ gos_result_t gos_procGetId (
  * @retval  GOS_ERROR   : Invalid process ID or NULL pointer to data structure.
  */
 gos_result_t gos_procGetData (
-		gos_pid_t             procId,
-		gos_procDescriptor_t* procData
-		);
+        gos_pid_t             procId,
+        gos_procDescriptor_t* procData
+        );
 
 /**
  * @brief   Registers a swap hook.
@@ -306,8 +306,8 @@ gos_result_t gos_procGetData (
  * @retval  GOS_ERROR        : Hook already exists or given hook function is NULL pointer.
  */
 gos_result_t gos_procRegisterSwapHook (
-		gos_procSwapHook_t swapHookFunction
-		);
+        gos_procSwapHook_t swapHookFunction
+        );
 
 /**
  * @brief   Registers an idle hook.
@@ -322,8 +322,8 @@ gos_result_t gos_procRegisterSwapHook (
  * @retval  GOS_ERROR        : Hook already exists or given hook function is NULL pointer.
  */
 gos_result_t gos_procRegisterIdleHook (
-		gos_procIdleHook_t idleHookFunction
-		);
+        gos_procIdleHook_t idleHookFunction
+        );
 
 /**
  * @brief   Registers a sleep hook.
@@ -338,8 +338,8 @@ gos_result_t gos_procRegisterIdleHook (
  * @retval  GOS_ERROR         : Hook already exists or given hook function is NULL pointer.
  */
 gos_result_t gos_procRegisterSleepHook (
-		gos_procSleepHook_t sleepHookFunction
-		);
+        gos_procSleepHook_t sleepHookFunction
+        );
 
 /**
  * @brief   Registers a wake-up hook.
@@ -354,8 +354,8 @@ gos_result_t gos_procRegisterSleepHook (
  * @retval  GOS_ERROR          : Hook already exists or given hook function is NULL pointer.
  */
 gos_result_t gos_procRegisterWakeupHook (
-		gos_procWakeupHook_t wakeupHookFunction
-		);
+        gos_procWakeupHook_t wakeupHookFunction
+        );
 
 /**
  * @brief   Registers a suspend hook.
@@ -370,8 +370,8 @@ gos_result_t gos_procRegisterWakeupHook (
  * @retval  GOS_ERROR           : Hook already exists or given hook function is NULL pointer.
  */
 gos_result_t gos_procRegisterSuspendHook (
-		gos_procSuspendHook_t suspendHookFunction
-		);
+        gos_procSuspendHook_t suspendHookFunction
+        );
 
 /**
  * @brief   Registers a resume hook.
@@ -386,8 +386,8 @@ gos_result_t gos_procRegisterSuspendHook (
  * @retval  GOS_ERROR          : Hook already exists or given hook function is NULL pointer.
  */
 gos_result_t gos_procRegisterResumeHook (
-		gos_procResumeHook_t resumeHookFunction
-		);
+        gos_procResumeHook_t resumeHookFunction
+        );
 
 /**
  * @brief   Process dump.
@@ -396,8 +396,8 @@ gos_result_t gos_procRegisterResumeHook (
  * @return  -
  */
 void_t gos_procDump (
-		void_t
-		);
+        void_t
+        );
 
 #endif
 #endif

@@ -143,8 +143,8 @@ typedef struct
  * @retval  GOS_ERROR   : Message daemon task registration failed.
  */
 gos_result_t gos_messageInit (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   Receives the selected messages.
@@ -166,10 +166,10 @@ gos_result_t gos_messageInit (
  * @retval  GOS_ERROR      : Reception failed because of invalid parameters or timeout.
  */
 gos_result_t gos_messageRx (
-		gos_messageId_t*     messageIdArray,
-		gos_message_t*       target,
-		gos_messageTimeout_t tmo
-		);
+        gos_messageId_t*     messageIdArray,
+        gos_message_t*       target,
+        gos_messageTimeout_t tmo
+        );
 
 /**
  * @brief   Transmits a message.
@@ -184,7 +184,7 @@ gos_result_t gos_messageRx (
  * @retval  GOS_ERROR   : Invalid message pointer or data or message array is full.
  */
 gos_result_t gos_messageTx (
-		gos_message_t* message
-		);
+        gos_message_t* message
+        );
 
 #endif

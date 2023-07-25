@@ -179,7 +179,7 @@ gos_result_t gos_messageInit (void_t)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return messageInitResult;
@@ -204,13 +204,13 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
      * Function code.
      */
     if (target                                              != NULL &&
-    	messageIdArray                                      != NULL &&
+        messageIdArray                                      != NULL &&
         gos_mutexLock(&messageMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS
-		)
+        )
     {
         if (messageWaiterArray[nextWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID &&
             gos_kernelTaskGetCurrentId(&currentTaskId)       == GOS_SUCCESS
-			)
+            )
         {
             // Add waiter to array.
             messageWaiterArray[nextWaiterIndex].waiterTaskId   = currentTaskId;
@@ -229,7 +229,7 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
                 }
                 else
                 {
-                	messageWaiterArray[nextWaiterIndex].messageIdArray[messageIdIndex] = messageIdArray[messageIdIndex];
+                    messageWaiterArray[nextWaiterIndex].messageIdArray[messageIdIndex] = messageIdArray[messageIdIndex];
                 }
             }
 
@@ -243,7 +243,7 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
 
                 if (messageWaiterArray[nextWaiterIndex].waiterTaskId == GOS_INVALID_TASK_ID)
@@ -252,7 +252,7 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
 
@@ -264,7 +264,7 @@ GOS_INLINE gos_result_t gos_messageRx (gos_messageId_t* messageIdArray, gos_mess
 
             if ((privileges & GOS_PRIV_TASK_MANIPULATE) != GOS_PRIV_TASK_MANIPULATE)
             {
-            	(void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+                (void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
                 (void_t) gos_kernelTaskBlock(currentTaskId, GOS_TASK_MAX_BLOCK_TIME_MS);
                 (void_t) gos_kernelTaskRemovePrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
             }
@@ -328,7 +328,7 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
 
                 if (messageArray[nextMessageIndex].messageId == GOS_MESSAGE_INVALID_ID)
@@ -337,18 +337,18 @@ GOS_INLINE gos_result_t gos_messageTx (gos_message_t* message)
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     // Unlock message mutex.
@@ -411,13 +411,13 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
                             }
                             else
                             {
-                            	// Nothing to do.
+                                // Nothing to do.
                             }
                         }
                     }
 
                     if (messageWaiterArray[messageWaiterIndex].waiterServed == GOS_FALSE &&
-                    	messageWaiterArray[messageWaiterIndex].waitTmo != GOS_MESSAGE_ENDLESS_TMO)
+                        messageWaiterArray[messageWaiterIndex].waitTmo != GOS_MESSAGE_ENDLESS_TMO)
                     {
                         messageWaiterArray[messageWaiterIndex].waitTmoCounter++;
 
@@ -429,17 +429,17 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
                         }
                         else
                         {
-                        	// Nothing to do.
+                            // Nothing to do.
                         }
                     }
                     else
                     {
-                    	// Nothing to do.
+                        // Nothing to do.
                     }
                 }
                 else
                 {
-                	// Nothing to do.
+                    // Nothing to do.
                 }
             }
 
@@ -448,7 +448,7 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         (void_t) gos_kernelTaskSleep(GOS_MESSAGE_DAEMON_POLL_TIME_MS);

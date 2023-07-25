@@ -47,7 +47,7 @@
  */
 #define gos_ported_procReset() (                                                                                 \
 {                                                                                                                \
-	GOS_ASM ("dsb 0xF":::"memory");                                                                              \
+    GOS_ASM ("dsb 0xF":::"memory");                                                                              \
     *(u32_t*)(0xE000ED0CUL) = (u32_t)((0x5FAUL << 16U) | (*(u32_t*)(0xE000ED0CUL) & (7UL << 8U)) | (1UL << 2U)); \
     GOS_ASM ("dsb 0xF":::"memory");                                                                              \
 }                                                                                                                \

@@ -101,7 +101,7 @@ void_t gos_errorHandler (
         u32_t            line,
         const char_t*    errorMessage,
         ...
-		);
+        );
 
 /**
  * @brief   Traces an initialization message.
@@ -109,7 +109,6 @@ void_t gos_errorHandler (
  *
  * @param   initDescription : Message to describe the initialization step.
  * @param   initResult      : Result of initialization.
- *
  * @return  Result of initialization.
  */
 gos_result_t gos_errorTraceInit (

@@ -73,7 +73,7 @@
 #define TRACE_FG_CYAN_START       "\x1B[36m"    //!< Cyan foreground start.
 #define TRACE_FG_WHITE_START      "\x1B[37m"    //!< White foreground start.
 
-#define TRACE_BG_RED_START        "\x1b[41m"	//!< Red background start.
+#define TRACE_BG_RED_START        "\x1b[41m"    //!< Red background start.
 #define TRACE_BG_GREEN_START      "\x1b[42m"    //!< Green background start.
 #define TRACE_BG_YELLOW_START     "\x1b[43m"    //!< Yellow background start.
 #define TRACE_BG_BLUE_START       "\x1b[44m"    //!< Blue background start.
@@ -99,8 +99,8 @@
  * @retval  GOS_ERROR   : Queue creation or task registration error.
  */
 gos_result_t gos_traceInit (
-		void_t
-		);
+        void_t
+        );
 
 /**
  * @brief   Traces a given message.
@@ -117,9 +117,9 @@ gos_result_t gos_traceInit (
  * @remark  This function uses the queue service.
  */
 gos_result_t gos_traceTrace (
-		bool_t  addTimeStamp,
-		char_t* traceMessage
-		);
+        bool_t  addTimeStamp,
+        char_t* traceMessage
+        );
 
 /**
  * @brief   Traces a given formatted message.
@@ -136,10 +136,10 @@ gos_result_t gos_traceTrace (
  * @retval  GOS_ERROR   : Queue put error.
  */
 gos_result_t gos_traceTraceFormatted (
-		bool_t            addTimeStamp,
-		GOS_CONST char_t* traceFormat,
-		...
-		);
+        bool_t            addTimeStamp,
+        GOS_CONST char_t* traceFormat,
+        ...
+        );
 
 /**
  * @brief   Traces a given formatted message.
@@ -155,8 +155,8 @@ gos_result_t gos_traceTraceFormatted (
  * @retval  GOS_ERROR   : Transmit error.
  */
 gos_result_t gos_traceTraceFormattedUnsafe (
-		GOS_CONST char_t* traceFormat,
-		...
-		);
+        GOS_CONST char_t* traceFormat,
+        ...
+        );
 
 #endif
