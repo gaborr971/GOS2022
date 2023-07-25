@@ -14,12 +14,12 @@
 //*************************************************************************************************
 //! @file       gos.h
 //! @author     Ahmed Gazar
-//! @date       2023-06-17
-//! @version    1.5
+//! @date       2023-07-12
+//! @version    1.6
 //!
 //! @brief      GOS header.
 //! @details    This header is a wrapper for the inclusion of all OS services and drivers for
-//!             GOS2022 v0.4
+//!             GOS2022 v0.5
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
@@ -32,7 +32,9 @@
 // 1.3        2022-12-11    Ahmed Gazar     -    Function prototypes removed
 // 1.4        2022-12-15    Ahmed Gazar     *    OS version number changed to v0.3
 // 1.5        2023-06-17    Ahmed Gazar     +    gos_Dump added
-//                                               OS version number changed to v0.4
+//                                          *    OS version number changed to v0.4
+// 1.6        2023-07-12    Ahmed Gazar     +    gos_sysmon.h include added
+//                                          *    OS version number changed to v0.5
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -67,6 +69,7 @@
 #include <gos_queue.h>
 #include <gos_shell.h>
 #include <gos_signal.h>
+#include <gos_sysmon.h>
 #include <gos_time.h>
 #include <gos_trace.h>
 #include <gos_trigger.h>
@@ -82,6 +85,6 @@
  * @return  -
  */
 void_t gos_Dump (
-		void_t
-		);
+        void_t
+        );
 #endif

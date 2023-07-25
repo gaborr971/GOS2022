@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos.c
 //! @author     Ahmed Gazar
-//! @date       2023-06-28
-//! @version    1.8
+//! @date       2023-07-12
+//! @version    1.9
 //!
 //! @brief      GOS source.
 //! @details    For a more detailed description of this service, please refer to @ref gos.h
@@ -39,6 +39,7 @@
 // 1.7        2023-06-17    Ahmed Gazar     +    Dump added
 //                                          +    GOS_SYS_TASK_SLEEP_TIME added
 // 1.8        2023-06-28    Ahmed Gazar     +    Dump ready signal invoking added
+// 1.9        2023-07-12    Ahmed Gazar     +    gos_sysmonInit added to initializers
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -112,18 +113,21 @@ GOS_STATIC bool_t dumpRequired;
  */
 GOS_STATIC gos_initStruct_t initializers [] =
 {
-    {"Queue service initialization"  ,  gos_queueInit},
-    {"Trace service initialization"  ,  gos_traceInit},
-    {"Signal service initialization" ,  gos_signalInit},
+    {"Queue service initialization"   , gos_queueInit},
+    {"Trace service initialization"   , gos_traceInit},
+    {"Signal service initialization"  , gos_signalInit},
 #if CFG_PROC_USE_SERVICE == 1
-    {"Process service initialization",  gos_procInit},
+    {"Process service initialization" , gos_procInit},
 #endif
-    {"Time service initialization"   ,  gos_timeInit},
+    {"Time service initialization"    , gos_timeInit},
 #if CFG_SHELL_USE_SERVICE == 1
-    {"Shell service initialization"  ,  gos_shellInit},
+    {"Shell service initialization"   , gos_shellInit},
 #endif
-    {"Message service initialization",  gos_messageInit},
-    {"GCP service initialization"    ,  gos_gcpInit},
+    {"Message service initialization" , gos_messageInit},
+    {"GCP service initialization"     , gos_gcpInit},
+#if CFG_SYSMON_USE_SERVICE == 1
+    {"Sysmon service initialization"  , gos_sysmonInit},
+#endif
     {"User application initialization", gos_userApplicationInit}
 };
 
@@ -182,7 +186,7 @@ int main (void_t)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     // Start OS.
@@ -203,8 +207,8 @@ int main (void_t)
  */
 void_t gos_Dump (void_t)
 {
-	gos_taskPrivilegeLevel_t privileges = 0u;
-	gos_tid_t currentTaskId = GOS_INVALID_TASK_ID;
+    gos_taskPrivilegeLevel_t privileges = 0u;
+    gos_tid_t currentTaskId = GOS_INVALID_TASK_ID;
 
     dumpRequired = GOS_TRUE;
 
@@ -213,9 +217,9 @@ void_t gos_Dump (void_t)
 
     if ((privileges & GOS_PRIV_TASK_MANIPULATE) != GOS_PRIV_TASK_MANIPULATE)
     {
-    	(void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+        (void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
         gos_kernelTaskWakeup(systemTaskId);
-    	(void_t) gos_kernelTaskRemovePrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+        (void_t) gos_kernelTaskRemovePrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
     }
     else
     {
@@ -275,7 +279,7 @@ GOS_STATIC gos_result_t gos_Start (void_t)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     return startStatus;
@@ -314,7 +318,7 @@ GOS_STATIC void_t gos_systemTask (void_t)
     }
     else
     {
-    	// Nothing to do.
+        // Nothing to do.
     }
 
     // Trace overall result.
@@ -333,7 +337,7 @@ GOS_STATIC void_t gos_systemTask (void_t)
 
         if (dumpRequired == GOS_TRUE)
         {
-        	(void_t) gos_kernelTaskSleep(100);
+            (void_t) gos_kernelTaskSleep(100);
             gos_kernelDump();
 #if CFG_PROC_USE_SERVICE
             gos_procDump();
@@ -346,7 +350,7 @@ GOS_STATIC void_t gos_systemTask (void_t)
         }
         else
         {
-        	// Nothing to do.
+            // Nothing to do.
         }
 
         (void_t) gos_kernelTaskSleep(GOS_SYS_TASK_SLEEP_TIME);
