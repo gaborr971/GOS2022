@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.c
 //! @author     Ahmed Gazar
-//! @date       2023-07-25
-//! @version    1.12
+//! @date       2023-09-08
+//! @version    1.13
 //!
 //! @brief      GOS kernel source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -58,6 +58,7 @@
 //                                          +    Task block timeout introduced
 // 1.12       2023-07-25    Ahmed Gazar     +    gos_kernelTaskGetDataByIndex added
 //                                          *    Ported function calls added
+// 1.13       2023-09-08    Ahmed Gazar     *    Sleep and block tick handling modified
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -259,6 +260,10 @@ GOS_STATIC gos_sysTickHook_t        kernelSysTickHookFunction = NULL;
  */
 GOS_STATIC bool_t                   resetRequired          = GOS_FALSE;
 
+/**
+ * Previous tick value for sleep and block tick calculation.
+ */
+GOS_STATIC u32_t                    previousTick           = 0u;
 
 /*
  * Function prototypes
@@ -550,8 +555,9 @@ GOS_INLINE gos_result_t gos_kernelTaskSleep (gos_taskSleepTick_t sleepTicks)
         {
             if (taskDescriptors[currentTaskIndex].taskState == GOS_TASK_READY)
             {
-                taskDescriptors[currentTaskIndex].taskState      = GOS_TASK_SLEEPING;
-                taskDescriptors[currentTaskIndex].taskSleepTicks = sysTicks + sleepTicks;
+                taskDescriptors[currentTaskIndex].taskState            = GOS_TASK_SLEEPING;
+                taskDescriptors[currentTaskIndex].taskSleepTicks       = sleepTicks;
+                taskDescriptors[currentTaskIndex].taskSleepTickCounter = 0u;
                 taskSleepResult = GOS_SUCCESS;
             }
         }
@@ -735,23 +741,9 @@ GOS_INLINE gos_result_t gos_kernelTaskBlock (gos_tid_t taskId, gos_blockMaxTick_
         {
             if (taskDescriptors[taskIndex].taskState == GOS_TASK_READY)
             {
-                taskDescriptors[taskIndex].taskState = GOS_TASK_BLOCKED;
-
-                if (blockTicks != GOS_TASK_MAX_BLOCK_TIME_MS)
-                {
-                    if ((sysTicks + blockTicks) == GOS_TASK_MAX_BLOCK_TIME_MS)
-                    {
-                        taskDescriptors[taskIndex].taskBlockMaxTicks = GOS_TASK_MAX_BLOCK_TIME_MS + 1;
-                    }
-                    else
-                    {
-                        taskDescriptors[taskIndex].taskBlockMaxTicks = sysTicks + blockTicks;
-                    }
-                }
-                else
-                {
-                    taskDescriptors[taskIndex].taskBlockMaxTicks = GOS_TASK_MAX_BLOCK_TIME_MS;
-                }
+                taskDescriptors[taskIndex].taskState            = GOS_TASK_BLOCKED;
+                taskDescriptors[taskIndex].taskBlockTicks       = blockTicks;
+                taskDescriptors[taskIndex].taskBlockTickCounter = 0u;
 
                 taskBlockResult = GOS_SUCCESS;
 
@@ -1533,15 +1525,10 @@ GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
 
     for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
     {
-        /*taskConvertedTime   = taskDescriptors[taskIndex].taskRunTime.minutes * 60 * 1000 * 1000 +
-                              taskDescriptors[taskIndex].taskRunTime.seconds * 1000 * 1000 +
-                              taskDescriptors[taskIndex].taskRunTime.milliseconds * 1000 +
-                              taskDescriptors[taskIndex].taskRunTime.microseconds;*/
         taskConvertedTime   = taskDescriptors[taskIndex].taskMonitoringRunTime.minutes * 60 * 1000 * 1000 +
                               taskDescriptors[taskIndex].taskMonitoringRunTime.seconds * 1000 * 1000 +
                               taskDescriptors[taskIndex].taskMonitoringRunTime.milliseconds * 1000 +
                               taskDescriptors[taskIndex].taskMonitoringRunTime.microseconds;
-
 
         if (systemConvertedTime > 0)
         {
@@ -1551,12 +1538,6 @@ GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
             if (isResetRequired == GOS_TRUE || monitoringTime.seconds > 0)
             {
                 taskDescriptors[taskIndex].taskCpuUsage = (u16_t)((u32_t)(10000 * taskConvertedTime) / systemConvertedTime);
-                /*taskDescriptors[taskIndex].taskRunTime.days         = 0u;
-                taskDescriptors[taskIndex].taskRunTime.hours        = 0u;
-                taskDescriptors[taskIndex].taskRunTime.minutes      = 0u;
-                taskDescriptors[taskIndex].taskRunTime.seconds      = 0u;
-                taskDescriptors[taskIndex].taskRunTime.milliseconds = 0u;
-                taskDescriptors[taskIndex].taskRunTime.microseconds = 0u;*/
 
                 // Increase runtime microseconds.
                 gos_runTimeAddMicroseconds(
@@ -1945,6 +1926,7 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
     u16_t          nextTask       = 0u;
     u16_t          sysTimerActVal = 0u;
     u16_t          currentRunTime = 0u;
+    u32_t          elapsedTicks   = sysTicks - previousTick;
 
     /*
      * Function code.
@@ -1958,16 +1940,20 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
         {
             // Wake-up sleeping tasks if their sleep time has elapsed.
             if (taskDescriptors[taskIndex].taskState == GOS_TASK_SLEEPING &&
-                sysTicks >= taskDescriptors[taskIndex].taskSleepTicks)
+                (taskDescriptors[taskIndex].taskSleepTickCounter += elapsedTicks) == taskDescriptors[taskIndex].taskSleepTicks)
             {
                 taskDescriptors[taskIndex].taskState = GOS_TASK_READY;
             }
             // Unblock tasks if their timeout time has elapsed.
-            else if (taskDescriptors[taskIndex].taskState == GOS_TASK_BLOCKED &&
-                    taskDescriptors[taskIndex].taskBlockMaxTicks != GOS_TASK_MAX_BLOCK_TIME_MS &&
-                    sysTicks > taskDescriptors[taskIndex].taskBlockMaxTicks)
+            else if ((taskDescriptors[taskIndex].taskState == GOS_TASK_BLOCKED) &&
+                    (taskDescriptors[taskIndex].taskBlockTicks != GOS_TASK_MAX_BLOCK_TIME_MS) &&
+                    ((taskDescriptors[taskIndex].taskBlockTickCounter += elapsedTicks) == taskDescriptors[taskIndex].taskBlockTicks))
             {
                 taskDescriptors[taskIndex].taskState = GOS_TASK_READY;
+            }
+            else
+            {
+                // Nothing to do.
             }
 
             // Choose the highest priority task - that is not the current one, and is ready - to run.
@@ -1980,6 +1966,19 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
             {
                 nextTask = taskIndex;
                 lowestPrio = taskDescriptors[taskIndex].taskPriority;
+            }
+            else
+            {
+                // Nothing to do.
+            }
+
+            if (taskDescriptors[taskIndex].taskFunction == NULL)
+            {
+                break;
+            }
+            else
+            {
+                // Continue.
             }
         }
 
@@ -2000,7 +1999,15 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
             {
                 kernelSwapHookFunction(taskDescriptors[currentTaskIndex].taskId, taskDescriptors[nextTask].taskId);
             }
+            else
+            {
+                // Nothing to do.
+            }
             taskDescriptors[currentTaskIndex].taskCsCounter++;
+        }
+        else
+        {
+            // Nothing to do.
         }
 
         // Calculate current task run-time.
@@ -2008,15 +2015,16 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
         currentRunTime = sysTimerActVal - sysTimerValue;
 
         // Increase monitoring system time and current task runtime.
-        gos_runTimeAddMicroseconds(&monitoringTime, &taskDescriptors[currentTaskIndex].taskMonitoringRunTime, currentRunTime);
+        (void_t) gos_runTimeAddMicroseconds(&monitoringTime, &taskDescriptors[currentTaskIndex].taskMonitoringRunTime, currentRunTime);
 
         // Refresh system timer value.
-        gos_timerDriverSysTimerGet(&sysTimerValue);
+        (void_t) gos_timerDriverSysTimerGet(&sysTimerValue);
 
         // Set current task.
         currentTaskIndex = nextTask;
 
-        gos_kernelCalculateTaskCpuUsages(GOS_FALSE);
+        // Update previous tick value.
+        previousTick = sysTicks;
     }
 }
 
@@ -2045,7 +2053,7 @@ GOS_STATIC void_t gos_kernelIdleTask (void_t)
 
         gos_kernelCalculateTaskCpuUsages(GOS_FALSE);
 
-        gos_kernelTaskYield();
+        (void_t) gos_kernelTaskYield();
     }
 }
 

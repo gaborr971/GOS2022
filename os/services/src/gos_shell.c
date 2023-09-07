@@ -35,6 +35,8 @@
 // 1.6        2023-05-19    Ahmed Gazar     *    Command buffer size modified
 //                                          +    Buffer overflow protection added
 // 1.7        2023-07-12    Ahmed Gazar     +    Command handler privilege-handling added
+// 1.8        2023-09-08    Ahmed Gazar     +    Shell help: list of shell commands added
+//                                          +    Shell CPU and runtime commands added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -412,9 +414,9 @@ GOS_STATIC void_t gos_shellDaemonTask (void_t)
                     {
                         if (shellCommands[index].commandHandler != NULL)
                         {
-                            gos_kernelTaskSetPrivileges(shellDaemonTaskId, shellCommands[index].commandHandlerPrivileges);
+                            (void_t) gos_kernelTaskSetPrivileges(shellDaemonTaskId, shellCommands[index].commandHandlerPrivileges);
                             shellCommands[index].commandHandler(commandParams);
-                            gos_kernelTaskSetPrivileges(shellDaemonTaskId, GOS_TASK_PRIVILEGE_KERNEL);
+                            (void_t) gos_kernelTaskSetPrivileges(shellDaemonTaskId, GOS_TASK_PRIVILEGE_KERNEL);
                         }
                         else
                         {
@@ -474,6 +476,7 @@ GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
     u8_t                    index        = 0u;
     gos_shellCommandIndex_t commandIndex = 0u;
     gos_tid_t               taskId       = GOS_INVALID_TASK_ID;
+    gos_runtime_t           totalRunTime = {0};
 
     /*
      * Function code.
@@ -484,20 +487,35 @@ GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
     }
     else if (strcmp(params, "reset") == 0)
     {
-        (void_t) gos_kernelReset();
+        gos_kernelReset();
     }
     else if (strcmp(params, "help") == 0)
     {
-        gos_shellDriverTransmitString("List of registered shell commands: \r\n");
+        (void_t) gos_shellDriverTransmitString("List of registered shell commands: \r\n");
         for (commandIndex = 0u; commandIndex < CFG_SHELL_MAX_COMMAND_NUMBER; commandIndex++)
         {
             if (strcmp(shellCommands[commandIndex].command, "") == 0)
             {
                 break;
             }
+            else if (strcmp(shellCommands[commandIndex].command, "shell") == 0)
+            {
+                (void_t) gos_shellDriverTransmitString("\t"
+                        "- shell\r\n\t\t"
+                        "- dump\r\n\t\t"
+                        "- reset\r\n\t\t"
+                        "- delete_tid\r\n\t\t"
+                        "- suspend_tid\r\n\t\t"
+                        "- resume_tid\r\n\t\t"
+                        "- delete\r\n\t\t"
+                        "- suspend\r\n\t\t"
+                        "- resume\r\n\t\t"
+                        "- runtime\r\n\t\t"
+                        "- cpu\r\n");
+            }
             else
             {
-                gos_shellDriverTransmitString("\t- %s\r\n", shellCommands[commandIndex].command);
+                (void_t) gos_shellDriverTransmitString("\t- %s\r\n", shellCommands[commandIndex].command);
             }
         }
     }
@@ -602,6 +620,22 @@ GOS_STATIC void_t gos_shellCommandHandler (char_t* params)
             {
                 (void_t) gos_shellDriverTransmitString("Task could not be found.\r\n");
             }
+        }
+        else if (strcmp(params, "cpu") == 0)
+        {
+            (void_t) gos_shellDriverTransmitString("CPU usage: %u.%02u%%\r\n", (gos_kernelGetCpuUsage() / 100), (gos_kernelGetCpuUsage() % 100));
+        }
+        else if (strcmp(params, "runtime") == 0)
+        {
+            (void_t) gos_runTimeGet(&totalRunTime);
+
+            (void_t) gos_shellDriverTransmitString(
+                    "System runtime: %d days %d hours %d minutes %d seconds\r\n",
+                    totalRunTime.days,
+                    totalRunTime.hours,
+                    totalRunTime.minutes,
+                    totalRunTime.seconds
+                    );
         }
         else
         {

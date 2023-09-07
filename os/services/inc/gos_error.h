@@ -75,7 +75,7 @@ typedef enum
  * Function prototypes
  */
 /**
- * @brief   Prints the startup logo on the log output.
+ * @brief   Prints the startup logo on the trace output.
  * @details Prints the GOS logo (similar to the ones used in the file headers) on the log output.
  *
  * @return    -
@@ -84,7 +84,7 @@ void_t gos_printStartupLogo (void_t);
 
 /**
  * @brief   Handles the given error.
- * @details Prints the formatted error message on the log output, and based on the error
+ * @details Prints the formatted error message on the trace output, and based on the error
  *          level, it returns or stays in an infinite loop and disables scheduling.
  *
  * @param   errorLevel   : Level of error (OS/user, warning/fatal).
@@ -105,7 +105,7 @@ void_t gos_errorHandler (
 
 /**
  * @brief   Traces an initialization message.
- * @details Writes the formatted initialization message on the log output.
+ * @details Writes the formatted initialization message on the trace output.
  *
  * @param   initDescription : Message to describe the initialization step.
  * @param   initResult      : Result of initialization.

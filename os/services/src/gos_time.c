@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_time.c
 //! @author     Ahmed Gazar
-//! @date       2023-07-25
-//! @version    1.5
+//! @date       2023-09-08
+//! @version    1.6
 //!
 //! @brief      GOS time service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_time.h
@@ -32,6 +32,9 @@
 // 1.3        2023-01-31    Ahmed Gazar     +    gos_runTimeAddMicroseconds added
 // 1.4        2023-06-30    Ahmed Gazar     +    TIME_SLEEP_TIME_MS added
 // 1.5        2023-07-25    Ahmed Gazar     +    gos_runTimeAddMilliseconds added
+// 1.6        2023-09-08    Ahmed Gazar     *    gos_timeAddSeconds, gos_runTimeAddMicroseconds,
+//                                               and gos_runTimeAddMilliseconds reworked for
+//                                               optimized complexity and execution time
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -314,64 +317,136 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
 /*
  * Function: gos_timeAddSeconds
  */
-gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds)
+gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u16_t seconds)
 {
     /*
      * Local variables.
      */
     gos_result_t timeAddSecondsResult = GOS_ERROR;
-    u32_t        secondCounter        = 0u;
 
     /*
      * Function code.
      */
     if (pTime != NULL)
     {
-        while (secondCounter++ < seconds)
+        // 1. Raw increment.
+        pTime->seconds += seconds;
+
+        // 2. Post-adjustment.
+        if (pTime->seconds >= 60u)
         {
-            pTime->seconds++;
-            if (pTime->seconds >= 60)
+            pTime->minutes += pTime->seconds / 60;
+            pTime->seconds %= 60u;
+
+            if (pTime->minutes >= 60u)
             {
-                pTime->seconds = 0U;
-                pTime->minutes++;
+                pTime->hours += pTime->minutes / 60;
+                pTime->minutes %= 60u;
 
-                // Check minutes.
-                if (pTime->minutes >= 60)
+                if (pTime->hours >= 24u)
                 {
-                    pTime->minutes = 0U;
-                    pTime->hours++;
+                    pTime->days += pTime->hours / 24u;
+                    pTime->hours %= 24u;
 
-                    // Check hours.
-                    if (pTime->hours >= 24)
+                    // Check days.
+                    if (pTime->years % 4 == 0  && pTime->months == GOS_TIME_FEBRUARY && pTime->days >= 30)
                     {
-                        pTime->hours = 0U;
-                        pTime->days++;
+                        pTime->days = 1u;
+                        pTime->months++;
+                    }
+                    else if (pTime->years % 4 == 0 && pTime->months == GOS_TIME_FEBRUARY)
+                    {
+                        // Wait.
+                    }
+                    else if (pTime->days >= (dayLookupTable[pTime->months - 1] + 1))
+                    {
+                        pTime->days = 1u;
+                        pTime->months++;
+                    }
+                    else
+                    {
+                        // Nothing to do.
+                    }
 
-                        // Check days.
-                        if (pTime->years % 4 == 0  && pTime->months == GOS_TIME_FEBRUARY && pTime->days >= 30)
-                        {
-                            pTime->days = 1U;
-                            pTime->months++;
-                        }
-                        else if (pTime->years % 4 == 0 && pTime->months == GOS_TIME_FEBRUARY)
-                        {
-                            // Wait.
-                        }
-                        else if (pTime->days >= (dayLookupTable[pTime->months - 1] + 1))
-                        {
-                            pTime->days = 1U;
-                            pTime->months++;
-                        }
-                        else
-                        {
-                            // Nothing to do.
-                        }
+                    // Check months.
+                    if (pTime->months == 13)
+                    {
+                        pTime->months = 1;
+                        pTime->years++;
+                    }
+                    else
+                    {
+                        // Nothing to do.
+                    }
+                }
+                else
+                {
+                    // Nothing to do.
+                }
+            }
+            else
+            {
+                // Nothing to do.
+            }
+        }
+        else
+        {
+            // Nothing to do.
+        }
 
-                        // Check months.
-                        if (pTime->months == 13)
+        timeAddSecondsResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Nothing to do.
+    }
+
+    return timeAddSecondsResult;
+}
+
+/*
+ * Function: gos_runTimeAddMicroseconds
+ */
+gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t* pRunTime2, u16_t microseconds)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t runtimeAddMicrosecondsResult = GOS_ERROR;
+
+    /*
+     * Function code.
+     */
+    if (pRunTime1 != NULL)
+    {
+        // 1. Raw increment.
+        pRunTime1->microseconds += microseconds;
+
+        // 2. Post-adjustment.
+        if (pRunTime1->microseconds >= 1000u)
+        {
+            pRunTime1->microseconds -= 1000u;
+            pRunTime1->milliseconds += 1u;
+
+            if (pRunTime1->milliseconds >= 1000u)
+            {
+                pRunTime1->milliseconds -= 1000u;
+                pRunTime1->seconds += 1u;
+
+                if (pRunTime1->seconds >= 60u)
+                {
+                    pRunTime1->seconds -= 60u;
+                    pRunTime1->minutes += 1u;
+
+                    if (pRunTime1->minutes >= 60u)
+                    {
+                        pRunTime1->minutes -= 60u;
+                        pRunTime1->hours += 1u;
+
+                        if (pRunTime1->hours >= 24u)
                         {
-                            pTime->months = 1;
-                            pTime->years++;
+                            pRunTime1->hours -= 24u;
+                            pRunTime1->days += 1u;
                         }
                         else
                         {
@@ -393,76 +468,46 @@ gos_result_t gos_timeAddSeconds (gos_time_t* pTime, u32_t seconds)
                 // Nothing to do.
             }
         }
-        timeAddSecondsResult = GOS_SUCCESS;
+        else
+        {
+            // Nothing to do.
+        }
     }
     else
     {
         // Nothing to do.
     }
 
-    return timeAddSecondsResult;
-}
-
-/*
- * Function: gos_runTimeAddMicroseconds
- */
-gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t* pRunTime2, u16_t microseconds)
-{
-    /*
-     * Local variables.
-     */
-    gos_result_t runtimeAddMicrosecondsResult = GOS_ERROR;
-    u16_t        microsecondCounter           = 0u;
-
-    /*
-     * Function code.
-     */
-    if (pRunTime1 != NULL || pRunTime2 != NULL)
+    if (pRunTime2 != NULL)
     {
-        while (microsecondCounter++ < microseconds)
+        // 1. Raw increment.
+        pRunTime2->microseconds += microseconds;
+
+        // 2. Post-adjustment.
+        if (pRunTime2->microseconds >= 1000u)
         {
-            if (pRunTime1 != NULL)
+            pRunTime2->microseconds -= 1000u;
+            pRunTime2->milliseconds += 1u;
+
+            if (pRunTime2->milliseconds >= 1000u)
             {
-                pRunTime1->microseconds++;
+                pRunTime2->milliseconds -= 1000u;
+                pRunTime2->seconds += 1u;
 
-                if (pRunTime1->microseconds >= 1000)
+                if (pRunTime2->seconds >= 60u)
                 {
-                    pRunTime1->microseconds = 0U;
-                    pRunTime1->milliseconds++;
+                    pRunTime2->seconds -= 60u;
+                    pRunTime2->minutes += 1u;
 
-                    // Check milliseconds.
-                    if (pRunTime1->milliseconds >= 1000)
+                    if (pRunTime2->minutes >= 60u)
                     {
-                        pRunTime1->milliseconds = 0U;
-                        pRunTime1->seconds++;
+                        pRunTime2->minutes -= 60u;
+                        pRunTime2->hours += 1u;
 
-                        // Check seconds.
-                        if (pRunTime1->seconds >= 60)
+                        if (pRunTime2->hours >= 24u)
                         {
-                            pRunTime1->seconds = 0U;
-                            pRunTime1->minutes++;
-
-                            // Check minutes.
-                            if (pRunTime1->minutes >= 60)
-                            {
-                                pRunTime1->minutes = 0U;
-                                pRunTime1->hours++;
-
-                                // Check hours.
-                                if (pRunTime1->hours >= 24)
-                                {
-                                    pRunTime1->hours = 0U;
-                                    pRunTime1->days++;
-                                }
-                                else
-                                {
-                                    // Nothing to do.
-                                }
-                            }
-                            else
-                            {
-                                // Nothing to do.
-                            }
+                            pRunTime2->hours -= 24u;
+                            pRunTime2->days += 1u;
                         }
                         else
                         {
@@ -479,72 +524,22 @@ gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t
                     // Nothing to do.
                 }
             }
-
-            if (pRunTime2 != NULL)
+            else
             {
-                pRunTime2->microseconds++;
-
-                if (pRunTime2->microseconds >= 1000)
-                {
-                    pRunTime2->microseconds = 0U;
-                    pRunTime2->milliseconds++;
-
-                    // Check milliseconds.
-                    if (pRunTime2->milliseconds >= 1000)
-                    {
-                        pRunTime2->milliseconds = 0U;
-                        pRunTime2->seconds++;
-
-                        // Check seconds.
-                        if (pRunTime2->seconds >= 60)
-                        {
-                            pRunTime2->seconds = 0U;
-                            pRunTime2->minutes++;
-
-                            // Check minutes.
-                            if (pRunTime2->minutes >= 60)
-                            {
-                                pRunTime2->minutes = 0U;
-                                pRunTime2->hours++;
-
-                                // Check hours.
-                                if (pRunTime2->hours >= 24)
-                                {
-                                    pRunTime2->hours = 0U;
-                                    pRunTime2->days++;
-                                }
-                                else
-                                {
-                                    // Nothing to do.
-                                }
-                            }
-                            else
-                            {
-                                // Nothing to do.
-                            }
-                        }
-                        else
-                        {
-                            // Nothing to do.
-                        }
-                    }
-                    else
-                    {
-                        // Nothing to do.
-                    }
-                }
-                else
-                {
-                    // Nothing to do.
-                }
+                // Nothing to do.
             }
         }
-        runtimeAddMicrosecondsResult = GOS_SUCCESS;
+        else
+        {
+            // Nothing to do.
+        }
     }
     else
     {
         // Nothing to do.
     }
+
+    runtimeAddMicrosecondsResult = GOS_SUCCESS;
 
     return runtimeAddMicrosecondsResult;
 }
@@ -552,49 +547,41 @@ gos_result_t gos_runTimeAddMicroseconds (gos_runtime_t* pRunTime1, gos_runtime_t
 /*
  * Function: gos_runTimeAddMilliseconds
  */
-gos_result_t gos_runTimeAddMilliseconds (gos_runtime_t* pRunTime, u32_t milliseconds)
+gos_result_t gos_runTimeAddMilliseconds (gos_runtime_t* pRunTime, u16_t milliseconds)
 {
     /*
      * Local variables.
      */
     gos_result_t runtimeAddMillisecondsResult = GOS_ERROR;
-    u32_t        millisecondCounter           = 0u;
 
     /*
      * Function code.
      */
     if (pRunTime != NULL)
     {
-        while (millisecondCounter++ < milliseconds)
+        // 1. Raw increment.
+        pRunTime->milliseconds += milliseconds;
+
+        // 2. Post-adjustment.
+        if (pRunTime->milliseconds >= 1000u)
         {
-            pRunTime->milliseconds++;
+            pRunTime->seconds += pRunTime->milliseconds / 1000u;
+            pRunTime->milliseconds %= 1000u;
 
-            if (pRunTime->milliseconds >= 1000u)
+            if (pRunTime->seconds >= 60u)
             {
-                pRunTime->milliseconds = 0u;
+                pRunTime->minutes += pRunTime->seconds / 60u;
+                pRunTime->seconds %= 60u;
 
-                pRunTime->seconds++;
-                if (pRunTime->seconds >= 60)
+                if (pRunTime->minutes >= 60u)
                 {
-                    pRunTime->seconds = 0U;
-                    pRunTime->minutes++;
+                    pRunTime->hours += pRunTime->minutes / 60u;
+                    pRunTime->minutes %= 60u;
 
-                    // Check minutes.
-                    if (pRunTime->minutes >= 60)
+                    if (pRunTime->hours >= 24u)
                     {
-                        pRunTime->minutes = 0U;
-                        pRunTime->hours++;
-
-                        // Check hours.
-                        if (pRunTime->hours >= 24)
-                        {
-                            pRunTime->hours = 0U;
-                            pRunTime->days++;
-                        }
-                        else
-                        {
-                            // Nothing to do.
-                        }
+                        pRunTime->days += pRunTime->hours / 24u;
+                        pRunTime->hours %= 24u;
                     }
                     else
                     {
@@ -606,7 +593,16 @@ gos_result_t gos_runTimeAddMilliseconds (gos_runtime_t* pRunTime, u32_t millisec
                     // Nothing to do.
                 }
             }
+            else
+            {
+                // Nothing to do.
+            }
         }
+        else
+        {
+            // Nothing to do.
+        }
+
         runtimeAddMillisecondsResult = GOS_SUCCESS;
     }
     else

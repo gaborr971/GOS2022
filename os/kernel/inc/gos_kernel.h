@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.h
 //! @author     Ahmed Gazar
-//! @date       2023-07-25
-//! @version    1.15
+//! @date       2023-09-08
+//! @version    1.16
 //!
 //! @brief      GOS kernel header.
 //! @details    The GOS kernel is the core of the GOS system. It contains the basic type
@@ -70,6 +70,8 @@
 //                                          -    GOS_IS_CALLER_ISR() removed
 // 1.15       2023-07-25    Ahmed Gazar     +    taskMonitoringRunTime added to task descriptor
 //                                          +    gos_kernelTaskGetDataByIndex
+// 1.16       2023-09-08    Ahmed Gazar     +    Task sleep tick and block tick counter added to
+//                                               task descriptor structure
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -410,7 +412,9 @@ typedef struct __attribute__((packed))
     gos_tid_t                taskId;                     //!< Task ID (internal).
     gos_tid_t*               taskIdEx;                   //!< Task ID (external).
     gos_taskSleepTick_t      taskSleepTicks;             //!< Task sleep ticks.
-    gos_blockMaxTick_t       taskBlockMaxTicks;          //!< Task block max. ticks.
+    gos_taskSleepTick_t      taskSleepTickCounter;       //!< Task sleep tick counter.
+    gos_blockMaxTick_t       taskBlockTicks;             //!< Task block ticks.
+    gos_blockMaxTick_t       taskBlockTickCounter;       //!< Task block tick counter.
     gos_taskAddress_t        taskPsp;                    //!< Task PSP.
     gos_taskRunCounter_t     taskRunCounter;             //!< Task run counter.
     gos_taskCSCounter_t      taskCsCounter;              //!< Task context-switch counter.

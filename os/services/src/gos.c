@@ -167,7 +167,7 @@ int main (void_t)
     /*
      * Function code.
      */
-     GOS_DISABLE_SCHED
+    GOS_DISABLE_SCHED
 
     // Initialize platform drivers.
     platformDriverInitResult = gos_platformDriverInit();
@@ -327,8 +327,8 @@ GOS_STATIC void_t gos_systemTask (void_t)
     GOS_ENABLE_SCHED
 
     // Set priority to kernel-level.
-    gos_kernelTaskSetOriginalPriority(systemTaskId, CFG_TASK_SYS_PRIO);
-    gos_kernelTaskSetPriority(systemTaskId, CFG_TASK_SYS_PRIO);
+    (void_t) gos_kernelTaskSetOriginalPriority(systemTaskId, CFG_TASK_SYS_PRIO);
+    (void_t) gos_kernelTaskSetPriority(systemTaskId, CFG_TASK_SYS_PRIO);
 
     for (;;)
     {

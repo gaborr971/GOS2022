@@ -157,7 +157,7 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
 
         if (isLocked == GOS_TRUE)
         {
-            gos_kernelTaskBlock(currentId, MUTEX_LOCK_SLEEP_MS);
+            (void_t) gos_kernelTaskBlock(currentId, MUTEX_LOCK_SLEEP_MS);
         }
         else
         {

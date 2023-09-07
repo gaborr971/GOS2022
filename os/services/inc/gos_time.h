@@ -204,7 +204,7 @@ gos_result_t gos_timeCompare (
  */
 gos_result_t gos_timeAddSeconds (
         gos_time_t* pTime,
-        u32_t       seconds
+        u16_t       seconds
         );
 
 /**
@@ -241,7 +241,7 @@ gos_result_t gos_runTimeAddMicroseconds (
  */
 gos_result_t gos_runTimeAddMilliseconds (
         gos_runtime_t* pRunTime,
-        u32_t          milliseconds
+        u16_t          milliseconds
         );
 
 /**

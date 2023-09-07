@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trigger.h
 //! @author     Ahmed Gazar
-//! @date       2023-05-04
-//! @version    2.0
+//! @date       2023-09-07
+//! @version    2.1
 //!
 //! @brief      GOS trigger service header.
 //! @details    Trigger service is a way of synchronizing tasks. A trigger instance works as a
@@ -29,7 +29,9 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2023-01-11    Ahmed Gazar     Initial version created
-// 2.0        2023-05-04    Ahmed Gazar     Service completely reworked
+// 2.0        2023-05-04    Ahmed Gazar     *    Service completely reworked
+// 2.1        2023-09-07    Ahmed Gazar     *    Trigger variables renamed
+//                                          +    Trigger mutex added
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -56,6 +58,7 @@
  * Includes
  */
 #include <gos_kernel.h>
+#include <gos_mutex.h>
 
 /*
  * Macros
@@ -78,13 +81,27 @@
  */
 typedef struct
 {
-    volatile u32_t triggerValueCounter; //!< Trigger value counter.
-    volatile u8_t  numOfWaiters;        //!< Number of waiters.
+    u32_t       valueCounter; //!< Value counter.
+    u32_t       desiredValue; //!< Desired value.
+    gos_tid_t   waiterTaskId; //!< Owner task ID.
+    gos_mutex_t triggerMutex; //!< Tigger mutex.
 }gos_trigger_t;
 
 /*
  * Function prototypes
  */
+/**
+ * @brief   Initializes the trigger instance.
+ * @details Calls the initializer for the trigger mutex.
+ *
+ * @param   pTrigger : Pointer to the trigger to be initialized.
+ *
+ * @return  -
+ */
+void_t gos_triggerInit (
+        gos_trigger_t* pTrigger
+        );
+
 /**
  * @brief   Resets the trigger counter of the given trigger instance.
  * @details Sets the trigger counter of the given trigger instance to zero.

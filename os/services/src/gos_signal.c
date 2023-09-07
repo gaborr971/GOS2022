@@ -80,7 +80,7 @@
 typedef struct
 {
     bool_t                   inUse;                                         //!< Flag to indicate whether the signal is in use.
-    gos_signalHandler_t      handlers [CFG_SIGNAL_MAX_SUBSCRIBERS];         //!< Signal handler array.
+    gos_signalHandler_t      handlers         [CFG_SIGNAL_MAX_SUBSCRIBERS]; //!< Signal handler array.
     gos_taskPrivilegeLevel_t handlerPrvileges [CFG_SIGNAL_MAX_SUBSCRIBERS]; //!< Signal handler privileges array.
     bool_t                   invokeRequired;                                //!< Invoke required flag.
     gos_signalSenderId_t     senderId;                                      //!< Sender ID.
@@ -247,9 +247,9 @@ GOS_INLINE gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSen
     /*
      * Local variables.
      */
-    gos_result_t               signalInvokeResult     = GOS_ERROR;
-    gos_tid_t                  callerTaskId           = GOS_INVALID_TASK_ID;
-    gos_taskDescriptor_t       callerTaskDesc         = {0};
+    gos_result_t         signalInvokeResult = GOS_ERROR;
+    gos_tid_t            callerTaskId       = GOS_INVALID_TASK_ID;
+    gos_taskDescriptor_t callerTaskDesc     = {0};
 
     /*
      * Function code.
@@ -314,7 +314,7 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
                     else
                     {
                         // Switch to signal handler privilege.
-                        gos_kernelTaskSetPrivileges(
+                        (void_t) gos_kernelTaskSetPrivileges(
                                 signalDaemonTaskDescriptor.taskId,
                                 signalArray[signalIndex].handlerPrvileges[signalHandlerIndex]
                                 );
@@ -322,7 +322,7 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
                         signalArray[signalIndex].handlers[signalHandlerIndex](signalArray[signalIndex].senderId);
 
                         // Switch back to kernel privilege.
-                        gos_kernelTaskSetPrivileges(signalDaemonTaskDescriptor.taskId, GOS_TASK_PRIVILEGE_KERNEL);
+                        (void_t) gos_kernelTaskSetPrivileges(signalDaemonTaskDescriptor.taskId, GOS_TASK_PRIVILEGE_KERNEL);
                     }
                 }
                 signalArray[signalIndex].invokeRequired = GOS_FALSE;

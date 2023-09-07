@@ -743,7 +743,6 @@ gos_result_t gos_procRegisterResumeHook (gos_procResumeHook_t resumeHookFunction
 
     return hookRegisterResult;
 }
-#endif
 
 /*
  * Function: gos_procDump
@@ -793,7 +792,6 @@ void_t gos_procDump (void_t)
     (void_t) gos_shellDriverTransmitString(DUMP_SEPARATOR"\n");
 }
 
-#if CFG_PROC_USE_SERVICE == 1
 /**
  * @brief   Checks the process descriptor.
  * @details Returns with error if the process function is NULL, the priority is invalid,
@@ -978,6 +976,15 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
             {
                 // Nothing to do.
             }
+
+            if (procDescriptors[procIndex].procFunction == NULL)
+            {
+                break;
+            }
+            else
+            {
+                // Nothing to do.
+            }
         }
 
         // If there was a process-swap, call the hook function.
@@ -995,6 +1002,10 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
         if ((gos_kernelGetSysTicks() - systemProcLastRunTick) > (4 * PROC_SYS_POLL_TIME_MS))
         {
             nextProc = 1u;
+        }
+        else
+        {
+            // Nothing to do.
         }
 
         currentProcIndex = nextProc;

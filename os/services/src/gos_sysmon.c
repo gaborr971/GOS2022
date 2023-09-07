@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_sysmon.c
 //! @author     Ahmed Gazar
-//! @date       2023-07-12
-//! @version    1.0
+//! @date       2023-09-08
+//! @version    1.1
 //!
 //! @brief      GOS system monitoring service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_sysmon.h
@@ -25,6 +25,8 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2023-07-12    Ahmed Gazar     Initial version created
+// 1.1        2023-09-08    Ahmed Gazar     +    Missing comments added
+//                                          *    Formatting fixed
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -61,40 +63,52 @@
 /*
  * Type definitions
  */
+/**
+ * System monitoring message ID enum.
+ */
 typedef enum
 {
-    GOS_SYSMON_MSG_UNKNOWN_ID                = 0,
-    GOS_SYSMON_MSG_PING_ID                   = 0x1010,
-    GOS_SYSMON_MSG_PING_RESP_ID              = 0x50A0,
-    GOS_SYSMON_MSG_CPU_USAGE_GET_ID          = 0x1023,
-    GOS_SYSMON_MSG_CPU_USAGE_GET_RESP_ID     = 0x5C20,
-    GOS_SYSMON_MSG_TASK_GET_DATA_ID          = 0x1B67,
-    GOS_SYSMON_MSG_TASK_GET_DATA_RESP_ID     = 0x5F8A,
-    GOS_SYSMON_MSG_TASK_GET_VAR_DATA_ID      = 0x12D5,
-    GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_ID = 0x596B
+    GOS_SYSMON_MSG_UNKNOWN_ID                = 0,        //!< Unknown message ID.
+    GOS_SYSMON_MSG_PING_ID                   = 0x1010,   //!< Ping message ID.
+    GOS_SYSMON_MSG_PING_RESP_ID              = 0x50A0,   //!< Ping response message ID.
+    GOS_SYSMON_MSG_CPU_USAGE_GET_ID          = 0x1023,   //!< CPU usage get message ID.
+    GOS_SYSMON_MSG_CPU_USAGE_GET_RESP_ID     = 0x5C20,   //!< CPU usage get response message ID.
+    GOS_SYSMON_MSG_TASK_GET_DATA_ID          = 0x1B67,   //!< Task data get message ID.
+    GOS_SYSMON_MSG_TASK_GET_DATA_RESP_ID     = 0x5F8A,   //!< Task data get response message ID.
+    GOS_SYSMON_MSG_TASK_GET_VAR_DATA_ID      = 0x12D5,   //!< Task variable data get message ID.
+    GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_ID = 0x596B    //!< Task variable data get response message ID.
 }gos_sysmonMessageId_t;
 
+/**
+ * System monitoring message protocol version enum.
+ */
 typedef enum
 {
-    GOS_SYSMON_MSG_UNKNOWN_PV                = 1,
-    GOS_SYSMON_MSG_PING_PV                   = 1,
-    GOS_SYSMON_MSG_PING_ACK_PV               = 1,
-    GOS_SYSMON_MSG_CPU_USAGE_GET_PV          = 1,
-    GOS_SYSMON_MSG_CPU_USAGE_GET_RESP_PV     = 1,
-    GOS_SYSMON_MSG_TASK_GET_DATA_PV          = 1,
-    GOS_SYSMON_MSG_TASK_GET_DATA_RESP_PV     = 1,
-    GOS_SYSMON_MSG_TASK_GET_VAR_DATA_PV      = 1,
-    GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_PV = 1
+    GOS_SYSMON_MSG_UNKNOWN_PV                = 1,        //!< Unknown protocol version.
+    GOS_SYSMON_MSG_PING_PV                   = 1,        //!< Ping message protocol version.
+    GOS_SYSMON_MSG_PING_ACK_PV               = 1,        //!< Ping acknowledge message protocol version.
+    GOS_SYSMON_MSG_CPU_USAGE_GET_PV          = 1,        //!< CPU usage get message protocol version.
+    GOS_SYSMON_MSG_CPU_USAGE_GET_RESP_PV     = 1,        //!< CPU usage get response message protocol version.
+    GOS_SYSMON_MSG_TASK_GET_DATA_PV          = 1,        //!< Task data get message protocol version.
+    GOS_SYSMON_MSG_TASK_GET_DATA_RESP_PV     = 1,        //!< Task data get response message protocol version.
+    GOS_SYSMON_MSG_TASK_GET_VAR_DATA_PV      = 1,        //!< Task variable data get message protocol version.
+    GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_PV = 1         //!< Task variable data get response message protocol version.
 }gos_sysmonMessagePv_t;
 
+/**
+ * Message result enum.
+ */
 typedef enum
 {
-    GOS_SYSMON_MSG_RES_OK          = 40,
-    GOS_SYSMON_MSG_RES_ERROR       = 99,
-    GOS_SYSMON_MSG_INV_PV          = 35,
-    GOS_SYSMON_MSG_INV_PAYLOAD_CRC = 28
+    GOS_SYSMON_MSG_RES_OK          = 40,                 //!< Message result OK.
+    GOS_SYSMON_MSG_RES_ERROR       = 99,                 //!< Message result ERROR.
+    GOS_SYSMON_MSG_INV_PV          = 35,                 //!< Invalid protocol version.
+    GOS_SYSMON_MSG_INV_PAYLOAD_CRC = 28                  //!< Invalid payload CRC.
 }gos_sysmonMessageResult_t;
 
+/**
+ * Task data message structure.
+ */
 typedef struct __attribute__((packed))
 {
     gos_taskState_t          taskState;                  //!< Task state.
@@ -112,6 +126,9 @@ typedef struct __attribute__((packed))
     gos_taskStackSize_t      taskStackMaxUsage;          //!< Task max. stack usage.
 }gos_sysmonTaskData_t;
 
+/**
+ * Task variable data message structure.
+ */
 typedef struct __attribute__((packed))
 {
     gos_taskState_t          taskState;                  //!< Task state.
@@ -123,32 +140,47 @@ typedef struct __attribute__((packed))
     gos_taskStackSize_t      taskStackMaxUsage;          //!< Task max. stack usage.
 }gos_sysmonTaskVariableData;
 
+/**
+ * Ping message structure.
+ */
 typedef struct __attribute__((packed))
 {
-    gos_sysmonMessageResult_t messageResult;
+    gos_sysmonMessageResult_t messageResult;             //!< Message result.
 }gos_sysmonPingMessage_t;
 
+/**
+ * CPU usage message structure.
+ */
 typedef struct __attribute__((packed))
 {
-    gos_sysmonMessageResult_t messageResult;
-    u16_t cpuUsage;
+    gos_sysmonMessageResult_t messageResult;             //!< Message result.
+    u16_t                     cpuUsage;                  //!< CPU usage x100[%].
 }gos_sysmonCpuUsageMessage_t;
 
+/**
+ * Task data get message structure.
+ */
 typedef struct __attribute__((packed))
 {
-    u16_t taskIndex;
+    u16_t taskIndex;                                     //!< Task index.
 }gos_sysmonTaskDataGetMessage_t;
 
+/**
+ * Task data message structure.
+ */
 typedef struct __attribute__((packed))
 {
-    gos_sysmonMessageResult_t messageResult;
-    gos_sysmonTaskData_t taskData;
+    gos_sysmonMessageResult_t messageResult;             //!< Message result.
+    gos_sysmonTaskData_t      taskData;                  //!< Task data.
 }gos_sysmonTaskDataMessage_t;
 
+/**
+ * Task variable data message structure.
+ */
 typedef struct __attribute__((packed))
 {
-    gos_sysmonMessageResult_t messageResult;
-    gos_sysmonTaskVariableData taskVariableData;
+    gos_sysmonMessageResult_t  messageResult;            //!< Message result.
+    gos_sysmonTaskVariableData taskVariableData;         //!< Task variable data.
 }gos_sysmonTaskVariableDataMessage_t;
 
 /*
@@ -187,7 +219,7 @@ gos_result_t gos_sysmonInit (void_t)
      * Function code.
      */
     if (gos_gcpRegisterPhysicalDriver(CFG_SYSMON_GCP_CHANNEL_NUM, gos_sysmonDriverTransmit,
-            gos_sysmonDriverReceive) == GOS_SUCCESS &&
+        gos_sysmonDriverReceive) == GOS_SUCCESS &&
         gos_kernelTaskRegister(&sysmonDaemonTaskDesc, NULL) == GOS_SUCCESS)
     {
         sysmonInitResult = GOS_SUCCESS;
@@ -239,18 +271,18 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                         pingMessage.messageResult = GOS_SYSMON_MSG_INV_PV;
                     }
 
-                    transmitMessageHeader.messageId = GOS_SYSMON_MSG_PING_RESP_ID;
-                    transmitMessageHeader.payloadSize = sizeof(pingMessage);
+                    transmitMessageHeader.messageId       = GOS_SYSMON_MSG_PING_RESP_ID;
+                    transmitMessageHeader.payloadSize     = sizeof(pingMessage);
                     transmitMessageHeader.protocolVersion = GOS_SYSMON_MSG_PING_ACK_PV;
 
-                    gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &pingMessage);
+                    (void_t) gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &pingMessage);
                     break;
                 }
                 case GOS_SYSMON_MSG_CPU_USAGE_GET_ID:
                 {
                     if (receiveMessageHeader.protocolVersion == GOS_SYSMON_MSG_CPU_USAGE_GET_PV)
                     {
-                        cpuMessage.cpuUsage = gos_kernelGetCpuUsage();
+                        cpuMessage.cpuUsage      = gos_kernelGetCpuUsage();
                         cpuMessage.messageResult = GOS_SYSMON_MSG_RES_OK;
                     }
                     else
@@ -258,18 +290,18 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                         cpuMessage.messageResult = GOS_SYSMON_MSG_INV_PV;
                     }
 
-                    transmitMessageHeader.messageId = GOS_SYSMON_MSG_CPU_USAGE_GET_RESP_ID;
-                    transmitMessageHeader.payloadSize = sizeof(cpuMessage);
+                    transmitMessageHeader.messageId       = GOS_SYSMON_MSG_CPU_USAGE_GET_RESP_ID;
+                    transmitMessageHeader.payloadSize     = sizeof(cpuMessage);
                     transmitMessageHeader.protocolVersion = GOS_SYSMON_MSG_CPU_USAGE_GET_RESP_PV;
 
-                    gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &cpuMessage);
+                    (void_t) gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &cpuMessage);
                     break;
                 }
                 case GOS_SYSMON_MSG_TASK_GET_DATA_ID:
                 {
                     if (receiveMessageHeader.protocolVersion == GOS_SYSMON_MSG_TASK_GET_DATA_PV)
                     {
-                        memcpy((void_t*)&taskDataGetMsg, (void_t*)receiveBuffer, receiveMessageHeader.payloadSize);
+                        (void_t) memcpy((void_t*)&taskDataGetMsg, (void_t*)receiveBuffer, receiveMessageHeader.payloadSize);
 
                         // Task get data message OK.
                         if (taskDataGetMsg.taskIndex == 0xFFFF)
@@ -281,23 +313,22 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
 
                                 if (taskDesc.taskId != GOS_INVALID_TASK_ID)
                                 {
-                                    taskDataMsg.taskData.taskId = taskDesc.taskId;
-                                    taskDataMsg.taskData.taskStackSize = taskDesc.taskStackSize;
-                                    taskDataMsg.taskData.taskStackMaxUsage = taskDesc.taskStackMaxUsage;
-                                    taskDataMsg.taskData.taskCpuUsageLimit = taskDesc.taskCpuUsageLimit;
-                                    taskDataMsg.taskData.taskCpuUsage = taskDesc.taskCpuUsage;
-                                    taskDataMsg.taskData.taskCpuUsageMax = taskDesc.taskCpuUsageMax;
+                                    taskDataMsg.taskData.taskId               = taskDesc.taskId;
+                                    taskDataMsg.taskData.taskStackSize        = taskDesc.taskStackSize;
+                                    taskDataMsg.taskData.taskStackMaxUsage    = taskDesc.taskStackMaxUsage;
+                                    taskDataMsg.taskData.taskCpuUsageLimit    = taskDesc.taskCpuUsageLimit;
+                                    taskDataMsg.taskData.taskCpuUsage         = taskDesc.taskCpuUsage;
+                                    taskDataMsg.taskData.taskCpuUsageMax      = taskDesc.taskCpuUsageMax;
                                     taskDataMsg.taskData.taskOriginalPriority = taskDesc.taskOriginalPriority;
-                                    taskDataMsg.taskData.taskPriority = taskDesc.taskPriority;
-                                    taskDataMsg.taskData.taskCsCounter = taskDesc.taskCsCounter;
-                                    taskDataMsg.taskData.taskPrivilegeLevel = taskDesc.taskPrivilegeLevel;
-                                    taskDataMsg.taskData.taskState = taskDesc.taskState;
+                                    taskDataMsg.taskData.taskPriority         = taskDesc.taskPriority;
+                                    taskDataMsg.taskData.taskCsCounter        = taskDesc.taskCsCounter;
+                                    taskDataMsg.taskData.taskPrivilegeLevel   = taskDesc.taskPrivilegeLevel;
+                                    taskDataMsg.taskData.taskState            = taskDesc.taskState;
 
-                                    memcpy((void_t*)&taskDataMsg.taskData.taskRunTime, (void_t*)&taskDesc.taskRunTime, sizeof(taskDesc.taskRunTime));
-                                    strcpy(taskDataMsg.taskData.taskName, taskDesc.taskName);
+                                    (void_t) memcpy((void_t*)&taskDataMsg.taskData.taskRunTime, (void_t*)&taskDesc.taskRunTime, sizeof(taskDesc.taskRunTime));
+                                    (void_t) strcpy(taskDataMsg.taskData.taskName, taskDesc.taskName);
 
                                     taskDataMsg.messageResult = GOS_SYSMON_MSG_RES_OK;
-
                                 }
                                 else
                                 {
@@ -309,7 +340,7 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                                 transmitMessageHeader.payloadSize = sizeof(taskDataMsg);
                                 transmitMessageHeader.protocolVersion = GOS_SYSMON_MSG_TASK_GET_DATA_RESP_PV;
 
-                                gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &taskDataMsg);
+                                (void_t) gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &taskDataMsg);
                             }
 
                             break;
@@ -319,20 +350,20 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                             // Send specific task data.
                             (void_t) gos_kernelTaskGetDataByIndex(taskDataGetMsg.taskIndex, &taskDesc);
 
-                            taskDataMsg.taskData.taskId = taskDesc.taskId;
-                            taskDataMsg.taskData.taskStackSize = taskDesc.taskStackSize;
-                            taskDataMsg.taskData.taskStackMaxUsage = taskDesc.taskStackMaxUsage;
-                            taskDataMsg.taskData.taskCpuUsageLimit = taskDesc.taskCpuUsageLimit;
-                            taskDataMsg.taskData.taskCpuUsage = taskDesc.taskCpuUsage;
-                            taskDataMsg.taskData.taskCpuUsageMax = taskDesc.taskCpuUsageMax;
+                            taskDataMsg.taskData.taskId               = taskDesc.taskId;
+                            taskDataMsg.taskData.taskStackSize        = taskDesc.taskStackSize;
+                            taskDataMsg.taskData.taskStackMaxUsage    = taskDesc.taskStackMaxUsage;
+                            taskDataMsg.taskData.taskCpuUsageLimit    = taskDesc.taskCpuUsageLimit;
+                            taskDataMsg.taskData.taskCpuUsage         = taskDesc.taskCpuUsage;
+                            taskDataMsg.taskData.taskCpuUsageMax      = taskDesc.taskCpuUsageMax;
                             taskDataMsg.taskData.taskOriginalPriority = taskDesc.taskOriginalPriority;
-                            taskDataMsg.taskData.taskPriority = taskDesc.taskPriority;
-                            taskDataMsg.taskData.taskCsCounter = taskDesc.taskCsCounter;
-                            taskDataMsg.taskData.taskPrivilegeLevel = taskDesc.taskPrivilegeLevel;
-                            taskDataMsg.taskData.taskState = taskDesc.taskState;
+                            taskDataMsg.taskData.taskPriority         = taskDesc.taskPriority;
+                            taskDataMsg.taskData.taskCsCounter        = taskDesc.taskCsCounter;
+                            taskDataMsg.taskData.taskPrivilegeLevel   = taskDesc.taskPrivilegeLevel;
+                            taskDataMsg.taskData.taskState            = taskDesc.taskState;
 
-                            memcpy((void_t*)&taskDataMsg.taskData.taskRunTime, (void_t*)&taskDesc.taskRunTime, sizeof(taskDesc.taskRunTime));
-                            strcpy(taskDataMsg.taskData.taskName, taskDesc.taskName);
+                            (void_t) memcpy((void_t*)&taskDataMsg.taskData.taskRunTime, (void_t*)&taskDesc.taskRunTime, sizeof(taskDesc.taskRunTime));
+                            (void_t) strcpy(taskDataMsg.taskData.taskName, taskDesc.taskName);
 
                             taskDataMsg.messageResult = GOS_SYSMON_MSG_RES_OK;
                         }
@@ -341,18 +372,18 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                     {
                         taskDataMsg.messageResult = GOS_SYSMON_MSG_INV_PV;
                     }
-                    transmitMessageHeader.messageId = GOS_SYSMON_MSG_TASK_GET_DATA_RESP_ID;
-                    transmitMessageHeader.payloadSize = sizeof(taskDataMsg);
+                    transmitMessageHeader.messageId       = GOS_SYSMON_MSG_TASK_GET_DATA_RESP_ID;
+                    transmitMessageHeader.payloadSize     = sizeof(taskDataMsg);
                     transmitMessageHeader.protocolVersion = GOS_SYSMON_MSG_TASK_GET_DATA_RESP_PV;
 
-                    gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &taskDataMsg);
+                    (void_t) gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &taskDataMsg);
                     break;
                 }
                 case GOS_SYSMON_MSG_TASK_GET_VAR_DATA_ID:
                 {
                     if (receiveMessageHeader.protocolVersion == GOS_SYSMON_MSG_TASK_GET_VAR_DATA_PV)
                     {
-                        memcpy((void_t*)&taskDataGetMsg, (void_t*)receiveBuffer, receiveMessageHeader.payloadSize);
+                        (void_t) memcpy((void_t*)&taskDataGetMsg, (void_t*)receiveBuffer, receiveMessageHeader.payloadSize);
 
                         // Task get data message OK.
                         if (taskDataGetMsg.taskIndex == 0xFFFF)
@@ -365,13 +396,13 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                                 if (taskDesc.taskId != GOS_INVALID_TASK_ID)
                                 {
                                     taskVariableDataMsg.taskVariableData.taskStackMaxUsage = taskDesc.taskStackMaxUsage;
-                                    taskVariableDataMsg.taskVariableData.taskCpuUsage = taskDesc.taskCpuUsage;
-                                    taskVariableDataMsg.taskVariableData.taskCpuUsageMax = taskDesc.taskCpuUsageMax;
-                                    taskVariableDataMsg.taskVariableData.taskPriority = taskDesc.taskPriority;
-                                    taskVariableDataMsg.taskVariableData.taskCsCounter = taskDesc.taskCsCounter;
-                                    taskVariableDataMsg.taskVariableData.taskState = taskDesc.taskState;
+                                    taskVariableDataMsg.taskVariableData.taskCpuUsage      = taskDesc.taskCpuUsage;
+                                    taskVariableDataMsg.taskVariableData.taskCpuUsageMax   = taskDesc.taskCpuUsageMax;
+                                    taskVariableDataMsg.taskVariableData.taskPriority      = taskDesc.taskPriority;
+                                    taskVariableDataMsg.taskVariableData.taskCsCounter     = taskDesc.taskCsCounter;
+                                    taskVariableDataMsg.taskVariableData.taskState         = taskDesc.taskState;
 
-                                    memcpy((void_t*)&taskVariableDataMsg.taskVariableData.taskRunTime, (void_t*)&taskDesc.taskRunTime, sizeof(taskDesc.taskRunTime));
+                                    (void_t) memcpy((void_t*)&taskVariableDataMsg.taskVariableData.taskRunTime, (void_t*)&taskDesc.taskRunTime, sizeof(taskDesc.taskRunTime));
 
                                     taskVariableDataMsg.messageResult = GOS_SYSMON_MSG_RES_OK;
 
@@ -382,13 +413,12 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                                     taskVariableDataMsg.messageResult = GOS_SYSMON_MSG_RES_ERROR;
                                 }
 
-                                transmitMessageHeader.messageId = GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_ID;
-                                transmitMessageHeader.payloadSize = sizeof(taskVariableDataMsg);
+                                transmitMessageHeader.messageId       = GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_ID;
+                                transmitMessageHeader.payloadSize     = sizeof(taskVariableDataMsg);
                                 transmitMessageHeader.protocolVersion = GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_PV;
 
-                                gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &taskVariableDataMsg);
+                                (void_t) gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &taskVariableDataMsg);
                             }
-
                             break;
                         }
                         else
@@ -397,13 +427,13 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                             (void_t) gos_kernelTaskGetDataByIndex(taskDataGetMsg.taskIndex, &taskDesc);
 
                             taskVariableDataMsg.taskVariableData.taskStackMaxUsage = taskDesc.taskStackMaxUsage;
-                            taskVariableDataMsg.taskVariableData.taskCpuUsage = taskDesc.taskCpuUsage;
-                            taskVariableDataMsg.taskVariableData.taskCpuUsageMax = taskDesc.taskCpuUsageMax;
-                            taskVariableDataMsg.taskVariableData.taskPriority = taskDesc.taskPriority;
-                            taskVariableDataMsg.taskVariableData.taskCsCounter = taskDesc.taskCsCounter;
-                            taskVariableDataMsg.taskVariableData.taskState = taskDesc.taskState;
+                            taskVariableDataMsg.taskVariableData.taskCpuUsage      = taskDesc.taskCpuUsage;
+                            taskVariableDataMsg.taskVariableData.taskCpuUsageMax   = taskDesc.taskCpuUsageMax;
+                            taskVariableDataMsg.taskVariableData.taskPriority      = taskDesc.taskPriority;
+                            taskVariableDataMsg.taskVariableData.taskCsCounter     = taskDesc.taskCsCounter;
+                            taskVariableDataMsg.taskVariableData.taskState         = taskDesc.taskState;
 
-                            memcpy((void_t*)&taskVariableDataMsg.taskVariableData.taskRunTime, (void_t*)&taskDesc.taskRunTime, sizeof(taskDesc.taskRunTime));
+                            (void_t) memcpy((void_t*)&taskVariableDataMsg.taskVariableData.taskRunTime, (void_t*)&taskDesc.taskRunTime, sizeof(taskDesc.taskRunTime));
 
                             taskVariableDataMsg.messageResult = GOS_SYSMON_MSG_RES_OK;
                         }
@@ -412,11 +442,11 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                     {
                         taskVariableDataMsg.messageResult = GOS_SYSMON_MSG_INV_PV;
                     }
-                    transmitMessageHeader.messageId = GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_ID;
-                    transmitMessageHeader.payloadSize = sizeof(taskVariableDataMsg);
+                    transmitMessageHeader.messageId       = GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_ID;
+                    transmitMessageHeader.payloadSize     = sizeof(taskVariableDataMsg);
                     transmitMessageHeader.protocolVersion = GOS_SYSMON_MSG_TASK_GET_VAR_DATA_RESP_PV;
 
-                    gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &taskVariableDataMsg);
+                    (void_t) gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, &taskVariableDataMsg);
                     break;
                 }
                 default:
@@ -425,7 +455,7 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
                     transmitMessageHeader.payloadSize = 0u;
                     transmitMessageHeader.protocolVersion = GOS_SYSMON_MSG_UNKNOWN_PV;
 
-                    gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, NULL);
+                    (void_t) gos_gcpTransmitMessage(CFG_SYSMON_GCP_CHANNEL_NUM, &transmitMessageHeader, NULL);
                     break;
                 }
             }

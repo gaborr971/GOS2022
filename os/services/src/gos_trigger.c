@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trigger.c
 //! @author     Ahmed Gazar
-//! @date       2023-07-12
-//! @version    2.3
+//! @date       2023-09-07
+//! @version    2.4
 //!
 //! @brief      GOS trigger service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_trigger.h
@@ -31,6 +31,8 @@
 // 2.3        2023-07-12    Ahmed Gazar     *    TRIGGER_WAIT_SLEEP_MS renamed to
 //                                               TRIGGER_WAIT_BLOCK_MS
 //                                          *    Waiting changed from sleep to block
+// 2.4        2023-09-07    Ahmed Gazar     *    Timeout handling rework
+//                                          -    TRIGGER_WAIT_BLOCK_MS removed
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -57,12 +59,24 @@
 #include <gos_trigger.h>
 
 /*
- * Macros
+ * Function: gos_mutexInit
  */
-/**
- * Block time in [ms] when trigger timeout is set to endless.
- */
-#define TRIGGER_WAIT_BLOCK_MS ( 10u )
+void_t gos_triggerInit (gos_trigger_t* pTrigger)
+{
+    /*
+     * Function code.
+     */
+
+    // Null pointer check.
+    if (pTrigger != NULL)
+    {
+        gos_mutexInit(&pTrigger->triggerMutex);
+    }
+    else
+    {
+        // Nothing to do.
+    }
+}
 
 /*
  * Function: gos_triggerReset
@@ -72,11 +86,20 @@ GOS_INLINE void_t gos_triggerReset (gos_trigger_t* pTrigger)
     /*
      * Function code.
      */
-    GOS_ATOMIC_ENTER
 
-    pTrigger->triggerValueCounter = 0u;
+    // Null pointer check.
+    if (pTrigger != NULL &&
+        gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
+    {
+        pTrigger->valueCounter = 0u;
+        pTrigger->desiredValue = 0u;
 
-    GOS_ATOMIC_EXIT
+        gos_mutexUnlock(&pTrigger->triggerMutex);
+    }
+    else
+    {
+        // Nothing to do.
+    }
 }
 
 /*
@@ -87,55 +110,49 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
     /*
      * Local variables.
      */
-    bool_t       isTriggerReached  = GOS_FALSE;
     gos_result_t triggerWaitResult = GOS_ERROR;
-    u32_t        sysTickInitial    = 0u;
     gos_tid_t    currentId         = GOS_INVALID_TASK_ID;
 
     /*
      * Function code.
      */
-    sysTickInitial = gos_kernelGetSysTicks();
 
-    GOS_ATOMIC_ENTER
-    pTrigger->numOfWaiters++;
-    (void_t) gos_kernelTaskGetCurrentId(&currentId);
-    GOS_ATOMIC_EXIT
-
-    while (isTriggerReached == GOS_FALSE)
+    // Null pointer check.
+    if (pTrigger != NULL)
     {
-        // Check if the trigger value is reached
-        GOS_ATOMIC_ENTER
-        if (pTrigger->triggerValueCounter >= value)
+        // Set owner task ID.
+        (void_t) gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO);
+        (void_t) gos_kernelTaskGetCurrentId(&currentId);
+        pTrigger->waiterTaskId = currentId;
+        pTrigger->desiredValue = value;
+        gos_mutexUnlock(&pTrigger->triggerMutex);
+
+        // Block until timeout in case trigger value has not been reached yet.
+        if (pTrigger->valueCounter < pTrigger->desiredValue)
         {
-            isTriggerReached = GOS_TRUE;
+            (void_t) gos_kernelTaskBlock(currentId, timeout);
+        }
+        else
+        {
+            // Trigger value already reached.
+        }
+
+        // Check if the trigger value is reached after unblock.
+        (void_t) gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO);
+        if (pTrigger->valueCounter >= pTrigger->desiredValue)
+        {
             triggerWaitResult = GOS_SUCCESS;
-            pTrigger->numOfWaiters--;
+            pTrigger->waiterTaskId = GOS_INVALID_TASK_ID;
         }
         else
         {
             // Nothing to do.
         }
-        GOS_ATOMIC_EXIT
-
-        if (isTriggerReached == GOS_FALSE)
-        {
-            (void_t) gos_kernelTaskBlock(currentId, TRIGGER_WAIT_BLOCK_MS);
-        }
-        else
-        {
-            // Nothing to do.
-        }
-
-        if ((timeout != GOS_TRIGGER_ENDLESS_TMO) &&
-            ((gos_kernelGetSysTicks() - sysTickInitial) >= timeout))
-        {
-            break;
-        }
-        else
-        {
-            // Nothing to do.
-        }
+        gos_mutexUnlock(&pTrigger->triggerMutex);
+    }
+    else
+    {
+        // Nothing to do.
     }
 
     return triggerWaitResult;
@@ -147,11 +164,50 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
 GOS_INLINE void_t gos_triggerIncrement (gos_trigger_t* pTrigger)
 {
     /*
+     * Local variables.
+     */
+    gos_taskPrivilegeLevel_t originalPrivileges = GOS_TASK_PRIVILEGE_USER;
+    gos_tid_t                currentTaskId      = GOS_INVALID_TASK_ID;
+
+    /*
      * Function code.
      */
-    GOS_ATOMIC_ENTER
 
-    pTrigger->triggerValueCounter++;
+    // Null pointer check.
+    if (pTrigger != NULL)
+    {
+        (void_t) gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO);
 
-    GOS_ATOMIC_EXIT
+        // Increment trigger value.
+        pTrigger->valueCounter++;
+
+        // If desired value is reached, unblock waiter.
+        if (pTrigger->valueCounter >= pTrigger->desiredValue)
+        {
+            // Get current task ID.
+            (void_t) gos_kernelTaskGetCurrentId(&currentTaskId);
+
+            // Get original privileges.
+            (void_t) gos_kernelTaskGetPrivileges(currentTaskId, &originalPrivileges);
+
+            // Add necessary privilege.
+            (void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+
+            // Unblock owner task.
+            (void_t) gos_kernelTaskUnblock(pTrigger->waiterTaskId);
+
+            // Restore privileges.
+            (void_t) gos_kernelTaskSetPrivileges(currentTaskId, originalPrivileges);
+        }
+        else
+        {
+            // Trigger value not reached yet.
+        }
+
+        gos_mutexUnlock(&pTrigger->triggerMutex);
+    }
+    else
+    {
+        // Nothing to do.
+    }
 }

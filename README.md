@@ -26,5 +26,5 @@ complex applications yet.
 Update: The code is being tested with a fairly complex application now and is
 proving well.
 
-Last updated: 2023-07-25
+Last updated: 2023-09-08
 (c) 2023, Ahmed Gazar

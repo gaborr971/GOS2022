@@ -129,7 +129,7 @@
 /**
  * Log daemon task stack size.
  */
-#define CFG_TASK_TRACE_DAEMON_STACK     ( 0x300 )
+#define CFG_TASK_TRACE_DAEMON_STACK     ( 0x400 )
 /**
  * Sysmon daemon task stack size.
  */
@@ -157,7 +157,7 @@
 /**
  * Shell daemon task priority.
  */
-#define CFG_TASK_SHELL_DAEMON_PRIO      ( 199 )
+#define CFG_TASK_SHELL_DAEMON_PRIO      ( 192 )
 /**
  * Time daemon task priority.
  */
@@ -169,7 +169,7 @@
 /**
  * Sysmon daemon task priority.
  */
-#define CFG_TASK_SYSMON_DAEMON_PRIO     40//( 192 )
+#define CFG_TASK_SYSMON_DAEMON_PRIO     ( 40 )
 
 /*
  * Process service parameters.
@@ -177,7 +177,7 @@
 /**
  * Process service use flag.
  */
-#define CFG_PROC_USE_SERVICE            ( 1 )
+#define CFG_PROC_USE_SERVICE            ( 0 )
 /**
  * Maximum process priority levels.
  */
@@ -310,10 +310,10 @@
 /**
  * Flag to indicate if the system should reset on error.
  */
-#define CFG_RESET_ON_ERROR              ( 0 )
+#define CFG_RESET_ON_ERROR              ( 1 )
 /**
  * Delay time before system reset.
  */
-#define CFG_RESET_ON_ERROR_DELAY_MS     ( 0 )
+#define CFG_RESET_ON_ERROR_DELAY_MS     ( 3000 )
 
 #endif

@@ -62,12 +62,12 @@
 /**
  * Mutex endless timeout.
  */
-#define GOS_MUTEX_ENDLESS_TMO ( 0xFFFFFFFF )
+#define GOS_MUTEX_ENDLESS_TMO ( 0xFFFFFFFFu )
 
 /**
  * Mutex no timeout.
  */
-#define GOS_MUTEX_NO_TMO      ( 0x00000000 )
+#define GOS_MUTEX_NO_TMO      ( 0x00000000u )
 
 /*
  * Type definitions
@@ -86,8 +86,8 @@ typedef enum
  */
 typedef struct
 {
-    volatile gos_mutexState_t mutexState; //!< Mutex state.
-    volatile gos_tid_t        owner;      //!< Mutex owner task.
+    gos_mutexState_t mutexState; //!< Mutex state.
+    gos_tid_t        owner;      //!< Mutex owner task.
 }gos_mutex_t;
 
 /*
