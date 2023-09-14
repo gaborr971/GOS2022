@@ -1,2 +1,0 @@
-../Core/driver/src/driver.c:66:14:driver_init	16	static
-../Core/driver/src/driver.c:103:19:sysTickHook	8	static

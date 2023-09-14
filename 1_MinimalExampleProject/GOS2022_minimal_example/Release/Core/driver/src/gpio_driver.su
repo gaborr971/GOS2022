@@ -1,7 +1,0 @@
-../Core/driver/src/gpio_driver.c:73:14:gpio_driverInit	32	static
-../Core/driver/src/gpio_driver.c:108:14:gpio_driverInitPin	32	static
-../Core/driver/src/gpio_driver.c:140:14:gpio_driverRegisterItCallback	8	static
-../Core/driver/src/gpio_driver.c:179:14:gpio_driverWritePin	8	static
-../Core/driver/src/gpio_driver.c:205:14:gpio_driverTogglePin	8	static
-../Core/driver/src/gpio_driver.c:231:8:EXTI15_10_IRQHandler	8	static
-../Core/driver/src/gpio_driver.c:244:8:HAL_GPIO_EXTI_Callback	8	static

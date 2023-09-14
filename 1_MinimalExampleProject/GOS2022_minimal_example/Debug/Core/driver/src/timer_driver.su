@@ -1,2 +1,0 @@
-../Core/driver/src/timer_driver.c:65:14:timer_driverSystimerInit	16	static
-../Core/driver/src/timer_driver.c:96:14:timer_driverSystimerGet	24	static

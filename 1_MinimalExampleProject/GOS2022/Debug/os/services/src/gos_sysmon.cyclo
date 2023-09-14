@@ -1,2 +1,0 @@
-../os/services/src/gos_sysmon.c:211:14:gos_sysmonInit	3
-../os/services/src/gos_sysmon.c:237:19:gos_sysmonDaemonTask	18

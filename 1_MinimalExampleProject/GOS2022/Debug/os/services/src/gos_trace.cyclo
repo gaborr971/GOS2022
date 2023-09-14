@@ -1,5 +1,0 @@
-../os/services/src/gos_trace.c:154:14:gos_traceInit	4
-../os/services/src/gos_trace.c:179:25:gos_traceTrace	11
-../os/services/src/gos_trace.c:273:14:gos_traceTraceFormatted	11
-../os/services/src/gos_trace.c:371:14:gos_traceTraceFormattedUnsafe	3
-../os/services/src/gos_trace.c:409:19:gos_traceDaemonTask	3

@@ -1,4 +1,0 @@
-../os/services/src/gos_trigger.c:65:14:gos_triggerInit	2
-../os/services/src/gos_trigger.c:92:19:gos_triggerReset	3
-../os/services/src/gos_trigger.c:116:25:gos_triggerWait	4
-../os/services/src/gos_trigger.c:172:19:gos_triggerIncrement	3
