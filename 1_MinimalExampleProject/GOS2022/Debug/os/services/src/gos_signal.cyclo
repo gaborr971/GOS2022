@@ -1,0 +1,5 @@
+../os/services/src/gos_signal.c:132:14:gos_signalInit	5
+../os/services/src/gos_signal.c:168:14:gos_signalCreate	4
+../os/services/src/gos_signal.c:202:14:gos_signalSubscribe	6
+../os/services/src/gos_signal.c:245:25:gos_signalInvoke	7
+../os/services/src/gos_signal.c:290:19:gos_signalDaemonTask	5

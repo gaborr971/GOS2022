@@ -1,0 +1,6 @@
+../os/services/src/gos_gcp.c:141:14:gos_gcpInit	16	static
+../os/services/src/gos_gcp.c:169:14:gos_gcpRegisterPhysicalDriver	32	static
+../os/services/src/gos_gcp.c:198:25:gos_gcpTransmitMessage	32	static
+../os/services/src/gos_gcp.c:246:25:gos_gcpReceiveMessage	40	static
+../os/services/src/gos_gcp.c:301:25:gos_gcpTransmitFrames	48	static
+../os/services/src/gos_gcp.c:383:25:gos_gcpReceiveFrames	48	static

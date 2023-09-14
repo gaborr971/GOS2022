@@ -1,0 +1,4 @@
+../os/services/src/gos_message.c:148:14:gos_messageInit	5
+../os/services/src/gos_message.c:191:25:gos_messageRx	13
+../os/services/src/gos_message.c:302:25:gos_messageTx	9
+../os/services/src/gos_message.c:369:19:gos_messageDaemonTask	10

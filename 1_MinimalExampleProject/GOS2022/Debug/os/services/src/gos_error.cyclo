@@ -1,0 +1,4 @@
+../os/services/src/gos_error.c:106:8:gos_printStartupLogo	1
+../os/services/src/gos_error.c:127:8:gos_errorHandler	10
+../os/services/src/gos_error.c:235:14:gos_errorTraceInit	1
+../os/services/src/gos_error.c:259:20:gos_traceResultToString	3

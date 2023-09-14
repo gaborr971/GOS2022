@@ -1,0 +1,12 @@
+../Core/driver/src/uart_driver.c:106:14:uart_driverInit	24	static
+../Core/driver/src/uart_driver.c:173:14:uart_driverTraceTransmitStringUnsafe	24	static
+../Core/driver/src/uart_driver.c:198:25:uart_driverTraceTransmitString	24	static
+../Core/driver/src/uart_driver.c:230:25:uart_driverShellReceiveChar	24	static
+../Core/driver/src/uart_driver.c:261:25:uart_driverShellTransmitString	24	static
+../Core/driver/src/uart_driver.c:292:8:HAL_UART_MspInit	16	static
+../Core/driver/src/uart_driver.c:357:8:USART2_IRQHandler	8	static
+../Core/driver/src/uart_driver.c:372:8:UART5_IRQHandler	8	static
+../Core/driver/src/uart_driver.c:387:8:HAL_UART_TxCpltCallback	16	static
+../Core/driver/src/uart_driver.c:409:8:HAL_UART_RxCpltCallback	16	static
+../Core/driver/src/uart_driver.c:427:8:DMA1_Stream0_IRQHandler	8	static
+../Core/driver/src/uart_driver.c:438:8:DMA1_Stream6_IRQHandler	8	static

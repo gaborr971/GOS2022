@@ -1,0 +1,9 @@
+../Core/Src/app.c:482:19:APP_LowPriorityTask	2
+../Core/Src/app.c:448:19:APP_MediumPriorityTask	1
+../Core/Src/app.c:399:19:APP_HighPriorityTask	2
+../Core/Src/app.c:306:19:APP_LifeSignTask	2
+../Core/Src/app.c:342:19:APP_ButtonTask	2
+../Core/Src/app.c:286:19:APP_LedTask	1
+../Core/Src/app.c:382:19:APP_ButtonPressedInterruptCallback	2
+../Core/Src/app.c:189:14:gos_platformDriverInit	1
+../Core/Src/app.c:245:14:gos_userApplicationInit	1
