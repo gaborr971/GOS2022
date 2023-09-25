@@ -9,61 +9,42 @@
 //                          #########         #########         #########
 //                            #####             #####             #####
 //
-//                                      (c) Ahmed Gazar, 2022
+//                                      (c) Ahmed Gazar, 2023
 //
 //*************************************************************************************************
-//! @file       gos_config.h
+//! @file       gos_sysmon_app_config.h
 //! @author     Ahmed Gazar
-//! @date       2023-07-12
-//! @version    1.7
+//! @date       2023-09-25
+//! @version    1.0
 //!
-//! @brief      GOS configuration header.
+//! @brief      GOS system monitoring application configuration header.
 //! @details    This header contains the kernel and service configurations of the operating system.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2022-10-24    Ahmed Gazar     Initial version created.
-// 1.1        2022-12-03    Ahmed Gazar     +    CFG_SCHED_COOPERATIVE added
-// 1.2        2022-12-11    Ahmed Gazar     +    CFG_USE_PRIO_INHERITANCE added
-//                                          -    CFG_LOG_PORT removed
-// 1.3        2022-12-15    Ahmed Gazar     -    Max priority level and idle task priority macros
-//                                               moved to gos_kernel.h
-// 1.4        2023-04-05    Ahmed Gazar     -    Lock- and trigger-related macros removed
-//                                          +    CFG_SYSTEM_TASK_STACK_SIZE added
-// 1.5        2023-05-19    Ahmed Gazar     +    CFG_SHELL_COMMAND_BUFFER_SIZE added
-// 1.6        2023-07-12    Ahmed Gazar     +    CFG_RESET_ON_ERROR and CFG_RESET_ON_ERROR_DELAY_MS
-//                                               added
-//                                          +    ARM_CORTEX_M4 and CFG_TARGET_CPU added
-// 1.7        2023-07-25    Ahmed Gazar     +    CFG_TASK_SYSMON_DAEMON_STACK added
-//                                          +    CFG_TASK_SYSMON_DAEMON_PRIO added
-//                                          +    CFG_SYSMON_USE_SERVICE added
-// 1.8        2023-09-25    Ahmed Gazar     *    Application specific configuration inclusion added
+// 1.0        2023-09-25    Ahmed Gazar     Initial version created.
 //*************************************************************************************************
-#ifndef GOS_CONFIG_H
-#define GOS_CONFIG_H
+#ifndef GOS_SYSMON_APP_CONFIG_H
+#define GOS_SYSMON_APP_CONFIG_H
 /*
  * Includes
  */
 #include <stdint.h>
 
 /*
- * Use one of the following includes to specify the
- * required configuration.
- */
-/* #include <gos_minimal_example_app_config.h> */
-/* #include <gos_sysmon_app_config.h> */
-
-/*
  * Macros
  */
-#ifndef GOS_CFG_OVERCONFIG
+/**
+ * Overconfiguration macro.
+ */
+#define GOS_CFG_OVERCONFIG
 /*
  * Supported target CPU list.
  */
 /**
- * ARM Cortex-M4
+ * ARM Cortex-M4.
  */
 #define ARM_CORTEX_M4                   ( 1 )
 
@@ -326,5 +307,4 @@
  */
 #define CFG_RESET_ON_ERROR_DELAY_MS     ( 3000 )
 
-#endif
 #endif
