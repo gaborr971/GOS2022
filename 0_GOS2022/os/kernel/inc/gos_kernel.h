@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.h
 //! @author     Ahmed Gazar
-//! @date       2023-09-08
-//! @version    1.16
+//! @date       2023-09-25
+//! @version    1.17
 //!
 //! @brief      GOS kernel header.
 //! @details    The GOS kernel is the core of the GOS system. It contains the basic type
@@ -72,6 +72,7 @@
 //                                          +    gos_kernelTaskGetDataByIndex
 // 1.16       2023-09-08    Ahmed Gazar     +    Task sleep tick and block tick counter added to
 //                                               task descriptor structure
+// 1.17       2023-09-25    Ahmed Gazar     *    Task stack variables modified
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -380,7 +381,7 @@ typedef u16_t   gos_millisecond_t; //!< Millisecond type.
 typedef u8_t    gos_second_t;      //!< Second type.
 typedef u8_t    gos_minute_t;      //!< Minute type.
 typedef u8_t    gos_hour_t;        //!< Hour type.
-typedef u8_t    gos_day_t;         //!< Day type.
+typedef u16_t   gos_day_t;         //!< Day type.
 typedef u8_t    gos_month_t;       //!< Month type.
 typedef u16_t   gos_year_t;        //!< Year type.
 
@@ -418,7 +419,8 @@ typedef struct __attribute__((packed))
     gos_taskAddress_t        taskPsp;                    //!< Task PSP.
     gos_taskRunCounter_t     taskRunCounter;             //!< Task run counter.
     gos_taskCSCounter_t      taskCsCounter;              //!< Task context-switch counter.
-    gos_taskStackSize_t      taskStackSize;              //!< Task stack size.
+    gos_taskStackSize_t      taskStackSize;              //!< Task allocated stack size.
+    gos_taskStackSize_t      taskStackSizeMaxUsage;      //!< Task max. stack size usage.
     gos_runtime_t            taskRunTime;                //!< Task run-time.
     gos_runtime_t            taskMonitoringRunTime;      //!< Task monitoring run-time (not erased).
     u16_t                    taskCpuUsageLimit;          //!< Task CPU usage limit in [% x 100].
@@ -426,8 +428,6 @@ typedef struct __attribute__((packed))
     u16_t                    taskCpuUsage;               //!< Task processor usage in [% x 100].
     u16_t                    taskCpuMonitoringUsage;     //!< Task CPU usage monitoring value in [% x 100].
     u32_t                    taskStackOverflowThreshold; //!< Task stack overflow threshold address.
-    gos_taskStackSize_t      taskStackMaxUsage;          //!< Task max. stack usage.
-    u16_t                    taskStackUsage;             //!< Task stack usage in [% x 100].
 }gos_taskDescriptor_t;
 
 /*
