@@ -13,10 +13,11 @@ You can find the latest source code of the OS here: https://github.com/gaborr971
 
 # Example projects
 Minimal example project: https://github.com/gaborr971/GOS2022/tree/main/1_MinimalExampleProject
+System monitoring example project: https://github.com/gaborr971/GOS2022/tree/main/2_SystemMonitoringExampleProject
 
 # Remarks
 Contribution to this project is encouraged and appriciated.
 If you have any questions or ideas, feel free to contact me: gaborr97@gmail.com
 
-Last updated: 2023-09-14
+Last updated: 2023-09-25
 (c) 2023, Ahmed Gazar
