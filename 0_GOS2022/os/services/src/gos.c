@@ -178,7 +178,7 @@ int main (void_t)
     // Pre-initialize.
     (void_t) gos_errorTraceInit("Platform driver initialization", platformDriverInitResult);
 
-    // Initialize teche kernel and register initializer task.
+    // Initialize the kernel and register initializer task.
     if (gos_errorTraceInit("Kernel initialization", gos_kernelInit()) == GOS_SUCCESS &&
         gos_kernelTaskRegister(&systemTaskDesc, &systemTaskId) == GOS_SUCCESS)
     {
