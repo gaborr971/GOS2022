@@ -8,7 +8,7 @@ The project is created for an STM32F446RE board with the following properties:
 -	Besides the system tasks, the following user tasks are defined:
 	-	LED blink task (to toggle the user LED on the board every 1 second, and increment the lifesign trigger)
 	-	Life sign task (to receive the trigger from the LED task with a timeout, or reset the system in case the trigger was not received within 3 seconds)
-	-	Button task (to receive a trigger from the user button interrupt callback and call a kernel dump)
+	-	Button task (to receive a trigger from the user button interrupt callback and print a message on the trace output)
 	-	Low, medium, and high priority tasks for mutex demonstration
 
 Observe the code and the behavior of the system. The system monitoring service is enabled and runs in the background when a request is
