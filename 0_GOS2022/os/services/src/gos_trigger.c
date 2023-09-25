@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trigger.c
 //! @author     Ahmed Gazar
-//! @date       2023-09-14
-//! @version    2.5
+//! @date       2023-09-25
+//! @version    2.6
 //!
 //! @brief      GOS trigger service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_trigger.h
@@ -34,6 +34,7 @@
 // 2.4        2023-09-07    Ahmed Gazar     *    Timeout handling rework
 //                                          -    TRIGGER_WAIT_BLOCK_MS removed
 // 2.5        2023-09-14    Ahmed Gazar     +    Mutex initialization result processing added
+// 2.6        2023-09-25    Ahmed Gazar     +    ISR handling added
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -184,7 +185,15 @@ GOS_INLINE void_t gos_triggerIncrement (gos_trigger_t* pTrigger)
     // Null pointer check.
     if (pTrigger != NULL)
     {
-        (void_t) gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO);
+    	if (gos_kernelIsCallerIsr() == GOS_TRUE)
+    	{
+            // Increment trigger value.
+            pTrigger->valueCounter++;
+    	}
+    	else
+    	{
+    		(void_t) gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO);
+    	}
 
         // Increment trigger value.
         pTrigger->valueCounter++;
@@ -212,7 +221,14 @@ GOS_INLINE void_t gos_triggerIncrement (gos_trigger_t* pTrigger)
             // Trigger value not reached yet.
         }
 
-        gos_mutexUnlock(&pTrigger->triggerMutex);
+        if (gos_kernelIsCallerIsr() == GOS_FALSE)
+        {
+        	gos_mutexUnlock(&pTrigger->triggerMutex);
+        }
+        else
+        {
+        	// Nothing to do.
+        }
     }
     else
     {
