@@ -12,8 +12,8 @@ tested and implemented on STM32F446RE.
 You can find the latest source code of the OS here: https://github.com/gaborr971/GOS2022/tree/main/0_GOS2022
 
 # Example projects
-Minimal example project: https://github.com/gaborr971/GOS2022/tree/main/1_MinimalExampleProject
-System monitoring example project: https://github.com/gaborr971/GOS2022/tree/main/2_SystemMonitoringExampleProject
+1. Minimal example project: https://github.com/gaborr971/GOS2022/tree/main/1_MinimalExampleProject
+2. System monitoring example project: https://github.com/gaborr971/GOS2022/tree/main/2_SystemMonitoringExampleProject
 
 # Remarks
 Contribution to this project is encouraged and appriciated.
