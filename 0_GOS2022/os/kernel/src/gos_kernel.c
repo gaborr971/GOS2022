@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.c
 //! @author     Ahmed Gazar
-//! @date       2023-09-08
-//! @version    1.13
+//! @date       2023-09-25
+//! @version    1.14
 //!
 //! @brief      GOS kernel source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -59,6 +59,7 @@
 // 1.12       2023-07-25    Ahmed Gazar     +    gos_kernelTaskGetDataByIndex added
 //                                          *    Ported function calls added
 // 1.13       2023-09-08    Ahmed Gazar     *    Sleep and block tick handling modified
+// 1.14       2023-09-25    Ahmed Gazar     +    Missing else branches added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -1563,12 +1564,20 @@ GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
                 {
                     taskDescriptors[taskIndex].taskCpuUsageMax = taskDescriptors[taskIndex].taskCpuUsage;
                 }
+                else
+                {
+                    // Max. value has not been reached.
+                }
             }
         }
 
         if (taskDescriptors[taskIndex].taskFunction == NULL)
         {
             break;
+        }
+        else
+        {
+            // Continue.
         }
     }
 
@@ -1679,9 +1688,9 @@ void_t gos_kernelDump (void_t)
                 taskDescriptors[taskIndex].taskId,
                 taskDescriptors[taskIndex].taskName,
                 taskDescriptors[taskIndex].taskStackSize,
-                taskDescriptors[taskIndex].taskStackMaxUsage,
-                ((10000 * taskDescriptors[taskIndex].taskStackMaxUsage) / taskDescriptors[taskIndex].taskStackSize) / 100,
-                ((10000 * taskDescriptors[taskIndex].taskStackMaxUsage) / taskDescriptors[taskIndex].taskStackSize) % 100
+                taskDescriptors[taskIndex].taskStackSizeMaxUsage,
+                ((10000 * taskDescriptors[taskIndex].taskStackSizeMaxUsage) / taskDescriptors[taskIndex].taskStackSize) / 100,
+                ((10000 * taskDescriptors[taskIndex].taskStackSizeMaxUsage) / taskDescriptors[taskIndex].taskStackSize) % 100
                 );
     }
     (void_t) gos_shellDriverTransmitString(STACK_STATS_SEPARATOR"\n");
@@ -1808,12 +1817,20 @@ GOS_STATIC void_t gos_kernelCheckTaskStack (void_t)
                 sp,
                 (taskDescriptors[currentTaskIndex].taskStackOverflowThreshold - sp));
     }
+    else
+    {
+        // No stack overflow was detected.
+    }
 
     if (sp != 0 &&
         (taskDescriptors[currentTaskIndex].taskStackOverflowThreshold - 64 + taskDescriptors[currentTaskIndex].taskStackSize - sp) >
-        taskDescriptors[currentTaskIndex].taskStackMaxUsage)
+        taskDescriptors[currentTaskIndex].taskStackSizeMaxUsage)
     {
-        taskDescriptors[currentTaskIndex].taskStackMaxUsage = (taskDescriptors[currentTaskIndex].taskStackOverflowThreshold - 64 + 32 + taskDescriptors[currentTaskIndex].taskStackSize - sp);
+        taskDescriptors[currentTaskIndex].taskStackSizeMaxUsage = (taskDescriptors[currentTaskIndex].taskStackOverflowThreshold - 64 + 32 + taskDescriptors[currentTaskIndex].taskStackSize - sp);
+    }
+    else
+    {
+        // Max. value has not been exceeded.
     }
 }
 
@@ -1940,7 +1957,7 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
         {
             // Wake-up sleeping tasks if their sleep time has elapsed.
             if (taskDescriptors[taskIndex].taskState == GOS_TASK_SLEEPING &&
-                (taskDescriptors[taskIndex].taskSleepTickCounter += elapsedTicks) == taskDescriptors[taskIndex].taskSleepTicks)
+                (taskDescriptors[taskIndex].taskSleepTickCounter += elapsedTicks) >= taskDescriptors[taskIndex].taskSleepTicks)
             {
                 taskDescriptors[taskIndex].taskState = GOS_TASK_READY;
             }
@@ -2142,7 +2159,7 @@ void_t NMI_Handler (void_t)
  * Function: HardFault_Handler
  */
 void_t HardFault_Handler (void_t)
-{
+ {
     /*
      * Function code.
      */
