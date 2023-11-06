@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.h
 //! @author     Ahmed Gazar
-//! @date       2023-09-25
-//! @version    1.17
+//! @date       2023-11-01
+//! @version    1.19
 //!
 //! @brief      GOS kernel header.
 //! @details    The GOS kernel is the core of the GOS system. It contains the basic type
@@ -73,6 +73,14 @@
 // 1.16       2023-09-08    Ahmed Gazar     +    Task sleep tick and block tick counter added to
 //                                               task descriptor structure
 // 1.17       2023-09-25    Ahmed Gazar     *    Task stack variables modified
+// 1.18       2023-10-20    Ahmed Gazar     +    gos_privilegedHook_t added
+//                                          +    gos_kernelRegisterPrivilegedHook added
+//                                          +    gos_kernelPrivilegedModeSetRequired added
+// 1.19       2023-11-01    Ahmed Gazar     *    RAM_START, RAM_SIZE, GLOBAL_STACK, and MAIN_STACK
+//                                               macros moved here
+//                                          *    GOS_ATOMIC_ENTER and GOS_ATOMIC_EXIT modified
+//                                          *    gos_kernel_privilege_t moved here
+//                                          -    taskIdEx removed from task descriptor structure
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -110,6 +118,26 @@
  */
 #define NULL                           ( (void *) 0 )
 #endif
+
+/**
+ * RAM start address.
+ */
+#define RAM_START                      ( 0x20000000u )
+
+/**
+ * RAM size (128kB).
+ */
+#define RAM_SIZE                       ( 128 * 1024 )
+
+/**
+ * Main stack.
+ */
+#define MAIN_STACK                     ( RAM_START + RAM_SIZE )
+
+/**
+ * Global stack.
+ */
+#define GLOBAL_STACK                   ( 0x1200 )
 
 /**
  * Default task ID.
@@ -217,19 +245,38 @@
 /**
  * Atomic operation enter - disable interrupts and kernel rescheduling.
  */
-#define GOS_ATOMIC_ENTER               {                                        \
-                                           GOS_DISABLE_SCHED                    \
-                                           GOS_ASM( " cpsid i " ::: "memory" ); \
-                                           GOS_ASM( "dsb" ::: "memory" );       \
-                                           GOS_ASM( "isb" );                    \
+#define GOS_ATOMIC_ENTER               {                                                                 \
+                                           GOS_EXTERN u8_t atomicCntr;                                   \
+                                           GOS_EXTERN u32_t primask;                                     \
+                                           if (atomicCntr == 0)                                          \
+                                           {                                                             \
+                                               GOS_ASM( " cpsid i " ::: "memory" );                      \
+                                               GOS_ASM( "MRS %0, primask" : "=r" (primask) :: "memory"); \
+                                               GOS_ASM( "dsb" ::: "memory" );                            \
+                                               GOS_ASM( "isb" );                                         \
+                                           }                                                             \
+                                           atomicCntr++;                                                 \
+                                           GOS_DISABLE_SCHED                                             \
                                        }
 
 /**
  * Atomic operation exit - enable interrupts kernel rescheduling.
  */
-#define GOS_ATOMIC_EXIT                {                                        \
-                                           GOS_ASM( " cpsie i " ::: "memory" ); \
-                                           GOS_ENABLE_SCHED                     \
+#define GOS_ATOMIC_EXIT                {                                                                  \
+                                           GOS_EXTERN u8_t atomicCntr;                                    \
+                                           GOS_EXTERN u32_t primask;                                      \
+                                           if (atomicCntr > 0)                                            \
+                                           {                                                              \
+                                               atomicCntr--;                                              \
+                                           }                                                              \
+                                           if (atomicCntr == 0)                                           \
+                                           {                                                              \
+                                               GOS_ASM ( "MSR primask, %0" : : "r" (primask) : "memory"); \
+                                               GOS_ASM( " cpsie i " ::: "memory" );                       \
+                                               GOS_ASM( "dsb" ::: "memory" );                             \
+                                               GOS_ASM( "isb" );                                          \
+                                           }                                                              \
+                                           GOS_ENABLE_SCHED                                               \
                                        }
 
 /**
@@ -351,6 +398,7 @@ typedef void_t    (*gos_taskBlockHook_t   )(gos_tid_t             );    //!< Tas
 typedef void_t    (*gos_taskUnblockHook_t )(gos_tid_t             );    //!< Task unblock hook type.
 typedef void_t    (*gos_taskDeleteHook_t  )(gos_tid_t             );    //!< Task delete hook type.
 typedef void_t    (*gos_sysTickHook_t     )(void_t                );    //!< System tick hook type.
+typedef void_t    (*gos_privilegedHook_t  )(void_t                );    //!< Privileged mode hook type.
 
 /**
  *  Result type enumerator.
@@ -375,6 +423,15 @@ typedef enum
     GOS_TRUE  = 0b00110110,   //!< True value.
     GOS_FALSE = 0b01001001    //!< False value.
 }gos_boolValue_t;
+
+/**
+ * Kernel privilege levels.
+ */
+typedef enum
+{
+    GOS_PRIVILEGED      = 0b10110,   //!< GOS_PRIVILEDGED
+    GOS_UNPRIVILEGED    = 0b01001    //!< GOS_UNPRIVILEDGED
+}gos_kernel_privilege_t;
 
 typedef u16_t   gos_microsecond_t; //!< Microsecond type.
 typedef u16_t   gos_millisecond_t; //!< Millisecond type.
@@ -411,7 +468,6 @@ typedef struct __attribute__((packed))
     gos_taskPrivilegeLevel_t taskPrivilegeLevel;         //!< Task privilege level.
     gos_taskName_t           taskName;                   //!< Task name.
     gos_tid_t                taskId;                     //!< Task ID (internal).
-    gos_tid_t*               taskIdEx;                   //!< Task ID (external).
     gos_taskSleepTick_t      taskSleepTicks;             //!< Task sleep ticks.
     gos_taskSleepTick_t      taskSleepTickCounter;       //!< Task sleep tick counter.
     gos_blockMaxTick_t       taskBlockTicks;             //!< Task block ticks.
@@ -463,7 +519,7 @@ gos_result_t gos_kernelInit (
  *                            or stack size is not 4-byte-aligned) in one of the array elements or
  *                            task array is full.
  */
-gos_result_t gos_kernelTaskRegisterTasks (
+gos_result_t gos_taskRegisterTasks (
         gos_taskDescriptor_t* taskDescriptors,
         u16_t                 arraySize
         );
@@ -484,7 +540,7 @@ gos_result_t gos_kernelTaskRegisterTasks (
  *                           invalid priority level, invalid stack size, idle task registration,
  *                           or stack size is not 4-byte-aligned) or task array is full.
  */
-gos_result_t gos_kernelTaskRegister (
+gos_result_t gos_taskRegister (
         gos_taskDescriptor_t* taskDescriptor,
         gos_tid_t*            taskId
         );
@@ -502,7 +558,7 @@ gos_result_t gos_kernelTaskRegister (
  * @retval  GOS_SUCCESS : Task successfully sent to sleeping state.
  * @retval  GOS_ERROR   : Function called from idle task or task state is not ready.
  */
-gos_result_t gos_kernelTaskSleep (
+gos_result_t gos_taskSleep (
         gos_taskSleepTick_t sleepTicks
         );
 
@@ -518,7 +574,7 @@ gos_result_t gos_kernelTaskSleep (
  * @retval  GOS_SUCCESS : Task waken up successfully.
  * @retval  GOS_ERROR   : Task ID is invalid, or task is not sleeping.
  */
-gos_result_t gos_kernelTaskWakeup (
+gos_result_t gos_taskWakeup (
         gos_tid_t taskId
         );
 
@@ -535,7 +591,7 @@ gos_result_t gos_kernelTaskWakeup (
  * @retval  GOS_SUCESS : Task suspended successfully.
  * @retval  GOS_ERROR  : Task ID is invalid, or task state is not ready or sleeping.
  */
-gos_result_t gos_kernelTaskSuspend (
+gos_result_t gos_taskSuspend (
         gos_tid_t taskId
         );
 
@@ -551,7 +607,7 @@ gos_result_t gos_kernelTaskSuspend (
  * @retval  GOS_SUCESS : Task resumed successfully.
  * @retval  GOS_ERROR  : Task ID is invalid, or task is not suspended.
  */
-gos_result_t gos_kernelTaskResume (
+gos_result_t gos_taskResume (
         gos_tid_t taskId
         );
 
@@ -568,7 +624,7 @@ gos_result_t gos_kernelTaskResume (
  * @retval  GOS_SUCESS : Task blocked successfully.
  * @retval  GOS_ERROR  : Task ID is invalid, or task state is not ready.
  */
-gos_result_t gos_kernelTaskBlock (
+gos_result_t gos_taskBlock (
         gos_tid_t          taskId,
         gos_blockMaxTick_t blockTicks
         );
@@ -585,7 +641,7 @@ gos_result_t gos_kernelTaskBlock (
  * @retval  GOS_SUCESS : Task unblocked successfully.
  * @retval  GOS_ERROR  : Task ID is invalid, or task is not blocked.
  */
-gos_result_t gos_kernelTaskUnblock (
+gos_result_t gos_taskUnblock (
         gos_tid_t taskId
         );
 
@@ -601,7 +657,7 @@ gos_result_t gos_kernelTaskUnblock (
  * @retval  GOS_SUCCESS : Task deleted successfully.
  * @retval  GOS_ERROR   : Task is already a zombie.
  */
-gos_result_t gos_kernelTaskDelete (
+gos_result_t gos_taskDelete (
         gos_tid_t taskId
         );
 
@@ -617,7 +673,7 @@ gos_result_t gos_kernelTaskDelete (
  * @retval  GOS_SUCCESS  : Current priority changed successfully.
  * @retval  GOS_ERROR    : Invalid task ID or priority.
  */
-gos_result_t gos_kernelTaskSetPriority (
+gos_result_t gos_taskSetPriority (
         gos_tid_t      taskId,
         gos_taskPrio_t taskPriority
         );
@@ -634,7 +690,7 @@ gos_result_t gos_kernelTaskSetPriority (
  * @retval  GOS_SUCCESS  : Original priority changed successfully.
  * @retval  GOS_ERROR    : Invalid task ID or priority.
  */
-gos_result_t gos_kernelTaskSetOriginalPriority (
+gos_result_t gos_taskSetOriginalPriority (
         gos_tid_t      taskId,
         gos_taskPrio_t taskPriority
         );
@@ -651,7 +707,7 @@ gos_result_t gos_kernelTaskSetOriginalPriority (
  * @retval  GOS_SUCCESS  : Current priority getting successfully.
  * @retval  GOS_ERROR    : Invalid task ID or priority variable is NULL.
  */
-gos_result_t gos_kernelTaskGetPriority (
+gos_result_t gos_taskGetPriority (
         gos_tid_t       taskId,
         gos_taskPrio_t* taskPriority
         );
@@ -668,7 +724,7 @@ gos_result_t gos_kernelTaskGetPriority (
  * @retval  GOS_SUCCESS  : Original priority getting successfully.
  * @retval  GOS_ERROR    : Invalid task ID or priority variable is NULL.
  */
-gos_result_t gos_kernelTaskGetOriginalPriority (
+gos_result_t gos_taskGetOriginalPriority (
         gos_tid_t       taskId,
         gos_taskPrio_t* taskPriority
         );
@@ -687,7 +743,7 @@ gos_result_t gos_kernelTaskGetOriginalPriority (
  * @retval  GOS_ERROR   : Invalid task ID or caller does not have the privilege to modify task
  *                        privileges.
  */
-gos_result_t gos_kernelTaskAddPrivilege (
+gos_result_t gos_taskAddPrivilege (
         gos_tid_t                taskId,
         gos_taskPrivilegeLevel_t privileges
         );
@@ -706,7 +762,7 @@ gos_result_t gos_kernelTaskAddPrivilege (
  * @retval  GOS_ERROR   : Invalid task ID or caller does not have the privilege to modify task
  *                        privileges.
  */
-gos_result_t gos_kernelTaskRemovePrivilege (
+gos_result_t gos_taskRemovePrivilege (
         gos_tid_t                taskId,
         gos_taskPrivilegeLevel_t privileges
         );
@@ -725,7 +781,7 @@ gos_result_t gos_kernelTaskRemovePrivilege (
  * @retval  GOS_ERROR   : Invalid task ID or caller does not have the privilege to modify task
  *                        privileges.
  */
-gos_result_t gos_kernelTaskSetPrivileges (
+gos_result_t gos_taskSetPrivileges (
         gos_tid_t                taskId,
         gos_taskPrivilegeLevel_t privileges
         );
@@ -742,7 +798,7 @@ gos_result_t gos_kernelTaskSetPrivileges (
  * @retval  GOS_SUCCESS : Privileges get successful.
  * @retval  GOS_ERROR   : Invalid task ID or privilege variable is NULL pointer.
  */
-gos_result_t gos_kernelTaskGetPrivileges (
+gos_result_t gos_taskGetPrivileges (
         gos_tid_t                 taskId,
         gos_taskPrivilegeLevel_t* privileges
         );
@@ -759,7 +815,7 @@ gos_result_t gos_kernelTaskGetPrivileges (
  * @retval  GOS_SUCCESS : Task name found successfully.
  * @retval  GOS_ERROR   : Invalid task ID or task name variable is NULL.
  */
-gos_result_t gos_kernelTaskGetName (
+gos_result_t gos_taskGetName (
         gos_tid_t      taskId,
         gos_taskName_t taskName
         );
@@ -777,7 +833,7 @@ gos_result_t gos_kernelTaskGetName (
  * @retval  GOS_SUCCESS : Task ID found successfully.
  * @retval  GOS_ERROR   : Task name not found.
  */
-gos_result_t gos_kernelTaskGetId (
+gos_result_t gos_taskGetId (
         gos_taskName_t taskName,
         gos_tid_t*     taskId
         );
@@ -793,7 +849,7 @@ gos_result_t gos_kernelTaskGetId (
  * @retval  GOS_SUCCESS : Current task ID returned successfully.
  * @retval  GOS_ERROR   : Task ID pointer is NULL.
  */
-gos_result_t gos_kernelTaskGetCurrentId (
+gos_result_t gos_taskGetCurrentId (
         gos_tid_t* taskId
         );
 
@@ -810,7 +866,7 @@ gos_result_t gos_kernelTaskGetCurrentId (
  * @retval  GOS_SUCCESS : Task data copied successfully.
  * @retval  GOS_ERROR   : Invalid task ID or task data pointer is NULL.
  */
-gos_result_t gos_kernelTaskGetData (
+gos_result_t gos_taskGetData (
         gos_tid_t             taskId,
         gos_taskDescriptor_t* taskData
         );
@@ -828,7 +884,7 @@ gos_result_t gos_kernelTaskGetData (
  * @retval  GOS_SUCCESS : Task data copied successfully.
  * @retval  GOS_ERROR   : Invalid task index or task data pointer is NULL.
  */
-gos_result_t gos_kernelTaskGetDataByIndex (
+gos_result_t gos_taskGetDataByIndex (
         u16_t                 taskIndex,
         gos_taskDescriptor_t* taskData
         );
@@ -841,7 +897,7 @@ gos_result_t gos_kernelTaskGetDataByIndex (
  *
  * @retval  GOS_SUCCESS : Yield successful.
  */
-gos_result_t gos_kernelTaskYield (
+gos_result_t gos_taskYield (
         void_t
         );
 
@@ -886,11 +942,27 @@ gos_result_t gos_kernelRegisterIdleHook (
  *
  * @return  Result of registration.
  *
- * @retval  GOS_SUCCESS      : Registration successful.
- * @retval  GOS_ERROR        : Registration failed (hook function already exists or parameter is NULL).
+ * @retval  GOS_SUCCESS  : Registration successful.
+ * @retval  GOS_ERROR    : Registration failed (hook function already exists or parameter is NULL).
  */
 gos_result_t gos_kernelRegisterSysTickHook (
         gos_sysTickHook_t sysTickHookFunction
+        );
+
+/**
+ * @brief   Registers a privileged hook function.
+ * @details Checks if a hook function has already been registered, and,
+ *          if not, it registers the new hook function.
+ *
+ * @param   privilegedHookFunction : Privileged hook function.
+ *
+ * @return  Result of registration.
+ *
+ * @retval  GOS_SUCCESS : Registration successful.
+ * @retval  GOS_ERROR   : Registration failed (hook function already exists or parameter is NULL).
+ */
+gos_result_t gos_kernelRegisterPrivilegedHook (
+        gos_privilegedHook_t privilegedHookFunction
         );
 
 /**
@@ -904,7 +976,7 @@ gos_result_t gos_kernelRegisterSysTickHook (
  * @retval  GOS_SUCCESS         : Subscription successful.
  * @retval  GOS_ERROR           : Subscription failed or signal handler is NULL.
  */
-gos_result_t gos_kernelSubscribeTaskDeleteSignal (
+gos_result_t gos_taskSubscribeDeleteSignal (
         void_t (*deleteSignalHandler)(u16_t)
         );
 
@@ -966,6 +1038,19 @@ gos_result_t gos_kernelStart (
  * @return    -
  */
 void_t gos_kernelReset (
+        void_t
+        );
+
+/**
+ * @brief   Requests a privileged mode setting.
+ * @details Initiates an SVC call while setting the corresponding flag
+ *          to set the execution mode to privileged (permanently).
+ *          After this, it calls the corresponding hook function, so
+ *          the caller can access special registers immediately.
+ *
+ * @return  -
+ */
+void_t gos_kernelPrivilegedModeSetRequired (
         void_t
         );
 
@@ -1062,6 +1147,18 @@ gos_result_t gos_kernelGetMaxCpuLoad (
  */
 bool_t gos_kernelIsCallerIsr (
         void_t
+        );
+
+/**
+ * @brief   Reschedules the kernel.
+ * @details Based on the privilege, it invokes a kernel reschedule event.
+ *
+ * @param   privilege : Privilege level.
+ *
+ * @return  -
+ */
+void_t gos_kernelReschedule (
+        gos_kernel_privilege_t privilege
         );
 
 /**

@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_signal.c
 //! @author     Ahmed Gazar
-//! @date       2023-07-12
-//! @version    1.7
+//! @date       2023-10-04
+//! @version    1.8
 //!
 //! @brief      GOS signal service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_signal.h
@@ -35,6 +35,8 @@
 // 1.6        2023-06-30    Ahmed Gazar     +    Dump ready signal added back
 //                                          -    signalDaemonTaskId removed
 // 1.7        2023-07-12    Ahmed Gazar     +    Signal handler privilege-handling added
+// 1.8        2023-10-04    Ahmed Gazar     *    Signal daemon polling replaced by async unblocking
+//                                          -    GOS_SIGNAL_DAEMON_POLL_TIME_MS removed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -61,15 +63,8 @@
 #include <gos_signal.h>
 #include <gos_error.h>
 #include <gos_queue.h>
+#include <gos_trigger.h>
 #include <string.h>
-
-/*
- * Macros
- */
-/**
- * Signal daemon poll time in [ms].
- */
-#define GOS_SIGNAL_DAEMON_POLL_TIME_MS    ( 50u )
 
 /*
  * Type definitions
@@ -102,6 +97,11 @@ typedef struct
  * Internal signal descriptor array.
  */
 GOS_STATIC gos_signalDescriptor_t signalArray [CFG_SIGNAL_MAX_NUMBER];
+
+/**
+ * Invoke trigger (to count the number of signal invokings).
+ */
+GOS_STATIC gos_trigger_t          signalInvokeTrigger;
 
 /*
  * External variables
@@ -147,9 +147,10 @@ gos_result_t gos_signalInit (void_t)
     }
 
     // Register signal daemon and create kernel task delete signal.
-    if (gos_kernelTaskRegister(&signalDaemonTaskDescriptor, NULL) != GOS_SUCCESS ||
+    if (gos_taskRegister(&signalDaemonTaskDescriptor, NULL) != GOS_SUCCESS ||
         gos_signalCreate(&kernelTaskDeleteSignal)                 != GOS_SUCCESS ||
-        gos_signalCreate(&kernelDumpReadySignal)                  != GOS_SUCCESS
+        gos_signalCreate(&kernelDumpReadySignal)                  != GOS_SUCCESS ||
+        gos_triggerInit(&signalInvokeTrigger)                     != GOS_SUCCESS
     )
     {
         signalInitResult = GOS_ERROR;
@@ -247,9 +248,9 @@ GOS_INLINE gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSen
     /*
      * Local variables.
      */
-    gos_result_t         signalInvokeResult = GOS_ERROR;
-    gos_tid_t            callerTaskId       = GOS_INVALID_TASK_ID;
-    gos_taskDescriptor_t callerTaskDesc     = {0};
+    gos_result_t             signalInvokeResult = GOS_ERROR;
+    gos_tid_t                callerTaskId       = GOS_INVALID_TASK_ID;
+    gos_taskDescriptor_t     callerTaskDesc     = {0};
 
     /*
      * Function code.
@@ -257,14 +258,18 @@ GOS_INLINE gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSen
     if (signalId < CFG_SIGNAL_MAX_NUMBER && signalArray[signalId].inUse == GOS_TRUE)
     {
         if ((gos_kernelIsCallerIsr()                                 == GOS_TRUE    ||
-            (gos_kernelTaskGetCurrentId(&callerTaskId)               == GOS_SUCCESS &&
-            gos_kernelTaskGetData(callerTaskId, &callerTaskDesc)     == GOS_SUCCESS &&
+            (gos_taskGetCurrentId(&callerTaskId)               == GOS_SUCCESS &&
+            gos_taskGetData(callerTaskId, &callerTaskDesc)     == GOS_SUCCESS &&
             (callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_SIGNALING) == GOS_PRIV_SIGNALING))
             )
         {
             signalArray[signalId].senderId       = senderId;
             signalArray[signalId].invokeRequired = GOS_TRUE;
             signalInvokeResult                   = GOS_SUCCESS;
+
+            // Unblock signal daemon to handle signal invoking by
+            // incrementing the invoke trigger.
+            (void_t) gos_triggerIncrement(&signalInvokeTrigger);
         }
         else
         {
@@ -300,39 +305,46 @@ GOS_STATIC void_t gos_signalDaemonTask (void_t)
      */
     for (;;)
     {
-        for (signalIndex = 0u; signalIndex < CFG_SIGNAL_MAX_NUMBER; signalIndex++)
+        // Wait for trigger.
+        if (gos_triggerWait(&signalInvokeTrigger, 1u, GOS_TRIGGER_ENDLESS_TMO) == GOS_SUCCESS)
         {
-            if (signalArray[signalIndex].invokeRequired == GOS_TRUE)
+            gos_triggerReset(&signalInvokeTrigger);
+            for (signalIndex = 0u; signalIndex < CFG_SIGNAL_MAX_NUMBER; signalIndex++)
             {
-                for (signalHandlerIndex = 0u; signalHandlerIndex < CFG_SIGNAL_MAX_SUBSCRIBERS; signalHandlerIndex++)
+                if (signalArray[signalIndex].invokeRequired == GOS_TRUE)
                 {
-                    if (signalArray[signalIndex].handlers[signalHandlerIndex] == NULL)
+                    for (signalHandlerIndex = 0u; signalHandlerIndex < CFG_SIGNAL_MAX_SUBSCRIBERS; signalHandlerIndex++)
                     {
-                        // Last handler called, stop calling.
-                        break;
-                    }
-                    else
-                    {
-                        // Switch to signal handler privilege.
-                        (void_t) gos_kernelTaskSetPrivileges(
-                                signalDaemonTaskDescriptor.taskId,
-                                signalArray[signalIndex].handlerPrvileges[signalHandlerIndex]
-                                );
-                        // Call signal handler.
-                        signalArray[signalIndex].handlers[signalHandlerIndex](signalArray[signalIndex].senderId);
+                        if (signalArray[signalIndex].handlers[signalHandlerIndex] == NULL)
+                        {
+                            // Last handler called, stop calling.
+                            break;
+                        }
+                        else
+                        {
+                            // Switch to signal handler privilege.
+                            (void_t) gos_taskSetPrivileges(
+                                    signalDaemonTaskDescriptor.taskId,
+                                    signalArray[signalIndex].handlerPrvileges[signalHandlerIndex]
+                                    );
+                            // Call signal handler.
+                            signalArray[signalIndex].handlers[signalHandlerIndex](signalArray[signalIndex].senderId);
 
-                        // Switch back to kernel privilege.
-                        (void_t) gos_kernelTaskSetPrivileges(signalDaemonTaskDescriptor.taskId, GOS_TASK_PRIVILEGE_KERNEL);
+                            // Switch back to kernel privilege.
+                            (void_t) gos_taskSetPrivileges(signalDaemonTaskDescriptor.taskId, GOS_TASK_PRIVILEGE_KERNEL);
+                        }
                     }
+                    signalArray[signalIndex].invokeRequired = GOS_FALSE;
                 }
-                signalArray[signalIndex].invokeRequired = GOS_FALSE;
-            }
-            else
-            {
-                // Nothing to do.
+                else
+                {
+                    // Nothing to do.
+                }
             }
         }
-
-        (void_t) gos_kernelTaskSleep(GOS_SIGNAL_DAEMON_POLL_TIME_MS);
+        else
+        {
+            // Unexpected error.
+        }
     }
 }

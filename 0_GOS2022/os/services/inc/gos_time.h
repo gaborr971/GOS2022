@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_time.h
 //! @author     Ahmed Gazar
-//! @date       2023-01-31
-//! @version    1.5
+//! @date       2023-11-06
+//! @version    1.6
 //!
 //! @brief      GOS time service header.
 //! @details    Time service provides an easy interface to manipulate time structures, track the
@@ -37,6 +37,9 @@
 //                                          +    Milliseconds and microseconds fields added to
 //                                               run-time structure
 //                                          +    gos_runTimeAddMicroseconds added
+// 1.6        2023-11-06    Ahmed Gazar     +    Milliseconds added to gos_time_t
+//                                          +    gos_timeIncreaseSystemTime added
+//                                          +    gos_timeAddMilliseconds added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -72,12 +75,13 @@
  */
 typedef struct __attribute__((packed))
 {
-    gos_second_t seconds;    //!< Seconds.
-    gos_minute_t minutes;    //!< Minutes.
-    gos_hour_t   hours;      //!< Hours.
-    gos_day_t    days;       //!< Days.
-    gos_month_t  months;     //!< Months.
-    gos_year_t   years;      //!< Years.
+    gos_millisecond_t milliseconds;     //!< Milliseconds.
+    gos_second_t      seconds;          //!< Seconds.
+    gos_minute_t      minutes;          //!< Minutes.
+    gos_hour_t        hours;            //!< Hours.
+    gos_day_t         days;             //!< Days.
+    gos_month_t       months;           //!< Months.
+    gos_year_t        years;            //!< Years.
 }gos_time_t;
 
 /**
@@ -85,9 +89,9 @@ typedef struct __attribute__((packed))
  */
 typedef enum
 {
-    GOS_TIME_EARLIER, //!< First time is earlier than second.
-    GOS_TIME_LATER,   //!< First time is later than second.
-    GOS_TIME_EQUAL    //!< Times are equal.
+    GOS_TIME_EARLIER,                   //!< First time is earlier than second.
+    GOS_TIME_LATER,                     //!< First time is later than second.
+    GOS_TIME_EQUAL                      //!< Times are equal.
 }gos_timeComprareResult_t;
 
 /**
@@ -95,20 +99,20 @@ typedef enum
  */
 typedef enum
 {
-    GOS_TIME_JANUARY = 1,          //!< January.
-    GOS_TIME_FEBRUARY,             //!< February.
-    GOS_TIME_MARCH,                //!< March.
-    GOS_TIME_APRIL,                //!< April.
-    GOS_TIME_MAY,                  //!< May.
-    GOS_TIME_JUNE,                 //!< June.
-    GOS_TIME_JULY,                 //!< July.
-    GOS_TIME_AUGUST,               //!< August.
-    GOS_TIME_SEPTEMBER,            //!< September.
-    GOS_TIME_OCTOBER,              //!< October.
-    GOS_TIME_NOVEMBER,             //!< November.
-    GOS_TIME_DECEMBER,             //!< December.
+    GOS_TIME_JANUARY = 1,               //!< January.
+    GOS_TIME_FEBRUARY,                  //!< February.
+    GOS_TIME_MARCH,                     //!< March.
+    GOS_TIME_APRIL,                     //!< April.
+    GOS_TIME_MAY,                       //!< May.
+    GOS_TIME_JUNE,                      //!< June.
+    GOS_TIME_JULY,                      //!< July.
+    GOS_TIME_AUGUST,                    //!< August.
+    GOS_TIME_SEPTEMBER,                 //!< September.
+    GOS_TIME_OCTOBER,                   //!< October.
+    GOS_TIME_NOVEMBER,                  //!< November.
+    GOS_TIME_DECEMBER,                  //!< December.
 
-    GOS_TIME_NUMBER_OF_MONTHS = 12 //!< Number of months in a year.
+    GOS_TIME_NUMBER_OF_MONTHS = 12      //!< Number of months in a year.
 }gos_timeMonthEnum_t;
 
 /**
@@ -188,6 +192,38 @@ gos_result_t gos_timeCompare (
         gos_time_t*               pTime1,
         gos_time_t*               pTime2,
         gos_timeComprareResult_t* result
+        );
+
+/**
+ * @brief   This function increases the system time and runtime with the given value of milliseconds.
+ * @details This function increases the system time and runtime with the given value of milliseconds.
+ *
+ * @param   milliseconds : Number of milliseconds to add to system time.
+ *
+ * @return  Result of system time increasing.
+ *
+ * @retval  GOS_SUCCESS : Increasing successful.
+ * @retval  GOS_ERROR   : System time or runtime increasing failed.
+ */
+gos_result_t gos_timeIncreaseSystemTime (
+        u16_t milliseconds
+        );
+
+/**
+ * @brief   This function adds the given number of milliseconds to the given time structure.
+ * @details This function adds the given number of milliseconds to the given time structure.
+ *
+ * @param   pTime        : Pointer to the time structure.
+ * @param   milliseconds : Number of milliseconds to add.
+ *
+ * @return  Result of time increasing.
+ *
+ * @retval  GOS_SUCCESS : Increasing successful.
+ * @retval  GOS_ERROR   : Time structure is NULL pointer.
+ */
+gos_result_t gos_timeAddMilliseconds (
+        gos_time_t* pTime,
+        u16_t       milliseconds
         );
 
 /**

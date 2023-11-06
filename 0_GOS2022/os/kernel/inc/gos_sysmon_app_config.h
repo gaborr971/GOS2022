@@ -241,6 +241,10 @@
  * Maximum number of message IDs a task can wait for (includes the terminating 0).
  */
 #define CFG_MESSAGE_MAX_WAITER_IDS      ( 8 )
+/**
+ * Maximum number of message addressees.
+ */
+#define CFG_MESSAGE_MAX_ADDRESSEES      ( 8 )
 
 /*
  * Shell service parameters.

@@ -180,7 +180,7 @@ int main (void_t)
 
     // Initialize the kernel and register initializer task.
     if (gos_errorTraceInit("Kernel initialization", gos_kernelInit()) == GOS_SUCCESS &&
-        gos_kernelTaskRegister(&systemTaskDesc, &systemTaskId) == GOS_SUCCESS)
+        gos_taskRegister(&systemTaskDesc, &systemTaskId) == GOS_SUCCESS)
     {
         initError = GOS_FALSE;
     }
@@ -207,23 +207,29 @@ int main (void_t)
  */
 void_t gos_Dump (void_t)
 {
-    gos_taskPrivilegeLevel_t privileges = 0u;
-    gos_tid_t currentTaskId = GOS_INVALID_TASK_ID;
+    /*
+     * Local variables.
+     */
+    gos_taskPrivilegeLevel_t privileges    = 0u;
+    gos_tid_t                currentTaskId = GOS_INVALID_TASK_ID;
 
+    /*
+     * Function code.
+     */
     dumpRequired = GOS_TRUE;
 
-    (void_t) gos_kernelTaskGetCurrentId(&currentTaskId);
-    (void_t) gos_kernelTaskGetPrivileges(currentTaskId, &privileges);
+    (void_t) gos_taskGetCurrentId(&currentTaskId);
+    (void_t) gos_taskGetPrivileges(currentTaskId, &privileges);
 
     if ((privileges & GOS_PRIV_TASK_MANIPULATE) != GOS_PRIV_TASK_MANIPULATE)
     {
-        (void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
-        gos_kernelTaskWakeup(systemTaskId);
-        (void_t) gos_kernelTaskRemovePrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+        (void_t) gos_taskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+        gos_taskWakeup(systemTaskId);
+        (void_t) gos_taskRemovePrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
     }
     else
     {
-        gos_kernelTaskWakeup(systemTaskId);
+        gos_taskWakeup(systemTaskId);
     }
 }
 
@@ -327,8 +333,8 @@ GOS_STATIC void_t gos_systemTask (void_t)
     GOS_ENABLE_SCHED
 
     // Set priority to kernel-level.
-    (void_t) gos_kernelTaskSetOriginalPriority(systemTaskId, CFG_TASK_SYS_PRIO);
-    (void_t) gos_kernelTaskSetPriority(systemTaskId, CFG_TASK_SYS_PRIO);
+    (void_t) gos_taskSetOriginalPriority(systemTaskId, CFG_TASK_SYS_PRIO);
+    (void_t) gos_taskSetPriority(systemTaskId, CFG_TASK_SYS_PRIO);
 
     for (;;)
     {
@@ -337,7 +343,7 @@ GOS_STATIC void_t gos_systemTask (void_t)
 
         if (dumpRequired == GOS_TRUE)
         {
-            (void_t) gos_kernelTaskSleep(100);
+            (void_t) gos_taskSleep(100);
             gos_kernelDump();
 #if CFG_PROC_USE_SERVICE
             gos_procDump();
@@ -353,6 +359,6 @@ GOS_STATIC void_t gos_systemTask (void_t)
             // Nothing to do.
         }
 
-        (void_t) gos_kernelTaskSleep(GOS_SYS_TASK_SLEEP_TIME);
+        (void_t) gos_taskSleep(GOS_SYS_TASK_SLEEP_TIME);
     }
 }

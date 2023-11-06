@@ -1014,7 +1014,7 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
         (void_t) gos_timerDriverSysTimerGet(&sysTimerInitial);
 
         // Set privileges.
-        (void_t) gos_kernelTaskSetPrivileges(
+        (void_t) gos_taskSetPrivileges(
                 procDaemonTaskId,
                 procDescriptors[currentProcIndex].procPrivileges
                 );
@@ -1023,7 +1023,7 @@ GOS_STATIC void_t gos_procDaemonTask (void_t)
         procDescriptors[currentProcIndex].procFunction();
 
         // Restore privileges.
-        (void_t) gos_kernelTaskSetPrivileges(
+        (void_t) gos_taskSetPrivileges(
                 procDaemonTaskId,
                 GOS_TASK_PRIVILEGE_KERNEL
                 );

@@ -19,7 +19,7 @@
 //!
 //! @brief      GOS message service header.
 //! @details    Message service is a way of inter-task communication provided by the operating
-//!             system. With the use of messages data can be passed between different tasks. The
+//!             system. With the use of messages, data can be passed between different tasks. The
 //!             data sent through the message service is only limited in size which is a
 //!             configuration parameter. Message passing is handled by the background daemon task
 //!             thus ensuring that big data transfers do not block the system. Messages are first
@@ -124,9 +124,9 @@ typedef u16_t gos_messageIdIndex_t;        //!< Message ID index type.
  */
 typedef struct
 {
-    gos_messageId_t   messageId;                             //!< Message ID.
-    gos_messageSize_t messageSize;                           //!< Message size.
-    u8_t              messageBytes [CFG_MESSAGE_MAX_LENGTH]; //!< Message bytes.
+    gos_messageId_t   messageId;                                 //!< Message ID.
+    gos_messageSize_t messageSize;                               //!< Message size.
+    u8_t              messageBytes [CFG_MESSAGE_MAX_LENGTH];     //!< Message bytes.
 }gos_message_t;
 
 /*

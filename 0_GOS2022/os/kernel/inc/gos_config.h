@@ -52,13 +52,17 @@
  * Use one of the following includes to specify the
  * required configuration.
  */
-/* #include <gos_minimal_example_app_config.h> */
-/* #include <gos_sysmon_app_config.h> */
+#if defined(GOS2022_MINIMAL_EXAMPLE)
+#include <gos_minimal_example_app_config.h>
+#elif defined(GOS2022_SYSMON_EXAMPLE)
+#include <gos_sysmon_app_config.h>
+#elif defined(GOS2022_BOOTLOADER)
+#include <gos_bootloader_config.h>
+#else
 
 /*
  * Macros
  */
-#ifndef GOS_CFG_OVERCONFIG
 /*
  * Supported target CPU list.
  */
@@ -118,7 +122,7 @@
 /**
  * Signal daemon task stack size.
  */
-#define CFG_TASK_SIGNAL_DAEMON_STACK    ( 0x300 )
+#define CFG_TASK_SIGNAL_DAEMON_STACK    ( 0x400 )
 /**
  * Process daemon task stack size.
  */
@@ -247,7 +251,7 @@
 /**
  * Maximum number of messages handled at once.
  */
-#define CFG_MESSAGE_MAX_NUMBER          ( 4 )
+#define CFG_MESSAGE_MAX_NUMBER          ( 8 )
 /**
  * Maximum length of a message in bytes.
  */
@@ -260,6 +264,10 @@
  * Maximum number of message IDs a task can wait for (includes the terminating 0).
  */
 #define CFG_MESSAGE_MAX_WAITER_IDS      ( 8 )
+/**
+ * Maximum number of message addressees.
+ */
+#define CFG_MESSAGE_MAX_ADDRESSEES      ( 8 )
 
 /*
  * Shell service parameters.
@@ -267,7 +275,7 @@
 /**
  * Shell service use flag.
  */
-#define CFG_SHELL_USE_SERVICE           ( 0 )
+#define CFG_SHELL_USE_SERVICE           ( 1 )
 /**
  * Maximum number of shell commands.
  */
@@ -307,7 +315,7 @@
 /**
  * Sysmon use service flag.
  */
-#define CFG_SYSMON_USE_SERVICE          ( 1 )
+#define CFG_SYSMON_USE_SERVICE          ( 0 )
 
 /**
  * Define sysmon GCP channel number.

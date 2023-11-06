@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_error.c
 //! @author     Ahmed Gazar
-//! @date       2023-06-30
-//! @version    2.2
+//! @date       2023-10-20
+//! @version    2.3
 //!
 //! @brief      GOS error handler service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_error.h
@@ -32,6 +32,7 @@
 //                                               Logo printing simplified
 // 2.2        2023-06-30    Ahmed Gazar     *    Logo printing modified
 //                                          +    CFG_RESET_ON_ERROR check added
+// 2.3        2023-10-20    Ahmed Gazar     *    gos_printStartupLogo made weak
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -103,7 +104,7 @@ GOS_STATIC char_t* gos_traceResultToString (gos_result_t* pResult);
 /*
  * Function: gos_printStartupLogo
  */
-void_t gos_printStartupLogo (void_t)
+__attribute__((weak)) void_t gos_printStartupLogo (void_t)
 {
     /*
      * Function code.

@@ -12,22 +12,22 @@
 //                                      (c) Ahmed Gazar, 2023
 //
 //*************************************************************************************************
-//! @file       gos_minimal_example_app_config.h
+//! @file       gos_bootloader_config.h
 //! @author     Ahmed Gazar
-//! @date       2023-09-25
+//! @date       2023-09-26
 //! @version    1.0
 //!
-//! @brief      GOS minimal example application configuration header.
+//! @brief      GOS bootloader configuration header.
 //! @details    This header contains the kernel and service configurations of the operating system.
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
-// 1.0        2023-09-25    Ahmed Gazar     Initial version created.
+// 1.0        2023-09-26    Ahmed Gazar     Initial version created.
 //*************************************************************************************************
-#ifndef GOS_MINIMAL_EXAMPLE_APP_CONFIG_H
-#define GOS_MINIMAL_EXAMPLE_APP_CONFIG_H
+#ifndef GOS_BOOTLOADER_CONFIG_H
+#define GOS_BOOTLOADER_CONFIG_H
 /*
  * Includes
  */
@@ -35,7 +35,8 @@
 
 /*
  * Macros
- *//**
+ */
+/**
  * Overconfiguration macro.
  */
 #define GOS_CFG_OVERCONFIG
@@ -43,7 +44,7 @@
  * Supported target CPU list.
  */
 /**
- * ARM Cortex-M4
+ * ARM Cortex-M4.
  */
 #define ARM_CORTEX_M4                   ( 1 )
 
@@ -74,7 +75,7 @@
 /**
  * Maximum number of tasks.
  */
-#define CFG_TASK_MAX_NUMBER             ( 16 )
+#define CFG_TASK_MAX_NUMBER             ( 18 )
 
 /*
  * OS task stack sizes.
@@ -122,7 +123,7 @@
 /**
  * Sysmon daemon task stack size.
  */
-#define CFG_TASK_SYSMON_DAEMON_STACK    ( 0x300 )
+#define CFG_TASK_SYSMON_DAEMON_STACK    ( 0x400 )
 
 /*
  * OS task priorities.
@@ -158,7 +159,7 @@
 /**
  * Sysmon daemon task priority.
  */
-#define CFG_TASK_SYSMON_DAEMON_PRIO     ( 40 )
+#define CFG_TASK_SYSMON_DAEMON_PRIO     ( 191 )
 
 /*
  * Process service parameters.
@@ -190,7 +191,7 @@
 /**
  * Maximum number of queues.
  */
-#define CFG_QUEUE_MAX_NUMBER            ( 4 )
+#define CFG_QUEUE_MAX_NUMBER            ( 1 )
 /**
  * Maximum number of queue elements.
  */
@@ -215,7 +216,7 @@
 /**
  * Maximum number of signals.
  */
-#define CFG_SIGNAL_MAX_NUMBER           ( 6 )
+#define CFG_SIGNAL_MAX_NUMBER           ( 3 )
 /**
  * Maximum number of signal subscribers.
  */
@@ -275,7 +276,7 @@
 /**
  * GCP maximum number of channels.
  */
-#define CFG_GCP_CHANNELS_MAX_NUMBER     ( 3 )
+#define CFG_GCP_CHANNELS_MAX_NUMBER     ( 2 )
 
 /*
  * Trace service parameters.
@@ -292,6 +293,7 @@
  * Sysmon use service flag.
  */
 #define CFG_SYSMON_USE_SERVICE          ( 0 )
+
 /**
  * Define sysmon GCP channel number.
  */
@@ -307,6 +309,6 @@
 /**
  * Delay time before system reset.
  */
-#define CFG_RESET_ON_ERROR_DELAY_MS     ( 3000 )
+#define CFG_RESET_ON_ERROR_DELAY_MS     ( 2000 )
 
 #endif

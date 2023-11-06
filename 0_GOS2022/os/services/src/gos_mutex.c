@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_mutex.c
 //! @author     Ahmed Gazar
-//! @date       2023-09-14
-//! @version    1.3
+//! @date       2023-10-31
+//! @version    1.4
 //!
 //! @brief      GOS mutex service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_mutex.h
@@ -30,6 +30,8 @@
 //                                          +    Mutex unlock current task check added so that
 //                                               only the owner can unlock the mutex
 // 1.3        2023-09-14    Ahmed Gazar     *    gos_mutexInit return value modified
+// 1.4        2023-10-31    Ahmed Gazar     *    Lock and unlock functions reworked
+//                                          -    Priority inheritance temporarily removed
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -61,7 +63,7 @@
 /**
  * Sleep time in [ms] when trigger timeout is set to endless.
  */
-#define MUTEX_LOCK_SLEEP_MS ( 10u )
+#define MUTEX_LOCK_SLEEP_MS ( 5u )
 
 /*
  * Function: gos_mutexInit
@@ -98,157 +100,79 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
     /*
      * Local variables.
      */
-    bool_t                   isLocked        = GOS_TRUE;
-    gos_result_t             mutexLockResult = GOS_ERROR;
-    u32_t                    sysTickInitial  = 0u;
-    gos_taskPrivilegeLevel_t privileges      = 0u;
-#if CFG_USE_PRIO_INHERITANCE
-    gos_taskPrio_t           ownerPrio       = CFG_PROC_MAX_PRIO_LEVELS;
-    gos_taskPrio_t           currentPrio     = CFG_PROC_MAX_PRIO_LEVELS;
-    gos_tid_t                currentId       = GOS_INVALID_TASK_ID;
-#endif
+    gos_result_t lockResult   = GOS_ERROR;
+    u32_t        sysTickStart = gos_kernelGetSysTicks();
 
     /*
      * Function code.
      */
-    sysTickInitial = gos_kernelGetSysTicks();
-
-#if CFG_USE_PRIO_INHERITANCE
-    (void_t) gos_kernelTaskGetCurrentId(&currentId);
-    (void_t) gos_kernelTaskGetPriority(currentId, &currentPrio);
-    (void_t) gos_kernelTaskGetPriority(pMutex->owner, &ownerPrio);
-#endif
-
-    // Wait for the mutex to become available
-    while (isLocked == GOS_TRUE)
+    while ((pMutex != NULL) && (((gos_kernelGetSysTicks() - sysTickStart) <= timeout) || (timeout == GOS_MUTEX_ENDLESS_TMO)))
     {
-        // Check if the mutex is locked
         GOS_ATOMIC_ENTER
+
         if (pMutex->mutexState == GOS_MUTEX_UNLOCKED)
         {
             pMutex->mutexState = GOS_MUTEX_LOCKED;
-            (void_t) gos_kernelTaskGetCurrentId((gos_tid_t*)&(pMutex->owner));
-            isLocked = GOS_FALSE;
-            mutexLockResult = GOS_SUCCESS;
+            gos_taskGetCurrentId(&(pMutex->owner));
+            lockResult = GOS_SUCCESS;
         }
-#if CFG_USE_PRIO_INHERITANCE
         else
         {
-            if (ownerPrio > currentPrio)
-            {
-                (void_t) gos_kernelTaskGetPrivileges(currentId, &privileges);
-
-                if ((privileges & GOS_PRIV_TASK_PRIO_CHANGE) != GOS_PRIV_TASK_PRIO_CHANGE)
-                {
-                    (void_t) gos_kernelTaskAddPrivilege(currentId, GOS_PRIV_TASK_PRIO_CHANGE);
-                    if (gos_kernelTaskSetPriority(pMutex->owner, currentPrio) == GOS_SUCCESS)
-                    {
-                        ownerPrio = currentPrio;
-                    }
-                    else
-                    {
-                        // Nothing to do.
-                    }
-                    (void_t) gos_kernelTaskRemovePrivilege(currentId, GOS_PRIV_TASK_PRIO_CHANGE);
-                }
-                else
-                {
-                    if (gos_kernelTaskSetPriority(pMutex->owner, currentPrio) == GOS_SUCCESS)
-                    {
-                        ownerPrio = currentPrio;
-                    }
-                    else
-                    {
-                        // Nothing to do.
-                    }
-                }
-            }
-            else
-            {
-                // Nothing to do.
-            }
+            // Mutex is locked.
         }
-#endif
+
         GOS_ATOMIC_EXIT
 
-        if (isLocked == GOS_TRUE)
-        {
-            (void_t) gos_kernelTaskBlock(currentId, MUTEX_LOCK_SLEEP_MS);
-        }
-        else
-        {
-            // Nothing to do.
-        }
-
-        if ((timeout != GOS_MUTEX_ENDLESS_TMO) &&
-            ((gos_kernelGetSysTicks() - sysTickInitial) >= timeout))
+        if (lockResult == GOS_SUCCESS)
         {
             break;
         }
         else
         {
-            // Nothing to do.
+            gos_taskSleep(MUTEX_LOCK_SLEEP_MS);
         }
     }
 
-    return mutexLockResult;
+    return lockResult;
 }
 
 /*
  * Function: gos_mutexUnlock
  */
-GOS_INLINE void_t gos_mutexUnlock (gos_mutex_t* pMutex)
+GOS_INLINE gos_result_t gos_mutexUnlock (gos_mutex_t* pMutex)
 {
     /*
      * Local variables.
      */
-    gos_tid_t                currentTaskId     = GOS_INVALID_TASK_ID;
-    gos_taskPrivilegeLevel_t privileges        = 0u;
-#if CFG_USE_PRIO_INHERITANCE
-    gos_taskPrio_t           ownerOriginalPrio = GOS_TASK_MAX_PRIO_LEVELS;
-    gos_taskPrio_t           ownerCurrentPrio  = GOS_TASK_MAX_PRIO_LEVELS;
-#endif
+    gos_result_t unlockResult = GOS_ERROR;
+    gos_tid_t    currentTask  = GOS_INVALID_TASK_ID;
+
     /*
      * Function code.
      */
-    GOS_ATOMIC_ENTER
-
-#if CFG_USE_PRIO_INHERITANCE
-    (void_t) gos_kernelTaskGetOriginalPriority(pMutex->owner, &ownerOriginalPrio);
-    (void_t) gos_kernelTaskGetPriority(pMutex->owner, &ownerCurrentPrio);
-    (void_t) gos_kernelTaskGetCurrentId(&currentTaskId);
-
-    if (ownerCurrentPrio != ownerOriginalPrio)
+    if (pMutex != NULL)
     {
-        (void_t) gos_kernelTaskGetPrivileges(currentTaskId, &privileges);
+        GOS_ATOMIC_ENTER
 
-        if ((privileges & GOS_PRIV_TASK_PRIO_CHANGE) != GOS_PRIV_TASK_PRIO_CHANGE)
+        gos_taskGetCurrentId(&currentTask);
+
+        if (pMutex->owner == currentTask)
         {
-            (void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_PRIO_CHANGE);
-            (void_t) gos_kernelTaskSetPriority(pMutex->owner, ownerOriginalPrio);
-            (void_t) gos_kernelTaskRemovePrivilege(currentTaskId, GOS_PRIV_TASK_PRIO_CHANGE);
+            pMutex->mutexState = GOS_MUTEX_UNLOCKED;
+            pMutex->owner      = GOS_INVALID_TASK_ID;
+            unlockResult       = GOS_SUCCESS;
         }
         else
         {
-            (void_t) gos_kernelTaskSetPriority(pMutex->owner, ownerOriginalPrio);
+            // Only the owner can unlock it.
         }
+
+        GOS_ATOMIC_EXIT
     }
     else
     {
-        // Nothing to do.
-    }
-#endif
-
-    // Only owner can release the mutex.
-    if (currentTaskId == pMutex->owner)
-    {
-        pMutex->mutexState = GOS_MUTEX_UNLOCKED;
-        pMutex->owner      = GOS_INVALID_TASK_ID;
-    }
-    else
-    {
-        // Nothing to do.
+        // Null pointer.
     }
 
-    GOS_ATOMIC_EXIT
+    return unlockResult;
 }

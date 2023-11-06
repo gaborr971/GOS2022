@@ -540,7 +540,7 @@ gos_result_t gos_sysmonInit (void_t)
      */
     if (gos_gcpRegisterPhysicalDriver(CFG_SYSMON_GCP_CHANNEL_NUM, gos_sysmonDriverTransmit,
         gos_sysmonDriverReceive) == GOS_SUCCESS &&
-        gos_kernelTaskRegister(&sysmonDaemonTaskDesc, NULL) == GOS_SUCCESS)
+        gos_taskRegister(&sysmonDaemonTaskDesc, NULL) == GOS_SUCCESS)
     {
         sysmonInitResult = GOS_SUCCESS;
     }
@@ -580,6 +580,10 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
             {
                 gos_sysmonSendResponse(GOS_SYSMON_MSG_UNKNOWN);
             }
+        }
+        else
+        {
+            // Reception error.
         }
     }
 }
@@ -710,7 +714,7 @@ GOS_STATIC void_t gos_sysmonHandleTaskDataGet (gos_sysmonMessageEnum_t lutIndex)
             // Send all task data.
             for (taskIndex = 0; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
             {
-                (void_t) gos_kernelTaskGetDataByIndex(taskIndex, &taskDesc);
+                (void_t) gos_taskGetDataByIndex(taskIndex, &taskDesc);
 
                 if (taskDesc.taskId != GOS_INVALID_TASK_ID)
                 {
@@ -743,7 +747,7 @@ GOS_STATIC void_t gos_sysmonHandleTaskDataGet (gos_sysmonMessageEnum_t lutIndex)
         else
         {
             // Send specific task data.
-            (void_t) gos_kernelTaskGetDataByIndex(taskDataGetMsg.taskIndex, &taskDesc);
+            (void_t) gos_taskGetDataByIndex(taskDataGetMsg.taskIndex, &taskDesc);
 
             taskDataMsg.taskData.taskId               = taskDesc.taskId;
             taskDataMsg.taskData.taskStackSize        = taskDesc.taskStackSize;
@@ -799,7 +803,7 @@ GOS_STATIC void_t gos_sysmonHandleTaskVariableDataGet (gos_sysmonMessageEnum_t l
             // Send all task data.
             for (taskIndex = 0; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
             {
-                (void_t) gos_kernelTaskGetDataByIndex(taskIndex, &taskDesc);
+                (void_t) gos_taskGetDataByIndex(taskIndex, &taskDesc);
 
                 if (taskDesc.taskId != GOS_INVALID_TASK_ID)
                 {
@@ -827,7 +831,7 @@ GOS_STATIC void_t gos_sysmonHandleTaskVariableDataGet (gos_sysmonMessageEnum_t l
         else
         {
             // Send specific task data.
-            (void_t) gos_kernelTaskGetDataByIndex(taskDataGetMsg.taskIndex, &taskDesc);
+            (void_t) gos_taskGetDataByIndex(taskDataGetMsg.taskIndex, &taskDesc);
 
             taskVariableDataMsg.taskVariableData.taskStackMaxUsage = taskDesc.taskStackSizeMaxUsage;
             taskVariableDataMsg.taskVariableData.taskCpuUsage      = taskDesc.taskCpuUsage;
@@ -867,14 +871,14 @@ GOS_STATIC void_t gos_sysmonHandleTaskModification (gos_sysmonMessageEnum_t lutI
     if (taskModifyResultMessage.messageResult == GOS_SYSMON_MSG_RES_OK)
     {
         // Send specific task data.
-        (void_t) gos_kernelTaskGetDataByIndex(taskModifyMessage.taskIndex, &taskDesc);
+        (void_t) gos_taskGetDataByIndex(taskModifyMessage.taskIndex, &taskDesc);
 
          // Perform request based on modification type.
          switch (taskModifyMessage.modificationType)
          {
              case GOS_SYSMON_TASK_MOD_TYPE_SUSPEND:
              {
-                 if (gos_kernelTaskSuspend(taskDesc.taskId) == GOS_SUCCESS)
+                 if (gos_taskSuspend(taskDesc.taskId) == GOS_SUCCESS)
                  {
                      taskModifyResultMessage.messageResult = GOS_SYSMON_MSG_RES_OK;
                  }
@@ -886,7 +890,7 @@ GOS_STATIC void_t gos_sysmonHandleTaskModification (gos_sysmonMessageEnum_t lutI
              }
              case GOS_SYSMON_TASK_MOD_TYPE_RESUME:
              {
-                 if (gos_kernelTaskResume(taskDesc.taskId) == GOS_SUCCESS)
+                 if (gos_taskResume(taskDesc.taskId) == GOS_SUCCESS)
                  {
                      taskModifyResultMessage.messageResult = GOS_SYSMON_MSG_RES_OK;
                  }
@@ -898,7 +902,7 @@ GOS_STATIC void_t gos_sysmonHandleTaskModification (gos_sysmonMessageEnum_t lutI
              }
              case GOS_SYSMON_TASK_MOD_TYPE_DELETE:
              {
-                 if (gos_kernelTaskDelete(taskDesc.taskId) == GOS_SUCCESS)
+                 if (gos_taskDelete(taskDesc.taskId) == GOS_SUCCESS)
                  {
                      taskModifyResultMessage.messageResult = GOS_SYSMON_MSG_RES_OK;
                  }

@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trigger.c
 //! @author     Ahmed Gazar
-//! @date       2023-09-25
-//! @version    2.6
+//! @date       2023-11-06
+//! @version    2.7
 //!
 //! @brief      GOS trigger service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_trigger.h
@@ -34,7 +34,12 @@
 // 2.4        2023-09-07    Ahmed Gazar     *    Timeout handling rework
 //                                          -    TRIGGER_WAIT_BLOCK_MS removed
 // 2.5        2023-09-14    Ahmed Gazar     +    Mutex initialization result processing added
-// 2.6        2023-09-25    Ahmed Gazar     +    ISR handling added
+// 2.6        2023-10-04    Ahmed Gazar     +    gos_triggerDecrement added
+// 2.7        2023-11-06    Ahmed Gazar     *    Trigger mutex replaced with atomic operations
+//                                          *    gos_triggerDecrement return value added
+//                                          +    gos_triggerInit parameter settings added
+//                                          *    gos_triggerIncrement rework
+//                                          +    Return value added to gos_triggerIncrement
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -73,11 +78,13 @@ gos_result_t gos_triggerInit (gos_trigger_t* pTrigger)
     /*
      * Function code.
      */
-
     // Null pointer check.
     if (pTrigger != NULL)
     {
-        triggerInitResult = gos_mutexInit(&pTrigger->triggerMutex);
+        pTrigger->valueCounter = 0u;
+        pTrigger->desiredValue = 0u;
+        pTrigger->waiterTaskId = GOS_INVALID_TASK_ID;
+        triggerInitResult      = GOS_SUCCESS;
     }
     else
     {
@@ -95,15 +102,15 @@ GOS_INLINE void_t gos_triggerReset (gos_trigger_t* pTrigger)
     /*
      * Function code.
      */
-
     // Null pointer check.
-    if (pTrigger != NULL &&
-        gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
+    if (pTrigger != NULL)
     {
+        GOS_ATOMIC_ENTER
+
         pTrigger->valueCounter = 0u;
         pTrigger->desiredValue = 0u;
 
-        gos_mutexUnlock(&pTrigger->triggerMutex);
+        GOS_ATOMIC_EXIT
     }
     else
     {
@@ -125,21 +132,22 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
     /*
      * Function code.
      */
-
     // Null pointer check.
     if (pTrigger != NULL)
     {
         // Set owner task ID.
-        (void_t) gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO);
-        (void_t) gos_kernelTaskGetCurrentId(&currentId);
+        GOS_ATOMIC_ENTER
+
+        (void_t) gos_taskGetCurrentId(&currentId);
         pTrigger->waiterTaskId = currentId;
         pTrigger->desiredValue = value;
-        gos_mutexUnlock(&pTrigger->triggerMutex);
+
+        GOS_ATOMIC_EXIT
 
         // Block until timeout in case trigger value has not been reached yet.
         if (pTrigger->valueCounter < pTrigger->desiredValue)
         {
-            (void_t) gos_kernelTaskBlock(currentId, timeout);
+            (void_t) gos_taskBlock(currentId, timeout);
         }
         else
         {
@@ -147,7 +155,8 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
         }
 
         // Check if the trigger value is reached after unblock.
-        (void_t) gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO);
+        GOS_ATOMIC_ENTER
+
         if (pTrigger->valueCounter >= pTrigger->desiredValue)
         {
             triggerWaitResult      = GOS_SUCCESS;
@@ -157,7 +166,8 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
         {
             // Nothing to do.
         }
-        gos_mutexUnlock(&pTrigger->triggerMutex);
+
+        GOS_ATOMIC_EXIT
     }
     else
     {
@@ -170,68 +180,84 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
 /*
  * Function: gos_triggerIncrement
  */
-GOS_INLINE void_t gos_triggerIncrement (gos_trigger_t* pTrigger)
+GOS_INLINE gos_result_t gos_triggerIncrement (gos_trigger_t* pTrigger)
 {
-    /*
-     * Local variables.
-     */
-    gos_taskPrivilegeLevel_t originalPrivileges = GOS_TASK_PRIVILEGE_USER;
-    gos_tid_t                currentTaskId      = GOS_INVALID_TASK_ID;
+/*
+ * Local variables.
+ */
+gos_result_t triggerIncrementResult = GOS_ERROR;
 
     /*
      * Function code.
      */
-
     // Null pointer check.
     if (pTrigger != NULL)
     {
-    	if (gos_kernelIsCallerIsr() == GOS_TRUE)
-    	{
-            // Increment trigger value.
-            pTrigger->valueCounter++;
-    	}
-    	else
-    	{
-    		(void_t) gos_mutexLock(&pTrigger->triggerMutex, GOS_MUTEX_ENDLESS_TMO);
-    	}
+        GOS_ATOMIC_ENTER
 
         // Increment trigger value.
         pTrigger->valueCounter++;
 
-        // If desired value is reached, unblock waiter.
         if (pTrigger->valueCounter >= pTrigger->desiredValue)
         {
-            // Get current task ID.
-            (void_t) gos_kernelTaskGetCurrentId(&currentTaskId);
-
-            // Get original privileges.
-            (void_t) gos_kernelTaskGetPrivileges(currentTaskId, &originalPrivileges);
-
-            // Add necessary privilege.
-            (void_t) gos_kernelTaskAddPrivilege(currentTaskId, GOS_PRIV_TASK_MANIPULATE);
+            GOS_ISR_ENTER
 
             // Unblock owner task.
-            (void_t) gos_kernelTaskUnblock(pTrigger->waiterTaskId);
+            (void_t) gos_taskUnblock(pTrigger->waiterTaskId);
 
-            // Restore privileges.
-            (void_t) gos_kernelTaskSetPrivileges(currentTaskId, originalPrivileges);
+            GOS_ISR_EXIT
         }
         else
         {
             // Trigger value not reached yet.
         }
 
-        if (gos_kernelIsCallerIsr() == GOS_FALSE)
-        {
-        	gos_mutexUnlock(&pTrigger->triggerMutex);
-        }
-        else
-        {
-        	// Nothing to do.
-        }
+        triggerIncrementResult = GOS_SUCCESS;
+
+        GOS_ATOMIC_EXIT
     }
     else
     {
         // Nothing to do.
     }
+
+    return triggerIncrementResult;
+}
+
+/*
+ * Function: gos_triggerDecrement
+ */
+GOS_INLINE gos_result_t gos_triggerDecrement (gos_trigger_t* pTrigger)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t triggerDecrementResult = GOS_ERROR;
+
+    /*
+     * Function code.
+     */
+    // Null pointer check.
+    if (pTrigger != NULL)
+    {
+        GOS_ATOMIC_ENTER
+
+        if (pTrigger->valueCounter > 0u)
+        {
+            pTrigger->valueCounter -= 1u;
+            triggerDecrementResult  = GOS_SUCCESS;
+        }
+        else
+        {
+            // Trigger is already zero.
+        }
+
+        GOS_ATOMIC_EXIT
+    }
+    else
+    {
+        // Nothing to do.
+    }
+
+    return triggerDecrementResult;
 }

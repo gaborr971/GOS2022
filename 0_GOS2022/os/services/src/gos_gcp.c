@@ -68,7 +68,7 @@
 /**
  * Message frame size (bytes).
  */
-#define FRAME_SIZE                  ( 8u )
+#define FRAME_SIZE                  ( 64u )
 
 /**
  * Frame protocol version high byte.

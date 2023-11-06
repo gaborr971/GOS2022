@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_time.c
 //! @author     Ahmed Gazar
-//! @date       2023-09-08
-//! @version    1.6
+//! @date       2023-10-04
+//! @version    1.7
 //!
 //! @brief      GOS time service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_time.h
@@ -35,6 +35,10 @@
 // 1.6        2023-09-08    Ahmed Gazar     *    gos_timeAddSeconds, gos_runTimeAddMicroseconds,
 //                                               and gos_runTimeAddMilliseconds reworked for
 //                                               optimized complexity and execution time
+// 1.7        2023-10-04    Ahmed Gazar     *    System time handling strategy rework: now it is
+//                                               systick-based and measured in milliseconds (system
+//                                               runtime as well)
+//                                          +    gos_timeAddMilliseconds added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -61,6 +65,7 @@
 #include <gos_time.h>
 #include <gos_error.h>
 #include <gos_signal.h>
+#include <string.h>
 
 /*
  * Macros
@@ -83,7 +88,7 @@
 /**
  * Time task sleep time in [ms].
  */
-#define TIME_SLEEP_TIME_MS    ( 1000u )
+#define TIME_SLEEP_TIME_MS    ( 500u )
 
 /*
  * Static variables
@@ -163,7 +168,7 @@ gos_result_t gos_timeInit (void_t)
      * Function code.
      */
     if (gos_signalCreate(&timeSignalId)                                != GOS_SUCCESS ||
-        gos_kernelTaskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS
+        gos_taskRegister(&timeDaemonTaskDesc, &timeDaemonTaskId) != GOS_SUCCESS
         )
     {
         timeInitResult = GOS_ERROR;
@@ -191,12 +196,7 @@ gos_result_t gos_timeGet (gos_time_t* pTime)
      */
     if (pTime != NULL)
     {
-        pTime->seconds  = systemTime.seconds;
-        pTime->minutes  = systemTime.minutes;
-        pTime->hours    = systemTime.hours;
-        pTime->days     = systemTime.days;
-        pTime->months   = systemTime.months;
-        pTime->years    = systemTime.years;
+        (void_t) memcpy((void_t*)pTime, (GOS_CONST void_t*)&systemTime, sizeof(systemTime));
 
         timeGetResult = GOS_SUCCESS;
     }
@@ -223,12 +223,7 @@ gos_result_t gos_timeSet (gos_time_t* pTime)
      */
     if (pTime != NULL)
     {
-        systemTime.seconds  = pTime->seconds;
-        systemTime.minutes  = pTime->minutes;
-        systemTime.hours    = pTime->hours;
-        systemTime.days     = pTime->days;
-        systemTime.months   = pTime->months;
-        systemTime.years    = pTime->years;
+        (void_t) memcpy((void_t*)&systemTime, (GOS_CONST void_t*)pTime, sizeof(*pTime));
 
         timeSetResult = GOS_SUCCESS;
     }
@@ -255,10 +250,7 @@ gos_result_t gos_runTimeGet (gos_runtime_t* pRunTime)
      */
     if (pRunTime != NULL)
     {
-        pRunTime->seconds = systemRunTime.seconds;
-        pRunTime->minutes = systemRunTime.minutes;
-        pRunTime->hours   = systemRunTime.hours;
-        pRunTime->days    = systemRunTime.days;
+        (void_t) memcpy((void_t*)pRunTime, (void_t*)&systemRunTime, sizeof(systemRunTime));
 
         runtimeGetResult = GOS_SUCCESS;
     }
@@ -312,6 +304,102 @@ gos_result_t gos_timeCompare (gos_time_t* pTime1, gos_time_t* pTime2, gos_timeCo
     }
 
     return timeCompareResult;
+}
+
+/*
+ * Function: gos_timeAddMilliseconds
+ */
+gos_result_t gos_timeAddMilliseconds (gos_time_t* pTime, u16_t milliseconds)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t timeAddMillisecondsResult = GOS_ERROR;
+
+    /*
+     * Function code.
+     */
+    if (pTime != NULL)
+    {
+        // 1. Raw increment.
+        pTime->milliseconds += milliseconds;
+
+        // 2. Post-adjustment.
+        if (pTime->milliseconds >= 1000u)
+        {
+            pTime->seconds += pTime->milliseconds / 1000u;
+            pTime->milliseconds %= 1000u;
+
+            if (pTime->seconds >= 60u)
+            {
+                pTime->minutes += pTime->seconds / 60u;
+                pTime->seconds %= 60u;
+
+                if (pTime->minutes >= 60u)
+                {
+                    pTime->hours += pTime->minutes / 60u;
+                    pTime->minutes %= 60u;
+
+                    if (pTime->hours >= 24u)
+                    {
+                        pTime->days += pTime->hours / 24u;
+                        pTime->hours %= 24u;
+
+                        // Check days.
+                        if (pTime->years % 4 == 0  && pTime->months == GOS_TIME_FEBRUARY && pTime->days >= 30)
+                        {
+                            pTime->days = 1u;
+                            pTime->months++;
+                        }
+                        else if (pTime->years % 4 == 0 && pTime->months == GOS_TIME_FEBRUARY)
+                        {
+                            // Wait.
+                        }
+                        else if (pTime->days >= (dayLookupTable[pTime->months - 1] + 1))
+                        {
+                            pTime->days = 1u;
+                            pTime->months++;
+                        }
+                        else
+                        {
+                            // Nothing to do.
+                        }
+
+                        // Check months.
+                        if (pTime->months == 13)
+                        {
+                            pTime->months = 1;
+                            pTime->years++;
+                        }
+                        else
+                        {
+                            // Nothing to do.
+                        }
+                    }
+                    else
+                    {
+                        // Nothing to do.
+                    }
+                }
+                else
+                {
+                    // Nothing to do.
+                }
+            }
+            else
+            {
+                // Nothing to do.
+            }
+        }
+
+        timeAddMillisecondsResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Nothing to do.
+    }
+
+    return timeAddMillisecondsResult;
 }
 
 /*
@@ -674,6 +762,32 @@ gos_result_t gos_runTimeAddSeconds (gos_runtime_t* pRunTime, u32_t seconds)
     return runtimeAddSecondsResult;
 }
 
+/*
+ * Function: gos_timeIncreaseSystemTime
+ */
+gos_result_t gos_timeIncreaseSystemTime (u16_t milliseconds)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t increaseSystemTimeResult = GOS_ERROR;
+
+    /*
+     * Function code.
+     */
+    if (gos_runTimeAddMilliseconds(&systemRunTime, milliseconds) == GOS_SUCCESS &&
+        gos_timeAddMilliseconds(&systemTime, milliseconds) == GOS_SUCCESS)
+    {
+        increaseSystemTimeResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // One of the operations failed.
+    }
+
+    return increaseSystemTimeResult;
+}
+
 /**
  * @brief   Time daemon task.
  * @details Increases the system time approximately every second and invokes the
@@ -693,15 +807,6 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
      */
     for (;;)
     {
-        // Initialize previous time.
-        (void_t) gos_timeGet(&previousTime);
-
-        // Increase time by 1 second.
-        (void_t) gos_timeAddSeconds(&systemTime, 1);
-
-        // Increase run-time by 1 second.
-        (void_t) gos_runTimeAddSeconds(&systemRunTime, 1);
-
         // Invoke second elapsed signal.
         if (systemTime.seconds > previousTime.seconds)
         {
@@ -762,6 +867,8 @@ GOS_STATIC void_t gos_timeDaemonTask (void_t)
             // Nothing to do.
         }
 
-        (void_t) gos_kernelTaskSleep(TIME_SLEEP_TIME_MS);
+        // Initialize previous time.
+        (void_t) gos_timeGet(&previousTime);
+        (void_t) gos_taskSleep(TIME_SLEEP_TIME_MS);
     }
 }

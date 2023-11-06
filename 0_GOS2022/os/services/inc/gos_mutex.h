@@ -134,10 +134,12 @@ gos_result_t gos_mutexLock (
  *
  * @param   pMutex : Pointer to the mutex to be unlocked.
  *
- * @return  -
+ * @return  Result of mutex unlocking.
+ *
+ * @retval  GOS_SUCCESS : Unlocking successful.
+ * @retval  GOS_ERROR   : Mutex is NULL or caller is not the owner of the mutex.
  */
-void_t gos_mutexUnlock (
+gos_result_t gos_mutexUnlock (
         gos_mutex_t* pMutex
         );
-
 #endif

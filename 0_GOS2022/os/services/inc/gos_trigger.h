@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trigger.h
 //! @author     Ahmed Gazar
-//! @date       2023-09-07
-//! @version    2.1
+//! @date       2023-11-06
+//! @version    2.2
 //!
 //! @brief      GOS trigger service header.
 //! @details    Trigger service is a way of synchronizing tasks. A trigger instance works as a
@@ -32,6 +32,8 @@
 // 2.0        2023-05-04    Ahmed Gazar     *    Service completely reworked
 // 2.1        2023-09-07    Ahmed Gazar     *    Trigger variables renamed
 //                                          +    Trigger mutex added
+// 2.2        2023-11-06    Ahmed Gazar     +    gos_triggerDecrement added
+//                                          -    Trigger mutex removed
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -84,7 +86,6 @@ typedef struct
     u32_t       valueCounter; //!< Value counter.
     u32_t       desiredValue; //!< Desired value.
     gos_tid_t   waiterTaskId; //!< Owner task ID.
-    gos_mutex_t triggerMutex; //!< Tigger mutex.
 }gos_trigger_t;
 
 /*
@@ -143,9 +144,27 @@ gos_result_t gos_triggerWait (
  *
  * @param   pTrigger : Pointer to the trigger instance.
  *
- * @return  -
+ * @return  Result of trigger incrementing.
+ *
+ * @retval  GOS_SUCCESS : Incrementing successful.
+ * @retval  GOS_ERROR   : Trigger is NULL pointer.
  */
-void_t gos_triggerIncrement (
+gos_result_t gos_triggerIncrement (
+        gos_trigger_t* pTrigger
+        );
+
+/**
+ * @brief   Increments the trigger value of the given trigger.
+ * @details Increments the trigger value of the given trigger.
+ *
+ * @param   pTrigger : Pointer to the trigger instance.
+ *
+ * @return  Result of trigger decrementing.
+ *
+ * @retval  GOS_SUCCESS : Decrementing successful.
+ * @retval  GOS_ERROR   : Trigger is NULL pointer or value is already zero.
+ */
+gos_result_t gos_triggerDecrement (
         gos_trigger_t* pTrigger
         );
 
