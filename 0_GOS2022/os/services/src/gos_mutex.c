@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_mutex.c
 //! @author     Ahmed Gazar
-//! @date       2023-10-31
-//! @version    1.4
+//! @date       2023-11-09
+//! @version    1.6
 //!
 //! @brief      GOS mutex service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_mutex.h
@@ -32,6 +32,8 @@
 // 1.3        2023-09-14    Ahmed Gazar     *    gos_mutexInit return value modified
 // 1.4        2023-10-31    Ahmed Gazar     *    Lock and unlock functions reworked
 //                                          -    Priority inheritance temporarily removed
+// 1.5        2023-11-06    Ahmed Gazar     +    void_t casts added to unused return values
+// 1.6        2023-11-09    Ahmed Gazar     *    Lock zero timeout handling added
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -113,7 +115,7 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
         if (pMutex->mutexState == GOS_MUTEX_UNLOCKED)
         {
             pMutex->mutexState = GOS_MUTEX_LOCKED;
-            gos_taskGetCurrentId(&(pMutex->owner));
+            (void_t) gos_taskGetCurrentId(&(pMutex->owner));
             lockResult = GOS_SUCCESS;
         }
         else
@@ -129,7 +131,14 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
         }
         else
         {
-            gos_taskSleep(MUTEX_LOCK_SLEEP_MS);
+            if (timeout > 0u)
+            {
+                (void_t) gos_taskSleep(MUTEX_LOCK_SLEEP_MS);
+            }
+            else
+            {
+                // Zero timeout, no sleep needed.
+            }
         }
     }
 
@@ -154,7 +163,7 @@ GOS_INLINE gos_result_t gos_mutexUnlock (gos_mutex_t* pMutex)
     {
         GOS_ATOMIC_ENTER
 
-        gos_taskGetCurrentId(&currentTask);
+        (void_t) gos_taskGetCurrentId(&currentTask);
 
         if (pMutex->owner == currentTask)
         {
