@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.c
 //! @author     Ahmed Gazar
-//! @date       2023-10-20
-//! @version    1.15
+//! @date       2023-11-10
+//! @version    1.17
 //!
 //! @brief      GOS kernel source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -66,9 +66,10 @@
 //                                          +    gos_kernelPrivilegedModeSetRequired function added
 //                                          +    Millisecond system time increment added to systick
 //                                               handler
-// 1.16       2023-11-01    Ahmed Gazar     *    Task-related definitions, variables, and functins
+// 1.16       2023-11-01    Ahmed Gazar     *    Task-related definitions, variables, and functions
 //                                               removed
 //                                          +    inIsr and atomic counters, primask added
+// 1.17       2023-11-10    Ahmed Gazar     +    Missing else branches and void casts added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -266,17 +267,17 @@ GOS_EXTERN gos_taskDescriptor_t     taskDescriptors [CFG_TASK_MAX_NUMBER];
 /*
  * Function prototypes
  */
-GOS_STATIC        void_t        gos_kernelCheckTaskStack         (void_t);
-GOS_STATIC        u32_t         gos_kernelGetCurrentPsp          (void_t);
-GOS_STATIC        void_t        gos_kernelSaveCurrentPsp         (u32_t psp);
-GOS_STATIC        void_t        gos_kernelSelectNextTask         (void_t);
-GOS_STATIC        char_t*       gos_kernelGetTaskStateString     (gos_taskState_t taskState);
-GOS_STATIC        void_t        gos_kernelProcessorReset         (void_t);
+GOS_STATIC void_t  gos_kernelCheckTaskStack     (void_t);
+GOS_STATIC u32_t   gos_kernelGetCurrentPsp      (void_t);
+GOS_STATIC void_t  gos_kernelSaveCurrentPsp     (u32_t psp);
+GOS_STATIC void_t  gos_kernelSelectNextTask     (void_t);
+GOS_STATIC char_t* gos_kernelGetTaskStateString (gos_taskState_t taskState);
+GOS_STATIC void_t  gos_kernelProcessorReset     (void_t);
 
 /*
  * External functions
  */
-GOS_EXTERN        void_t        gos_idleTask               (void_t);
+GOS_EXTERN void_t  gos_idleTask                 (void_t);
 
 /*
  * Function: gos_kernelInit
@@ -362,7 +363,7 @@ gos_result_t gos_kernelStart (void_t)
     gos_task_t firstTask = taskDescriptors[currentTaskIndex].taskFunction;
 
     // Initialize system timer value.
-    gos_timerDriverSysTimerGet(&sysTimerValue);
+    (void_t) gos_timerDriverSysTimerGet(&sysTimerValue);
 
     // Enable scheduling.
     GOS_ENABLE_SCHED
@@ -395,6 +396,10 @@ gos_result_t gos_kernelRegisterSwapHook (gos_taskSwapHook_t swapHookFunction)
         kernelSwapHookFunction = swapHookFunction;
         hookRegisterResult = GOS_SUCCESS;
     }
+    else
+    {
+        // Nothing to do.
+    }
 
     return hookRegisterResult;
 }
@@ -416,6 +421,10 @@ gos_result_t gos_kernelRegisterSysTickHook (gos_sysTickHook_t sysTickHookFunctio
     {
         kernelSysTickHookFunction = sysTickHookFunction;
         hookRegisterResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Nothing to do.
     }
 
     return hookRegisterResult;
@@ -439,6 +448,10 @@ gos_result_t gos_kernelRegisterPrivilegedHook (gos_privilegedHook_t privilegedHo
         kernelPrivilegedHookFunction = privilegedHookFunction;
         hookRegisterResult = GOS_SUCCESS;
     }
+    else
+    {
+        // Nothing to do.
+    }
 
     return hookRegisterResult;
 }
@@ -459,6 +472,10 @@ gos_result_t gos_kernelSubscribeDumpReadySignal (gos_signalHandler_t dumpReadySi
     if (dumpReadySignalHandler != NULL)
     {
         subscriptionResult = gos_signalSubscribe(kernelDumpReadySignal, dumpReadySignalHandler, GOS_TASK_PRIVILEGE_USER);
+    }
+    else
+    {
+        // Signal handler is NULL pointer.
     }
 
     return subscriptionResult;
@@ -487,12 +504,24 @@ void_t gos_ported_sysTickInterrupt (void_t)
             // Privileged.
             gos_kernelReschedule(GOS_PRIVILEGED);
         }
+        else
+        {
+            // Scheduling disabled.
+        }
 #endif
+    }
+    else
+    {
+        // Kernel is not running.
     }
 
     if (kernelSysTickHookFunction != NULL)
     {
         kernelSysTickHookFunction();
+    }
+    else
+    {
+        // Nothing to do.
     }
 }
 
@@ -557,10 +586,10 @@ GOS_INLINE void_t gos_kernelDelayUs (u16_t microseconds)
     /*
      * Function code.
      */
-    gos_timerDriverSysTimerGet(&tmrInitialValue);
+    (void_t) gos_timerDriverSysTimerGet(&tmrInitialValue);
     do
     {
-        gos_timerDriverSysTimerGet(&tmrActualValue);
+        (void_t) gos_timerDriverSysTimerGet(&tmrActualValue);
     }
     while ((u16_t)(tmrActualValue - tmrInitialValue) < microseconds);
 }
@@ -619,13 +648,13 @@ GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
                 taskDescriptors[taskIndex].taskCpuUsage = (u16_t)((u32_t)(10000 * taskConvertedTime) / systemConvertedTime);
 
                 // Increase runtime microseconds.
-                gos_runTimeAddMicroseconds(
+                (void_t) gos_runTimeAddMicroseconds(
                         &taskDescriptors[taskIndex].taskRunTime,
                         NULL,
                         (u16_t)taskDescriptors[taskIndex].taskMonitoringRunTime.microseconds);
 
                 // Increase runtime milliseconds.
-                gos_runTimeAddMilliseconds(
+                (void_t) gos_runTimeAddMilliseconds(
                         &taskDescriptors[taskIndex].taskRunTime,
                         (u32_t)(taskDescriptors[taskIndex].taskMonitoringRunTime.milliseconds +
                         taskDescriptors[taskIndex].taskMonitoringRunTime.seconds * 1000));
@@ -647,6 +676,14 @@ GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
                     // Max. value has not been reached.
                 }
             }
+            else
+            {
+                // Nothing to do.
+            }
+        }
+        else
+        {
+            // Nothing to do.
         }
 
         if (taskDescriptors[taskIndex].taskFunction == NULL)
@@ -707,16 +744,19 @@ void_t gos_kernelDump (void_t)
         {
             break;
         }
-        (void_t) gos_shellDriverTransmitString(
-                "| 0x%04X | %28s | %4d | " BINARY_PATTERN " | %4u.%02u | %18s |\r\n",
-                taskDescriptors[taskIndex].taskId,
-                taskDescriptors[taskIndex].taskName,
-                taskDescriptors[taskIndex].taskPriority,
-                TO_BINARY((u16_t)taskDescriptors[taskIndex].taskPrivilegeLevel),
-                taskDescriptors[taskIndex].taskCpuUsage / 100,
-                taskDescriptors[taskIndex].taskCpuUsage % 100,
-                gos_kernelGetTaskStateString(taskDescriptors[taskIndex].taskState)
-                );
+        else
+        {
+            (void_t) gos_shellDriverTransmitString(
+                    "| 0x%04X | %28s | %4d | " BINARY_PATTERN " | %4u.%02u | %18s |\r\n",
+                    taskDescriptors[taskIndex].taskId,
+                    taskDescriptors[taskIndex].taskName,
+                    taskDescriptors[taskIndex].taskPriority,
+                    TO_BINARY((u16_t)taskDescriptors[taskIndex].taskPrivilegeLevel),
+                    taskDescriptors[taskIndex].taskCpuUsage / 100,
+                    taskDescriptors[taskIndex].taskCpuUsage % 100,
+                    gos_kernelGetTaskStateString(taskDescriptors[taskIndex].taskState)
+                    );
+        }
     }
     (void_t) gos_shellDriverTransmitString(TASK_DUMP_SEPARATOR"\n");
 
@@ -737,13 +777,16 @@ void_t gos_kernelDump (void_t)
         {
             break;
         }
-        (void_t) gos_shellDriverTransmitString(
-                "| 0x%04X | %28s | %8u.%02u |\r\n",
-                taskDescriptors[taskIndex].taskId,
-                taskDescriptors[taskIndex].taskName,
-                taskDescriptors[taskIndex].taskCpuUsageMax / 100,
-                taskDescriptors[taskIndex].taskCpuUsageMax % 100
-                );
+        else
+        {
+            (void_t) gos_shellDriverTransmitString(
+                    "| 0x%04X | %28s | %8u.%02u |\r\n",
+                    taskDescriptors[taskIndex].taskId,
+                    taskDescriptors[taskIndex].taskName,
+                    taskDescriptors[taskIndex].taskCpuUsageMax / 100,
+                    taskDescriptors[taskIndex].taskCpuUsageMax % 100
+                    );
+        }
     }
     (void_t) gos_shellDriverTransmitString(MAX_CPU_DUMP_SEPARATOR"\n");
 
@@ -765,15 +808,18 @@ void_t gos_kernelDump (void_t)
         {
             break;
         }
-        (void_t) gos_shellDriverTransmitString(
-                "| 0x%04X | %28s | 0x%04X | 0x%-12X | %6u.%02u |%\r\n",
-                taskDescriptors[taskIndex].taskId,
-                taskDescriptors[taskIndex].taskName,
-                taskDescriptors[taskIndex].taskStackSize,
-                taskDescriptors[taskIndex].taskStackSizeMaxUsage,
-                ((10000 * taskDescriptors[taskIndex].taskStackSizeMaxUsage) / taskDescriptors[taskIndex].taskStackSize) / 100,
-                ((10000 * taskDescriptors[taskIndex].taskStackSizeMaxUsage) / taskDescriptors[taskIndex].taskStackSize) % 100
-                );
+        else
+        {
+            (void_t) gos_shellDriverTransmitString(
+                    "| 0x%04X | %28s | 0x%04X | 0x%-12X | %6u.%02u |%\r\n",
+                    taskDescriptors[taskIndex].taskId,
+                    taskDescriptors[taskIndex].taskName,
+                    taskDescriptors[taskIndex].taskStackSize,
+                    taskDescriptors[taskIndex].taskStackSizeMaxUsage,
+                    ((10000 * taskDescriptors[taskIndex].taskStackSizeMaxUsage) / taskDescriptors[taskIndex].taskStackSize) / 100,
+                    ((10000 * taskDescriptors[taskIndex].taskStackSizeMaxUsage) / taskDescriptors[taskIndex].taskStackSize) % 100
+                    );
+        }
     }
     (void_t) gos_shellDriverTransmitString(STACK_STATS_SEPARATOR"\n");
 }
@@ -796,6 +842,10 @@ gos_result_t gos_kernelSetMaxCpuLoad (u16_t maxCpuLoad)
         cpuUseLimit = maxCpuLoad;
         setMaxCpuLoadResult = GOS_SUCCESS;
     }
+    else
+    {
+        // Max. CPU load is invalid.
+    }
 
     return setMaxCpuLoadResult;
 }
@@ -817,6 +867,10 @@ gos_result_t gos_kernelGetMaxCpuLoad (u16_t* maxCpuLoad)
     {
         *maxCpuLoad = cpuUseLimit;
         getMaxCpuLoadResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Target is NULL pointer.
     }
 
     return getMaxCpuLoadResult;
@@ -1092,6 +1146,10 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
 
         // Update previous tick value.
         previousTick = sysTicks;
+    }
+    else
+    {
+        // Nothing to do.
     }
 }
 
