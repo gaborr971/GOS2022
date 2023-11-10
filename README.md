@@ -3,6 +3,8 @@ This repository contains the source code of GOS2022, and example projects.
 In addition, I will publish a documentation of the OS, and the design of
 custom boards for the test environment.
 
+Some initial documents can be found here: https://github.com/gaborr971/GOS2022/tree/main/0_GOS2022/doc
+
 # Description
 GOS2022 is an open-source, simple embedded operating system project.
 It is under currently under development and testing. So far it has only been
@@ -19,5 +21,5 @@ You can find the latest source code of the OS here: https://github.com/gaborr971
 Contribution to this project is encouraged and appriciated.
 If you have any questions or ideas, feel free to contact me: gaborr97@gmail.com
 
-Last updated: 2023-09-25
+Last updated: 2023-11-10
 (c) 2023, Ahmed Gazar
