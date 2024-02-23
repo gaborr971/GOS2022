@@ -40,6 +40,7 @@
 //                                          +    CFG_TASK_SYSMON_DAEMON_PRIO added
 //                                          +    CFG_SYSMON_USE_SERVICE added
 // 1.8        2023-09-25    Ahmed Gazar     *    Application specific configuration inclusion added
+// 1.9        2024-02-13    Ahmed Gazar     +    CFG_SYSMON_MAX_USER_MESSAGES added
 //*************************************************************************************************
 #ifndef GOS_CONFIG_H
 #define GOS_CONFIG_H
@@ -98,7 +99,7 @@
 /**
  * Maximum number of tasks.
  */
-#define CFG_TASK_MAX_NUMBER             ( 36 )
+#define CFG_TASK_MAX_NUMBER             ( 38 )
 
 /*
  * OS task stack sizes.
@@ -315,12 +316,17 @@
 /**
  * Sysmon use service flag.
  */
-#define CFG_SYSMON_USE_SERVICE          ( 0 )
+#define CFG_SYSMON_USE_SERVICE          ( 1 )
 
 /**
  * Define sysmon GCP channel number.
  */
 #define CFG_SYSMON_GCP_CHANNEL_NUM      ( 0 )
+
+/**
+ * Maximum number of user messages.
+ */
+#define CFG_SYSMON_MAX_USER_MESSAGES    ( 6 )
 
 /*
  * Error handling parameters.

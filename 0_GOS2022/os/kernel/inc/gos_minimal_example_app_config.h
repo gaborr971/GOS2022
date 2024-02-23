@@ -297,6 +297,11 @@
  */
 #define CFG_SYSMON_GCP_CHANNEL_NUM      ( 0 )
 
+/**
+ * Maximum number of user messages.
+ */
+#define CFG_SYSMON_MAX_USER_MESSAGES    ( 6 )
+
 /*
  * Error handling parameters.
  */

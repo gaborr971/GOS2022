@@ -509,7 +509,6 @@ GOS_INLINE gos_result_t gos_taskBlock (gos_tid_t taskId, gos_blockMaxTick_t bloc
     /*
      * Function code.
      */
-
     GOS_ATOMIC_ENTER
 
     if (taskId > GOS_DEFAULT_TASK_ID && (taskId - GOS_DEFAULT_TASK_ID) < CFG_TASK_MAX_NUMBER)
@@ -534,10 +533,14 @@ GOS_INLINE gos_result_t gos_taskBlock (gos_tid_t taskId, gos_blockMaxTick_t bloc
                     // Unprivileged.
                     gos_kernelReschedule(GOS_UNPRIVILEGED);
                 }
+                else
+                {
+                	// Nothing to do.
+                }
             }
             else
             {
-                GOS_NOP;
+            	// Nothing to do.
             }
         }
         else

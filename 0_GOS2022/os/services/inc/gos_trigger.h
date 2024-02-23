@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trigger.h
 //! @author     Ahmed Gazar
-//! @date       2023-11-06
-//! @version    2.2
+//! @date       2023-11-15
+//! @version    2.4
 //!
 //! @brief      GOS trigger service header.
 //! @details    Trigger service is a way of synchronizing tasks. A trigger instance works as a
@@ -34,6 +34,8 @@
 //                                          +    Trigger mutex added
 // 2.2        2023-11-06    Ahmed Gazar     +    gos_triggerDecrement added
 //                                          -    Trigger mutex removed
+// 2.3        2023-11-10    Ahmed Gazar     +    Return value added to gos_triggerReset
+// 2.4        2023-11-15    Ahmed Gazar     *    gos_triggerDecrement description corrected
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -60,7 +62,6 @@
  * Includes
  */
 #include <gos_kernel.h>
-#include <gos_mutex.h>
 
 /*
  * Macros
@@ -112,9 +113,12 @@ gos_result_t gos_triggerInit (
  *
  * @param   pTrigger : Pointer to the trigger instance.
  *
- * @return  -
+ * @return  Result of trigger resetting.
+ *
+ * @retval  GOS_SUCCESS : Trigger resetting successful.
+ * @retval  GOS_ERROR   : Trigger is NULL pointer.
  */
-void_t gos_triggerReset (
+gos_result_t gos_triggerReset (
         gos_trigger_t* pTrigger
         );
 
@@ -154,8 +158,8 @@ gos_result_t gos_triggerIncrement (
         );
 
 /**
- * @brief   Increments the trigger value of the given trigger.
- * @details Increments the trigger value of the given trigger.
+ * @brief   Decrements the trigger value of the given trigger.
+ * @details Decrements the trigger value of the given trigger.
  *
  * @param   pTrigger : Pointer to the trigger instance.
  *

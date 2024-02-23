@@ -145,7 +145,7 @@
 #define GOS_DEFAULT_TASK_ID            ( (gos_tid_t)0x8000 )
 
 /**
- * valid task ID.
+ * Invalid task ID.
  */
 #define GOS_INVALID_TASK_ID            ( (gos_tid_t)0x0100 )
 

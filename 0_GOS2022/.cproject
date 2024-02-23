@@ -119,9 +119,9 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.1263302286" name="MCU GCC Assembler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler">
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel.652399335" name="Debug level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel.value.g0" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.includepaths.1077182288" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.includepaths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/driver/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/os/scheduler/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/os/services/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/os/kernel/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/os/driver/inc}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input.571467031" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input"/>
 							</tool>
@@ -133,14 +133,9 @@
 									<listOptionValue builtIn="false" value="STM32F446xx"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths.227054802" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F4xx/Include"/>
-									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
-									<listOptionValue builtIn="false" value="../Inc"/>
-									<listOptionValue builtIn="false" value="../Drivers/STM32F4xx_HAL_Driver/Inc"/>
-									<listOptionValue builtIn="false" value="../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/driver/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/os/scheduler/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/os/services/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/os/kernel/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/GOS2022/os/driver/inc}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1657245890" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>

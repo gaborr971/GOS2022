@@ -15,11 +15,11 @@
 //! @file       gos.h
 //! @author     Ahmed Gazar
 //! @date       2023-11-06
-//! @version    1.7
+//! @version    1.8
 //!
 //! @brief      GOS header.
 //! @details    This header is a wrapper for the inclusion of all OS services and drivers for
-//!             GOS2022 v0.6
+//!             GOS2022 v0.7
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
@@ -36,6 +36,8 @@
 // 1.6        2023-07-12    Ahmed Gazar     +    gos_sysmon.h include added
 //                                          *    OS version number changed to v0.5
 // 1.7        2023-11-06    Ahmed Gazar     *    OS version number changed to v0.6
+// 1.8        2024-02-13    Ahmed Gazar     +    GOS_VERSION_MAJOR and GOS_VERSION_MINOR added
+//                                          *    OS version number changed to v0.7
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -74,6 +76,19 @@
 #include <gos_time.h>
 #include <gos_trace.h>
 #include <gos_trigger.h>
+
+/*
+ * Macros
+ */
+/**
+ * OS major version.
+ */
+#define GOS_VERSION_MAJOR    ( 0 )
+
+/**
+ * OS minor version.
+ */
+#define GOS_VERSION_MINOR    ( 7 )
 
 /*
  * Function prototypes

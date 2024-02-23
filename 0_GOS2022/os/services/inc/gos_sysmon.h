@@ -15,7 +15,7 @@
 //! @file       gos_sysmon.h
 //! @author     Ahmed Gazar
 //! @date       2023-07-12
-//! @version    1.0
+//! @version    1.1
 //!
 //! @brief      GOS system monitoring service header.
 //! @details    This service is used to send and receive system information to an external client
@@ -26,6 +26,9 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2023-07-12    Ahmed Gazar     Initial version created
+// 1.1        2024-02-13    Ahmed Gazar     +    gos_sysmonMessageReceivedCallback,
+//                                               gos_sysmonUserMessageDescriptor_t, and
+//                                               gos_sysmonRegisterUserMessage added
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -54,6 +57,26 @@
 #include <gos_kernel.h>
 
 /*
+ * Type definitions
+ */
+/**
+ * Sysmon message received callback function type.
+ */
+typedef void_t (*gos_sysmonMessageReceivedCallback) (void_t);
+
+/**
+ * User sysmon message descriptor.
+ */
+typedef struct
+{
+	u16_t                             messageId;       //!< Message ID.
+	u16_t                             protocolVersion; //!< Message PV.
+	void_t*                           payload;         //!< Pointer to payload target.
+	u32_t                             payloadSize;     //!< Size of payload.
+	gos_sysmonMessageReceivedCallback callback;        //!< Callback function pointer.
+}gos_sysmonUserMessageDescriptor_t;
+
+/*
  * Function prototypes
  */
 /**
@@ -66,5 +89,23 @@
  * @retval  GOS_ERROR   : Sysmon daemon task registration failed.
  */
 gos_result_t gos_sysmonInit (void_t);
+
+/**
+ * @brief   This function registers a custom user sysmon message.
+ * @details Registers a custom sysmon message given by its ID and PV. The message
+ *          will only be processed if the required ID is not an existing sysmon ID.
+ *          When a message is received with the given ID and PV, the message content
+ *          will be copied into the buffer defined in the descriptor structure, and
+ *          the registered callback function will be called.
+ *
+ *          Recommended ID range: 0x6000 ... 0x9999.
+ *
+ * @return  Result of registration.
+ *
+ * @retval  GOS_SUCCESS : User message registered successfully.
+ * @retval  GOS_ERROR   : Descriptor or callback is NULL or maximum number of user
+ *                        messages has been reached.
+ */
+gos_result_t gos_sysmonRegisterUserMessage (gos_sysmonUserMessageDescriptor_t* pDesc);
 
 #endif

@@ -99,7 +99,7 @@
 /**
  * Signal daemon task stack size.
  */
-#define CFG_TASK_SIGNAL_DAEMON_STACK    ( 0x300 )
+#define CFG_TASK_SIGNAL_DAEMON_STACK    ( 0x400 )
 /**
  * Process daemon task stack size.
  */
@@ -228,7 +228,7 @@
 /**
  * Maximum number of messages handled at once.
  */
-#define CFG_MESSAGE_MAX_NUMBER          ( 4 )
+#define CFG_MESSAGE_MAX_NUMBER          ( 8 )
 /**
  * Maximum length of a message in bytes.
  */
@@ -298,6 +298,11 @@
  * Define sysmon GCP channel number.
  */
 #define CFG_SYSMON_GCP_CHANNEL_NUM      ( 0 )
+
+/**
+ * Maximum number of user messages.
+ */
+#define CFG_SYSMON_MAX_USER_MESSAGES    ( 6 )
 
 /*
  * Error handling parameters.

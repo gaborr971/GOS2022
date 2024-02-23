@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trigger.c
 //! @author     Ahmed Gazar
-//! @date       2023-11-06
-//! @version    2.7
+//! @date       2023-11-15
+//! @version    2.9
 //!
 //! @brief      GOS trigger service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_trigger.h
@@ -40,6 +40,11 @@
 //                                          +    gos_triggerInit parameter settings added
 //                                          *    gos_triggerIncrement rework
 //                                          +    Return value added to gos_triggerIncrement
+// 2.8        2023-11-10    Ahmed Gazar     +    Return value added to gos_triggerReset
+// 2.9        2023-11-15    Ahmed Gazar     *    Increment task unblock condition changed from
+//                                               greater or equal to equal only
+//                                          +    Decrement task unblock added if value equals
+//                                               desired value
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -97,8 +102,13 @@ gos_result_t gos_triggerInit (gos_trigger_t* pTrigger)
 /*
  * Function: gos_triggerReset
  */
-GOS_INLINE void_t gos_triggerReset (gos_trigger_t* pTrigger)
+GOS_INLINE gos_result_t gos_triggerReset (gos_trigger_t* pTrigger)
 {
+	/*
+	 * Local variables.
+	 */
+	gos_result_t resetResult = GOS_ERROR;
+
     /*
      * Function code.
      */
@@ -110,12 +120,16 @@ GOS_INLINE void_t gos_triggerReset (gos_trigger_t* pTrigger)
         pTrigger->valueCounter = 0u;
         pTrigger->desiredValue = 0u;
 
+        resetResult = GOS_SUCCESS;
+
         GOS_ATOMIC_EXIT
     }
     else
     {
         // Nothing to do.
     }
+
+    return resetResult;
 }
 
 /*
@@ -182,10 +196,10 @@ GOS_INLINE gos_result_t gos_triggerWait (gos_trigger_t* pTrigger, u32_t value, u
  */
 GOS_INLINE gos_result_t gos_triggerIncrement (gos_trigger_t* pTrigger)
 {
-/*
- * Local variables.
- */
-gos_result_t triggerIncrementResult = GOS_ERROR;
+    /*
+    * Local variables.
+    */
+    gos_result_t triggerIncrementResult = GOS_ERROR;
 
     /*
      * Function code.
@@ -198,7 +212,7 @@ gos_result_t triggerIncrementResult = GOS_ERROR;
         // Increment trigger value.
         pTrigger->valueCounter++;
 
-        if (pTrigger->valueCounter >= pTrigger->desiredValue)
+        if (pTrigger->valueCounter == pTrigger->desiredValue)
         {
             GOS_ISR_ENTER
 
@@ -245,6 +259,21 @@ GOS_INLINE gos_result_t gos_triggerDecrement (gos_trigger_t* pTrigger)
         if (pTrigger->valueCounter > 0u)
         {
             pTrigger->valueCounter -= 1u;
+
+            if (pTrigger->valueCounter == pTrigger->desiredValue)
+            {
+                GOS_ISR_ENTER
+
+                // Unblock owner task.
+                (void_t) gos_taskUnblock(pTrigger->waiterTaskId);
+
+                GOS_ISR_EXIT
+            }
+            else
+            {
+                // Trigger value not reached yet.
+            }
+
             triggerDecrementResult  = GOS_SUCCESS;
         }
         else
