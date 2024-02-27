@@ -21,11 +21,11 @@ typedef u8_t drv_tmrTimeoutTimerId;
  */
 typedef struct
 {
-	u32_t timeoutMs;
-	u32_t ticks;
-	bool_t enabled;
-	drv_tmrTimeoutTimerId id;
-	drv_tmrTimeoutTimerElapsedCallback_t callback;
+    u32_t timeoutMs;
+    u32_t ticks;
+    bool_t enabled;
+    drv_tmrTimeoutTimerId id;
+    drv_tmrTimeoutTimerElapsedCallback_t callback;
 }drv_tmrTimeoutTimerDesc_t;
 
 /*

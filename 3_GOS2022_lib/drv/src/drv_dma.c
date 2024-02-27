@@ -58,23 +58,23 @@
  */
 GOS_STATIC DMA_Stream_TypeDef* dmaStreamLut [] =
 {
-	[DRV_DMA_1_STREAM_0] = DMA1_Stream0,
-	[DRV_DMA_1_STREAM_1] = DMA1_Stream1,
-	[DRV_DMA_1_STREAM_2] = DMA1_Stream2,
-	[DRV_DMA_1_STREAM_3] = DMA1_Stream3,
-	[DRV_DMA_1_STREAM_4] = DMA1_Stream4,
-	[DRV_DMA_1_STREAM_5] = DMA1_Stream5,
-	[DRV_DMA_1_STREAM_6] = DMA1_Stream6,
-	[DRV_DMA_1_STREAM_7] = DMA1_Stream7,
+    [DRV_DMA_1_STREAM_0] = DMA1_Stream0,
+    [DRV_DMA_1_STREAM_1] = DMA1_Stream1,
+    [DRV_DMA_1_STREAM_2] = DMA1_Stream2,
+    [DRV_DMA_1_STREAM_3] = DMA1_Stream3,
+    [DRV_DMA_1_STREAM_4] = DMA1_Stream4,
+    [DRV_DMA_1_STREAM_5] = DMA1_Stream5,
+    [DRV_DMA_1_STREAM_6] = DMA1_Stream6,
+    [DRV_DMA_1_STREAM_7] = DMA1_Stream7,
 
-	[DRV_DMA_2_STREAM_0] = DMA2_Stream0,
-	[DRV_DMA_2_STREAM_1] = DMA2_Stream1,
-	[DRV_DMA_2_STREAM_2] = DMA2_Stream2,
-	[DRV_DMA_2_STREAM_3] = DMA2_Stream3,
-	[DRV_DMA_2_STREAM_4] = DMA2_Stream4,
-	[DRV_DMA_2_STREAM_5] = DMA2_Stream5,
-	[DRV_DMA_2_STREAM_6] = DMA2_Stream6,
-	[DRV_DMA_2_STREAM_7] = DMA2_Stream7,
+    [DRV_DMA_2_STREAM_0] = DMA2_Stream0,
+    [DRV_DMA_2_STREAM_1] = DMA2_Stream1,
+    [DRV_DMA_2_STREAM_2] = DMA2_Stream2,
+    [DRV_DMA_2_STREAM_3] = DMA2_Stream3,
+    [DRV_DMA_2_STREAM_4] = DMA2_Stream4,
+    [DRV_DMA_2_STREAM_5] = DMA2_Stream5,
+    [DRV_DMA_2_STREAM_6] = DMA2_Stream6,
+    [DRV_DMA_2_STREAM_7] = DMA2_Stream7,
 };
 
 /*
@@ -95,39 +95,39 @@ GOS_EXTERN u32_t               dmaConfigSize;
  */
 gos_result_t drv_dmaInit (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t dmaInitResult = GOS_SUCCESS;
-	u8_t         idx           = 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t dmaInitResult = GOS_SUCCESS;
+    u8_t         idx           = 0u;
 
-	/*
-	 * Function code.
-	 */
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		dmaConfig[idx].hdma.Instance                 = dmaStreamLut[dmaConfig[idx].dmaStream];
-		dmaConfig[idx].hdma.Init.Channel             = dmaConfig[idx].channel;
-		dmaConfig[idx].hdma.Init.Direction           = dmaConfig[idx].direction;
-		dmaConfig[idx].hdma.Init.PeriphInc           = dmaConfig[idx].periphInc;
-	    dmaConfig[idx].hdma.Init.MemInc              = dmaConfig[idx].memInc;
-	    dmaConfig[idx].hdma.Init.PeriphDataAlignment = dmaConfig[idx].periphDataAlignment;
-	    dmaConfig[idx].hdma.Init.MemDataAlignment    = dmaConfig[idx].memDataAlignment;
-	    dmaConfig[idx].hdma.Init.Mode                = dmaConfig[idx].mode;
-	    dmaConfig[idx].hdma.Init.Priority            = dmaConfig[idx].priority;
-	    dmaConfig[idx].hdma.Init.FIFOMode            = dmaConfig[idx].fifoMode;
+    /*
+     * Function code.
+     */
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        dmaConfig[idx].hdma.Instance                 = dmaStreamLut[dmaConfig[idx].dmaStream];
+        dmaConfig[idx].hdma.Init.Channel             = dmaConfig[idx].channel;
+        dmaConfig[idx].hdma.Init.Direction           = dmaConfig[idx].direction;
+        dmaConfig[idx].hdma.Init.PeriphInc           = dmaConfig[idx].periphInc;
+        dmaConfig[idx].hdma.Init.MemInc              = dmaConfig[idx].memInc;
+        dmaConfig[idx].hdma.Init.PeriphDataAlignment = dmaConfig[idx].periphDataAlignment;
+        dmaConfig[idx].hdma.Init.MemDataAlignment    = dmaConfig[idx].memDataAlignment;
+        dmaConfig[idx].hdma.Init.Mode                = dmaConfig[idx].mode;
+        dmaConfig[idx].hdma.Init.Priority            = dmaConfig[idx].priority;
+        dmaConfig[idx].hdma.Init.FIFOMode            = dmaConfig[idx].fifoMode;
 
-	    if (HAL_DMA_Init(&(dmaConfig[idx].hdma)) != HAL_OK)
-	    {
-	    	dmaInitResult = GOS_ERROR;
-	    }
-	    else
-	    {
-	    	// Init OK.
-	    }
-	}
+        if (HAL_DMA_Init(&(dmaConfig[idx].hdma)) != HAL_OK)
+        {
+            dmaInitResult = GOS_ERROR;
+        }
+        else
+        {
+            // Init OK.
+        }
+    }
 
-	return dmaInitResult;
+    return dmaInitResult;
 }
 
 /*
@@ -135,29 +135,29 @@ gos_result_t drv_dmaInit (void_t)
  */
 void_t DMA1_Stream0_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_0)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_0)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -165,29 +165,29 @@ void_t DMA1_Stream0_IRQHandler (void_t)
  */
 void_t DMA1_Stream1_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_1)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_1)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -195,29 +195,29 @@ void_t DMA1_Stream1_IRQHandler (void_t)
  */
 void_t DMA1_Stream2_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_2)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_2)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -225,29 +225,29 @@ void_t DMA1_Stream2_IRQHandler (void_t)
  */
 void_t DMA1_Stream3_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_3)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_3)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -255,29 +255,29 @@ void_t DMA1_Stream3_IRQHandler (void_t)
  */
 void_t DMA1_Stream4_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_4)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_4)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 #if 0 // USED FOR DAC
@@ -286,29 +286,29 @@ void_t DMA1_Stream4_IRQHandler (void_t)
  */
 void_t DMA1_Stream5_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_5)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_5)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 #endif
 
@@ -317,29 +317,29 @@ void_t DMA1_Stream5_IRQHandler (void_t)
  */
 void_t DMA1_Stream6_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_6)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_6)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 #if 0 // USED FOR SPI
@@ -348,29 +348,29 @@ void_t DMA1_Stream6_IRQHandler (void_t)
  */
 void_t DMA1_Stream7_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_7)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_1_STREAM_7)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 #endif
 
@@ -379,29 +379,29 @@ void_t DMA1_Stream7_IRQHandler (void_t)
  */
 void_t DMA2_Stream0_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_0)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_0)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -409,29 +409,29 @@ void_t DMA2_Stream0_IRQHandler (void_t)
  */
 void_t DMA2_Stream1_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_1)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_1)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -439,29 +439,29 @@ void_t DMA2_Stream1_IRQHandler (void_t)
  */
 void_t DMA2_Stream2_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_2)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_2)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -469,29 +469,29 @@ void_t DMA2_Stream2_IRQHandler (void_t)
  */
 void_t DMA2_Stream3_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_3)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_3)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -499,29 +499,29 @@ void_t DMA2_Stream3_IRQHandler (void_t)
  */
 void_t DMA2_Stream4_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_4)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_4)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -529,29 +529,29 @@ void_t DMA2_Stream4_IRQHandler (void_t)
  */
 void_t DMA2_Stream5_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_5)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_5)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -559,29 +559,29 @@ void_t DMA2_Stream5_IRQHandler (void_t)
  */
 void_t DMA2_Stream6_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_6)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_6)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }
 
 /*
@@ -589,27 +589,27 @@ void_t DMA2_Stream6_IRQHandler (void_t)
  */
 void_t DMA2_Stream7_IRQHandler (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	u8_t idx = 0u;
+    /*
+     * Local variables.
+     */
+    u8_t idx = 0u;
 
-	/*
-	 * Function code.
-	 */
-	GOS_ISR_ENTER
+    /*
+     * Function code.
+     */
+    GOS_ISR_ENTER
 
-	for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
-	{
-		if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_7)
-		{
-			HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
-		}
-		else
-		{
-			// Continue.
-		}
-	}
+    for (idx = 0u; idx < dmaConfigSize / sizeof(drv_dmaDescriptor_t); idx++)
+    {
+        if (dmaConfig[idx].dmaStream == DRV_DMA_2_STREAM_7)
+        {
+            HAL_DMA_IRQHandler(&dmaConfig[idx].hdma);
+        }
+        else
+        {
+            // Continue.
+        }
+    }
 
-	GOS_ISR_EXIT
+    GOS_ISR_EXIT
 }

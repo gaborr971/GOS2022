@@ -62,12 +62,12 @@
 /**
  * Driver minor version.
  */
-#define DRIVER_VERSION_MINOR      ( 0                 )
+#define DRIVER_VERSION_MINOR      ( 1                 )
 
 /**
  * Driver build number.
  */
-#define DRIVER_VERSION_BUILD      ( 3                 )
+#define DRIVER_VERSION_BUILD      ( 0                 )
 
 /**
  * Driver version date / year.
@@ -82,7 +82,7 @@
 /**
  * Driver version date / day.
  */
-#define DRIVER_VERSION_DATE_DAY   ( 23                )
+#define DRIVER_VERSION_DATE_DAY   ( 27                )
 
 /**
  * Driver name.
@@ -104,33 +104,33 @@
  */
 gos_result_t drv_getVersion (lib_version_t* pDrvVersion)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t getVersionResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t getVersionResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (pDrvVersion != NULL)
-	{
-		pDrvVersion->major 		 = DRIVER_VERSION_MAJOR;
-		pDrvVersion->minor 		 = DRIVER_VERSION_MINOR;
-		pDrvVersion->build 		 = DRIVER_VERSION_BUILD;
-		pDrvVersion->date.years  = DRIVER_VERSION_DATE_YEAR;
-		pDrvVersion->date.months = DRIVER_VERSION_DATE_MONTH;
-		pDrvVersion->date.days   = DRIVER_VERSION_DATE_DAY;
+    /*
+     * Function code.
+     */
+    if (pDrvVersion != NULL)
+    {
+        pDrvVersion->major       = DRIVER_VERSION_MAJOR;
+        pDrvVersion->minor       = DRIVER_VERSION_MINOR;
+        pDrvVersion->build       = DRIVER_VERSION_BUILD;
+        pDrvVersion->date.years  = DRIVER_VERSION_DATE_YEAR;
+        pDrvVersion->date.months = DRIVER_VERSION_DATE_MONTH;
+        pDrvVersion->date.days   = DRIVER_VERSION_DATE_DAY;
 
-		(void_t) strcpy((char_t*)pDrvVersion->name, DRIVER_NAME);
-		(void_t) strcpy((char_t*)pDrvVersion->description, DRIVER_DESCRIPTION);
-		(void_t) strcpy((char_t*)pDrvVersion->author, DRIVER_AUTHOR);
+        (void_t) strcpy((char_t*)pDrvVersion->name, DRIVER_NAME);
+        (void_t) strcpy((char_t*)pDrvVersion->description, DRIVER_DESCRIPTION);
+        (void_t) strcpy((char_t*)pDrvVersion->author, DRIVER_AUTHOR);
 
-		getVersionResult = GOS_SUCCESS;
-	}
-	else
-	{
-		// Target is NULL.
-	}
+        getVersionResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Target is NULL.
+    }
 
-	return getVersionResult;
+    return getVersionResult;
 }

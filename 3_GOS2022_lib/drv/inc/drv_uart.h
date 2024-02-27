@@ -62,13 +62,13 @@
  */
 typedef enum
 {
-	DRV_UART_INSTANCE_1 = 0,                 //!< USART1
-	DRV_UART_INSTANCE_2,                     //!< USART2
-	DRV_UART_INSTANCE_3,                     //!< USART3
-	DRV_UART_INSTANCE_4,                     //!< UART4
-	DRV_UART_INSTANCE_5,                     //!< UART5
-	DRV_UART_INSTANCE_6,                     //!< USART6
-	DRV_UART_NUM_OF_INSTANCES                //!< Number of UART instances.
+    DRV_UART_INSTANCE_1 = 0,                 //!< USART1
+    DRV_UART_INSTANCE_2,                     //!< USART2
+    DRV_UART_INSTANCE_3,                     //!< USART3
+    DRV_UART_INSTANCE_4,                     //!< UART4
+    DRV_UART_INSTANCE_5,                     //!< UART5
+    DRV_UART_INSTANCE_6,                     //!< USART6
+    DRV_UART_NUM_OF_INSTANCES                //!< Number of UART instances.
 }drv_uartPeriphInstance_t;
 
 /**
@@ -76,9 +76,9 @@ typedef enum
  */
 typedef enum
 {
-	DRV_UART_SYSMON_INSTANCE = 0,            //!< System monitoring instance.
-	DRV_UART_SHELL_INSTANCE,                 //!< Shell instance.
-	DRV_UART_TRACE_INSTANCE                  //!< Trace instance.
+    DRV_UART_SYSMON_INSTANCE = 0,            //!< System monitoring instance.
+    DRV_UART_SHELL_INSTANCE,                 //!< Shell instance.
+    DRV_UART_TRACE_INSTANCE                  //!< Trace instance.
 }drv_uartServiceInstance_t;
 
 /**
@@ -86,16 +86,16 @@ typedef enum
  */
 typedef struct
 {
-	drv_uartPeriphInstance_t periphInstance; //!< Periphery instance.
-	u32_t                    baudRate;       //!< Baud rate.
-	u32_t                    wordLength;     //!< Word length.
-	u32_t                    stopBits;       //!< Stop bits.
-	u32_t                    parity;         //!< Parity.
-	u32_t                    mode;           //!< Mode.
-	u32_t                    hwFlowControl;  //!< Hardware flow control.
-	u32_t                    overSampling;   //!< Over-sampling.
-	drv_dmaDescriptor_t*     dmaConfigRx;    //!< TODO
-	drv_dmaDescriptor_t*     dmaConfigTx;    //!< TODO
+    drv_uartPeriphInstance_t periphInstance; //!< Periphery instance.
+    u32_t                    baudRate;       //!< Baud rate.
+    u32_t                    wordLength;     //!< Word length.
+    u32_t                    stopBits;       //!< Stop bits.
+    u32_t                    parity;         //!< Parity.
+    u32_t                    mode;           //!< Mode.
+    u32_t                    hwFlowControl;  //!< Hardware flow control.
+    u32_t                    overSampling;   //!< Over-sampling.
+    drv_dmaDescriptor_t*     dmaConfigRx;    //!< TODO
+    drv_dmaDescriptor_t*     dmaConfigTx;    //!< TODO
 }drv_uartDescriptor_t;
 
 /*
@@ -104,6 +104,12 @@ typedef struct
 
 // TODO
 gos_result_t drv_uartInit (void_t);
+
+// TODO
+gos_result_t drv_uartInitInstance (u8_t uartInstanceIndex);
+
+// TODO
+gos_result_t drv_uartDeInitInstance (u8_t uartInstanceIndex);
 
 // TODO
 gos_result_t drv_uartTraceTransmit (char_t* message);

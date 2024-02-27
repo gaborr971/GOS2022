@@ -63,42 +63,42 @@ GOS_STATIC u32_t gos_drvFlashGetSectorSize (u32_t address);
  */
 gos_result_t gos_drvFlashErase (u32_t address, u32_t requiredSize)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t           flashEraseResult = GOS_ERROR;
-	FLASH_EraseInitTypeDef eraseInitStruct  = {0};
-	u32_t                  startSector      = 0u;
-	u32_t                  endSector        = 0u;
-	u32_t                  endSectorAddress = 0u;
-	u32_t                  sectorError      = 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t           flashEraseResult = GOS_ERROR;
+    FLASH_EraseInitTypeDef eraseInitStruct  = {0};
+    u32_t                  startSector      = 0u;
+    u32_t                  endSector        = 0u;
+    u32_t                  endSectorAddress = 0u;
+    u32_t                  sectorError      = 0u;
 
-	/*
-	 * Function code.
-	 */
-	(void_t) HAL_FLASH_Unlock();
+    /*
+     * Function code.
+     */
+    (void_t) HAL_FLASH_Unlock();
 
-	startSector = gos_drvFlashGetSector(address);
-	endSectorAddress = address + requiredSize - 1;
-	endSector = gos_drvFlashGetSector(endSectorAddress);
+    startSector = gos_drvFlashGetSector(address);
+    endSectorAddress = address + requiredSize - 1;
+    endSector = gos_drvFlashGetSector(endSectorAddress);
 
-	eraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
-	eraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
-	eraseInitStruct.Sector        = startSector;
-	eraseInitStruct.NbSectors     = (endSector - startSector) + 1;
+    eraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
+    eraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
+    eraseInitStruct.Sector        = startSector;
+    eraseInitStruct.NbSectors     = (endSector - startSector) + 1;
 
-	if (HAL_FLASHEx_Erase(&eraseInitStruct, &sectorError) == HAL_OK)
-	{
-		flashEraseResult = GOS_SUCCESS;
-	}
-	else
-	{
-		// Flash erase error.
-	}
+    if (HAL_FLASHEx_Erase(&eraseInitStruct, &sectorError) == HAL_OK)
+    {
+        flashEraseResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Flash erase error.
+    }
 
-	(void_t) HAL_FLASH_Lock();
+    (void_t) HAL_FLASH_Lock();
 
-	return flashEraseResult;
+    return flashEraseResult;
 }
 
 /*
@@ -106,38 +106,38 @@ gos_result_t gos_drvFlashErase (u32_t address, u32_t requiredSize)
  */
 gos_result_t gos_drvFlashWrite (u32_t address, void_t* pData, u32_t size)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t flashWriteResult = GOS_ERROR;
-	u32_t        addressCounter   = 0u;
-	u32_t        idx              = 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t flashWriteResult = GOS_ERROR;
+    u32_t        addressCounter   = 0u;
+    u32_t        idx              = 0u;
 
-	/*
-	 * Function code.
-	 */
-	(void_t) HAL_FLASH_Unlock();
+    /*
+     * Function code.
+     */
+    (void_t) HAL_FLASH_Unlock();
 
-	// Preset flag.
-	flashWriteResult = GOS_SUCCESS;
+    // Preset flag.
+    flashWriteResult = GOS_SUCCESS;
 
-	for (addressCounter = 0u; addressCounter < size; addressCounter+=4)
-	{
-		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, (address + addressCounter),
-			((u32_t*)pData)[idx++]) == HAL_OK)
-		{
-			// Programming OK, continue.
-		}
-		else
-		{
-			flashWriteResult = GOS_ERROR;
-			break;
-		}
-	}
+    for (addressCounter = 0u; addressCounter < size; addressCounter+=4)
+    {
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, (address + addressCounter),
+            ((u32_t*)pData)[idx++]) == HAL_OK)
+        {
+            // Programming OK, continue.
+        }
+        else
+        {
+            flashWriteResult = GOS_ERROR;
+            break;
+        }
+    }
 
-	(void_t) HAL_FLASH_Lock();
+    (void_t) HAL_FLASH_Lock();
 
-	return flashWriteResult;
+    return flashWriteResult;
 }
 
 /*
@@ -145,35 +145,35 @@ gos_result_t gos_drvFlashWrite (u32_t address, void_t* pData, u32_t size)
  */
 gos_result_t gos_drvFlashWriteWithoutLock (u32_t address, void_t* pData, u32_t size)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t flashWriteResult = GOS_ERROR;
-	u32_t        addressCounter   = 0u;
-	u32_t        idx              = 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t flashWriteResult = GOS_ERROR;
+    u32_t        addressCounter   = 0u;
+    u32_t        idx              = 0u;
 
-	/*
-	 * Function code.
-	 */
-	// Preset flag.
-	flashWriteResult = GOS_SUCCESS;
+    /*
+     * Function code.
+     */
+    // Preset flag.
+    flashWriteResult = GOS_SUCCESS;
 
-	for (addressCounter = 0u; addressCounter < size; addressCounter+=4)
-	{
-		if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, (address + addressCounter),
-			((u32_t*)pData)[idx++]) == HAL_OK)
-		{
-			// Programming OK, continue.
-			GOS_NOP;
-		}
-		else
-		{
-			flashWriteResult = GOS_ERROR;
-			break;
-		}
-	}
+    for (addressCounter = 0u; addressCounter < size; addressCounter+=4)
+    {
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, (address + addressCounter),
+            ((u32_t*)pData)[idx++]) == HAL_OK)
+        {
+            // Programming OK, continue.
+            GOS_NOP;
+        }
+        else
+        {
+            flashWriteResult = GOS_ERROR;
+            break;
+        }
+    }
 
-	return flashWriteResult;
+    return flashWriteResult;
 }
 
 /*
@@ -181,24 +181,24 @@ gos_result_t gos_drvFlashWriteWithoutLock (u32_t address, void_t* pData, u32_t s
  */
 gos_result_t gos_drvFlashUnlock (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t unlockResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t unlockResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (HAL_FLASH_Unlock() == HAL_OK)
-	{
-		unlockResult = GOS_SUCCESS;
-	}
-	else
-	{
-		// Error.
-	}
+    /*
+     * Function code.
+     */
+    if (HAL_FLASH_Unlock() == HAL_OK)
+    {
+        unlockResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Error.
+    }
 
-	return unlockResult;
+    return unlockResult;
 }
 
 /*
@@ -206,24 +206,24 @@ gos_result_t gos_drvFlashUnlock (void_t)
  */
 gos_result_t gos_drvFlashLock (void_t)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t lockResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t lockResult = GOS_ERROR;
 
-	/*
-	 * Function code.
-	 */
-	if (HAL_FLASH_Lock() == HAL_OK)
-	{
-		lockResult = GOS_SUCCESS;
-	}
-	else
-	{
-		// Error.
-	}
+    /*
+     * Function code.
+     */
+    if (HAL_FLASH_Lock() == HAL_OK)
+    {
+        lockResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Error.
+    }
 
-	return lockResult;
+    return lockResult;
 }
 
 /*
@@ -231,25 +231,25 @@ gos_result_t gos_drvFlashLock (void_t)
  */
 gos_result_t gos_drvFlashRead (u32_t address, void_t* pData, u32_t size)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t flashReadResult = GOS_SUCCESS;
-	u32_t        addressCounter  = 0u;
+    /*
+     * Local variables.
+     */
+    gos_result_t flashReadResult = GOS_SUCCESS;
+    u32_t        addressCounter  = 0u;
 
-	/*
-	 * Function code.
-	 */
-	(void_t) HAL_FLASH_Unlock();
+    /*
+     * Function code.
+     */
+    (void_t) HAL_FLASH_Unlock();
 
-	for (addressCounter = 0u; addressCounter < size; addressCounter++)
-	{
-		((u8_t*)pData)[addressCounter] = *(__IO u8_t*)(address + addressCounter);
-	}
+    for (addressCounter = 0u; addressCounter < size; addressCounter++)
+    {
+        ((u8_t*)pData)[addressCounter] = *(__IO u8_t*)(address + addressCounter);
+    }
 
-	(void_t) HAL_FLASH_Lock();
+    (void_t) HAL_FLASH_Lock();
 
-	return flashReadResult;
+    return flashReadResult;
 }
 
 /**
@@ -262,49 +262,49 @@ gos_result_t gos_drvFlashRead (u32_t address, void_t* pData, u32_t size)
  */
 GOS_STATIC u32_t gos_drvFlashGetSector (u32_t address)
 {
-	/*
-	 * Local variables.
-	 */
-	u32_t sector = 0u;
+    /*
+     * Local variables.
+     */
+    u32_t sector = 0u;
 
-	/*
-	 * Function code.
-	 */
+    /*
+     * Function code.
+     */
     if ((address <= 0x08003FFF) && (address >= 0x08000000))
     {
-    	sector = FLASH_SECTOR_0;
+        sector = FLASH_SECTOR_0;
     }
     else if ((address <= 0x08007FFF) && (address >= 0x08004000))
     {
-    	sector = FLASH_SECTOR_1;
+        sector = FLASH_SECTOR_1;
     }
     else if ((address <= 0x0800BFFF) && (address >= 0x08008000))
     {
-    	sector = FLASH_SECTOR_2;
+        sector = FLASH_SECTOR_2;
     }
     else if ((address <= 0x0800FFFF) && (address >= 0x0800C000))
     {
-    	sector = FLASH_SECTOR_3;
+        sector = FLASH_SECTOR_3;
     }
     else if ((address <= 0x0801FFFF) && (address >= 0x08010000))
     {
-    	sector = FLASH_SECTOR_4;
+        sector = FLASH_SECTOR_4;
     }
     else if ((address <= 0x0803FFFF) && (address >= 0x08020000))
     {
-    	sector = FLASH_SECTOR_5;
+        sector = FLASH_SECTOR_5;
     }
     else if ((address <= 0x0805FFFF) && (address >= 0x08040000))
     {
-    	sector = FLASH_SECTOR_6;
+        sector = FLASH_SECTOR_6;
     }
     else if ((address <= 0x0807FFFF) && (address >= 0x08060000))
     {
-    	sector = FLASH_SECTOR_7;
+        sector = FLASH_SECTOR_7;
     }
     else
     {
-    	// Wrong address.
+        // Wrong address.
     }
 
     return sector;
@@ -320,61 +320,61 @@ GOS_STATIC u32_t gos_drvFlashGetSector (u32_t address)
  */
 GOS_STATIC u32_t gos_drvFlashGetSectorSize (u32_t address)
 {
-	/*
-	 * Local variables.
-	 */
-	u32_t sector     = 0u;
-	u32_t sectorSize = 0u;
+    /*
+     * Local variables.
+     */
+    u32_t sector     = 0u;
+    u32_t sectorSize = 0u;
 
-	/*
-	 * Function code.
-	 */
-	sector = gos_drvFlashGetSectorSize(address);
+    /*
+     * Function code.
+     */
+    sector = gos_drvFlashGetSectorSize(address);
 
-	switch (sector)
-	{
-		case FLASH_SECTOR_0:
-		{
-			sectorSize = 0x4000u;
-			break;
-		}
-		case FLASH_SECTOR_1:
-		{
-			sectorSize = 0x4000u;
-			break;
-		}
-		case FLASH_SECTOR_2:
-		{
-			sectorSize = 0x4000u;
-			break;
-		}
-		case FLASH_SECTOR_3:
-		{
-			sectorSize = 0x10000u;
-			break;
-		}
-		case FLASH_SECTOR_4:
-		{
-			sectorSize = 0x20000u;
-			break;
-		}
-		case FLASH_SECTOR_5:
-		{
-			sectorSize = 0x20000u;
-			break;
-		}
-		case FLASH_SECTOR_6:
-		{
-			sectorSize = 0x20000u;
-			break;
-		}
-		case FLASH_SECTOR_7:
-		{
-			sectorSize = 0x20000u;
-			break;
-		}
-		default: break;
-	}
+    switch (sector)
+    {
+        case FLASH_SECTOR_0:
+        {
+            sectorSize = 0x4000u;
+            break;
+        }
+        case FLASH_SECTOR_1:
+        {
+            sectorSize = 0x4000u;
+            break;
+        }
+        case FLASH_SECTOR_2:
+        {
+            sectorSize = 0x4000u;
+            break;
+        }
+        case FLASH_SECTOR_3:
+        {
+            sectorSize = 0x10000u;
+            break;
+        }
+        case FLASH_SECTOR_4:
+        {
+            sectorSize = 0x20000u;
+            break;
+        }
+        case FLASH_SECTOR_5:
+        {
+            sectorSize = 0x20000u;
+            break;
+        }
+        case FLASH_SECTOR_6:
+        {
+            sectorSize = 0x20000u;
+            break;
+        }
+        case FLASH_SECTOR_7:
+        {
+            sectorSize = 0x20000u;
+            break;
+        }
+        default: break;
+    }
 
-	return sectorSize;
+    return sectorSize;
 }

@@ -60,8 +60,8 @@
  */
 typedef enum
 {
-	DRV_CRC_CHECK_OK   	   = 0b11001010, //!< CRC match.
-	DRV_CRC_CHECK_ERROR	   = 0b10011100  //!< CRC mismatch.
+    DRV_CRC_CHECK_OK       = 0b11001010, //!< CRC match.
+    DRV_CRC_CHECK_ERROR    = 0b10011100  //!< CRC mismatch.
 }drv_crcCheckResult_t;
 
 /**
@@ -69,8 +69,8 @@ typedef enum
  */
 typedef enum
 {
-	DRV_CHKSUM_CHECK_OK    = 0b10100111, //!< CHK match.
-	DRV_CHKSUM_CHECK_ERROR = 0b11101001  //!< CHK mismatch.
+    DRV_CHKSUM_CHECK_OK    = 0b10100111, //!< CHK match.
+    DRV_CHKSUM_CHECK_ERROR = 0b11101001  //!< CHK mismatch.
 }drv_chkSumCheckResult_t;
 
 /*

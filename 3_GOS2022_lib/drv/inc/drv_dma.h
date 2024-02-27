@@ -62,22 +62,22 @@
  */
 typedef enum
 {
-	DRV_DMA_1_STREAM_0 = 0,/**< DRV_DMA_1_STREAM_0 */
-	DRV_DMA_1_STREAM_1,    /**< DRV_DMA_1_STREAM_1 */
-	DRV_DMA_1_STREAM_2,    /**< DRV_DMA_1_STREAM_2 */
-	DRV_DMA_1_STREAM_3,    /**< DRV_DMA_1_STREAM_3 */
-	DRV_DMA_1_STREAM_4,    /**< DRV_DMA_1_STREAM_4 */
-	DRV_DMA_1_STREAM_5,    /**< DRV_DMA_1_STREAM_5 */
-	DRV_DMA_1_STREAM_6,    /**< DRV_DMA_1_STREAM_6 */
-	DRV_DMA_1_STREAM_7,    /**< DRV_DMA_1_STREAM_7 */
-	DRV_DMA_2_STREAM_0,    /**< DRV_DMA_2_STREAM_0 */
-	DRV_DMA_2_STREAM_1,    /**< DRV_DMA_2_STREAM_1 */
-	DRV_DMA_2_STREAM_2,    /**< DRV_DMA_2_STREAM_2 */
-	DRV_DMA_2_STREAM_3,    /**< DRV_DMA_2_STREAM_3 */
-	DRV_DMA_2_STREAM_4,    /**< DRV_DMA_2_STREAM_4 */
-	DRV_DMA_2_STREAM_5,    /**< DRV_DMA_2_STREAM_5 */
-	DRV_DMA_2_STREAM_6,    /**< DRV_DMA_2_STREAM_6 */
-	DRV_DMA_2_STREAM_7,    /**< DRV_DMA_2_STREAM_7 */
+    DRV_DMA_1_STREAM_0 = 0,                 //!< DRV_DMA_1_STREAM_0
+    DRV_DMA_1_STREAM_1,                     //!< DRV_DMA_1_STREAM_1
+    DRV_DMA_1_STREAM_2,                     //!< DRV_DMA_1_STREAM_2
+    DRV_DMA_1_STREAM_3,                     //!< DRV_DMA_1_STREAM_3
+    DRV_DMA_1_STREAM_4,                     //!< DRV_DMA_1_STREAM_4
+    DRV_DMA_1_STREAM_5,                     //!< DRV_DMA_1_STREAM_5
+    DRV_DMA_1_STREAM_6,                     //!< DRV_DMA_1_STREAM_6
+    DRV_DMA_1_STREAM_7,                     //!< DRV_DMA_1_STREAM_7
+    DRV_DMA_2_STREAM_0,                     //!< DRV_DMA_2_STREAM_0
+    DRV_DMA_2_STREAM_1,                     //!< DRV_DMA_2_STREAM_1
+    DRV_DMA_2_STREAM_2,                     //!< DRV_DMA_2_STREAM_2
+    DRV_DMA_2_STREAM_3,                     //!< DRV_DMA_2_STREAM_3
+    DRV_DMA_2_STREAM_4,                     //!< DRV_DMA_2_STREAM_4
+    DRV_DMA_2_STREAM_5,                     //!< DRV_DMA_2_STREAM_5
+    DRV_DMA_2_STREAM_6,                     //!< DRV_DMA_2_STREAM_6
+    DRV_DMA_2_STREAM_7,                     //!< DRV_DMA_2_STREAM_7
 }drv_dmaStream_t;
 
 /**
@@ -85,23 +85,32 @@ typedef enum
  */
 typedef struct
 {
-	drv_dmaStream_t    dmaStream;
-	DMA_HandleTypeDef  hdma;
-	u32_t              channel;
-	u32_t              direction;
-	u32_t              periphInc;
-	u32_t              memInc;
-	u32_t              periphDataAlignment;
-	u32_t              memDataAlignment;
-	u32_t              mode;
-	u32_t              priority;
-	u32_t              fifoMode;
+    drv_dmaStream_t    dmaStream;            //!< DMA stream.
+    DMA_HandleTypeDef  hdma;                //!< DMA handle.
+    u32_t              channel;             //!< Channel.
+    u32_t              direction;           //!< Direction.
+    u32_t              periphInc;           //!< Periphery address increment.
+    u32_t              memInc;              //!< Memory address increment.
+    u32_t              periphDataAlignment; //!< Periphery data alignment.
+    u32_t              memDataAlignment;    //!< Memory data alignment.
+    u32_t              mode;                //!< Mode.
+    u32_t              priority;            //!< Priority.
+    u32_t              fifoMode;            //!< FIFO mode.
 }drv_dmaDescriptor_t;
 
 /*
  * Function prototypes
  */
-// TODO
+/**
+ * @brief   Initializes the DMA periphery.
+ * @details Loops through the DMA configuration array and initializes the
+ *          peripheries based on the user configuration.
+ *
+ * @return  Result of initialization.
+ *
+ * @retval  GOS_SUCCESS : Initialization successful.
+ * @retval  GOS_ERROR   : Initialization failed.
+ */
 gos_result_t drv_dmaInit (void_t);
 
 #endif
