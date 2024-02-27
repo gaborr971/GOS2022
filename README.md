@@ -16,11 +16,12 @@ You can find the latest source code of the OS here: https://github.com/gaborr971
 # Example projects
 1. Minimal example project: https://github.com/gaborr971/GOS2022/tree/main/1_MinimalExampleProject
 2. System monitoring example project: https://github.com/gaborr971/GOS2022/tree/main/2_SystemMonitoringExampleProject
-3. GOS2022 library (under development): a unified library of drivers and service implementations for GOS-based projects.
+3. GOS2022 library (under development): https://github.com/gaborr971/GOS2022/tree/main/3_GOS2022_lib 
+		A unified library of drivers and service implementations for GOS-based projects.
 
 # Remarks
 Contribution to this project is encouraged and appriciated.
 If you have any questions or ideas, feel free to contact me: gaborr97@gmail.com
 
-Last updated: 2024-02-23
+Last updated: 2024-02-28
 (c) 2024, Ahmed Gazar
