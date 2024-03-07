@@ -296,7 +296,7 @@ GOS_INLINE gos_result_t gos_queuePut (
     }
 
     // Unlock mutex.
-    gos_mutexUnlock(&queueMutex);
+    (void_t) gos_mutexUnlock(&queueMutex);
 
     return queuePutResult;
 }
@@ -371,7 +371,7 @@ GOS_INLINE gos_result_t gos_queueGet (
     }
 
     // Unlock mutex.
-    gos_mutexUnlock(&queueMutex);
+    (void_t) gos_mutexUnlock(&queueMutex);
 
     return queueGetResult;
 }
@@ -387,8 +387,8 @@ GOS_INLINE gos_result_t gos_queuePeek (
     /*
      * Local variables.
      */
-    gos_result_t     queueGetResult = GOS_ERROR;
-    gos_queueIndex_t queueIndex     = 0u;
+    gos_result_t     queuePeekResult = GOS_ERROR;
+    gos_queueIndex_t queueIndex      = 0u;
 
     /*
      * Function code.
@@ -408,7 +408,7 @@ GOS_INLINE gos_result_t gos_queuePeek (
         if (readCounters[queueIndex] != writeCounters[queueIndex])
         {
             (void_t) memcpy(target, queues[queueIndex].queueElements[readCounters[queueIndex]].queueElementBytes, queues[queueIndex].queueElements[readCounters[queueIndex]].elementLength);
-            queueGetResult = GOS_SUCCESS;
+            queuePeekResult = GOS_SUCCESS;
         }
         else
         {
@@ -421,9 +421,9 @@ GOS_INLINE gos_result_t gos_queuePeek (
     }
 
     // Unlock mutex.
-    gos_mutexUnlock(&queueMutex);
+    (void_t) gos_mutexUnlock(&queueMutex);
 
-    return queueGetResult;
+    return queuePeekResult;
 }
 
 /*

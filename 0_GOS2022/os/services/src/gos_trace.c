@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_trace.c
 //! @author     Ahmed Gazar
-//! @date       2023-10-04
-//! @version    1.11
+//! @date       2024-03-08
+//! @version    1.12
 //!
 //! @brief      GOS trace service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_trace.h
@@ -39,6 +39,7 @@
 //                                          *    Privilege handling rework
 // 1.10       2023-09-14    Ahmed Gazar     +    Mutex initialization result processing added
 // 1.11       2023-10-04    Ahmed Gazar     *    Trace timestamp: milliseconds added
+// 1.12       2024-03-08    Ahmed Gazar     -    GOS_TRACE_DAEMON_POLL_TIME_MS removed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -74,11 +75,6 @@
 /*
  * Macros
  */
-/**
- * Trace daemon poll time [ms].
- */
-#define GOS_TRACE_DAEMON_POLL_TIME_MS    ( 20u )
-
 /**
  * Trace timestamp formatter.
  */
@@ -163,7 +159,7 @@ gos_result_t gos_traceInit (void_t)
      * Function code.
      */
     // Create trace queue and register trace daemon task.
-    if (gos_queueCreate(&traceQueue)                       != GOS_SUCCESS ||
+    if (gos_queueCreate(&traceQueue)                 != GOS_SUCCESS ||
         gos_taskRegister(&traceDaemonTaskDesc, NULL) != GOS_SUCCESS ||
         gos_mutexInit(&traceMutex) != GOS_SUCCESS
         )
@@ -192,8 +188,8 @@ GOS_INLINE gos_result_t gos_traceTrace (bool_t addTimeStamp, char_t* traceMessag
      * Function code.
      */
     if ((traceMessage                                          != NULL           ) &&
-        (gos_taskGetCurrentId(&callerTaskId)             == GOS_SUCCESS    ) &&
-        (gos_taskGetData(callerTaskId, &callerTaskDesc)  == GOS_SUCCESS    ) &&
+        (gos_taskGetCurrentId(&callerTaskId)                   == GOS_SUCCESS    ) &&
+        (gos_taskGetData(callerTaskId, &callerTaskDesc)        == GOS_SUCCESS    ) &&
         (((callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE ) ||
         (gos_kernelIsCallerIsr()                               == GOS_TRUE       )) &&
         (gos_mutexLock(&traceMutex, GOS_TRACE_MUTEX_TMO_MS)    == GOS_SUCCESS    )
@@ -262,7 +258,7 @@ GOS_INLINE gos_result_t gos_traceTrace (bool_t addTimeStamp, char_t* traceMessag
         }
         GOS_ATOMIC_EXIT
 
-        gos_mutexUnlock(&traceMutex);
+        (void_t) gos_mutexUnlock(&traceMutex);
     }
     else
     {
@@ -291,8 +287,8 @@ gos_result_t gos_traceTraceFormatted (bool_t addTimeStamp, GOS_CONST char_t* tra
      * Function code.
      */
     if ((traceFormat                                           != NULL           ) &&
-        (gos_taskGetCurrentId(&callerTaskId)             == GOS_SUCCESS    ) &&
-        (gos_taskGetData(callerTaskId, &callerTaskDesc)  == GOS_SUCCESS    ) &&
+        (gos_taskGetCurrentId(&callerTaskId)                   == GOS_SUCCESS    ) &&
+        (gos_taskGetData(callerTaskId, &callerTaskDesc)        == GOS_SUCCESS    ) &&
         (((callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_TRACE) == GOS_PRIV_TRACE ) ||
         (gos_kernelIsCallerIsr()                               == GOS_TRUE       )) &&
         (gos_mutexLock(&traceMutex, GOS_TRACE_MUTEX_TMO_MS)    == GOS_SUCCESS    )
@@ -361,7 +357,7 @@ gos_result_t gos_traceTraceFormatted (bool_t addTimeStamp, GOS_CONST char_t* tra
         }
         GOS_ATOMIC_EXIT
 
-        gos_mutexUnlock(&traceMutex);
+        (void_t) gos_mutexUnlock(&traceMutex);
     }
     else
     {
@@ -434,7 +430,7 @@ GOS_STATIC void_t gos_traceDaemonTask (void_t)
         {
             // Nothing to do.
         }
-        gos_mutexUnlock(&traceMutex);
+        (void_t) gos_mutexUnlock(&traceMutex);
         (void_t) gos_taskSuspend(traceDaemonTaskDesc.taskId);
     }
 }

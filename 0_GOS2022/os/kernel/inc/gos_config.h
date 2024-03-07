@@ -87,7 +87,7 @@
 /**
  * Priority inheritance flag for lock.
  */
-#define CFG_USE_PRIO_INHERITANCE        ( 1 )
+#define CFG_USE_PRIO_INHERITANCE        ( 0 )
 
 /*
  * General task parameters.
@@ -99,7 +99,7 @@
 /**
  * Maximum number of tasks.
  */
-#define CFG_TASK_MAX_NUMBER             ( 38 )
+#define CFG_TASK_MAX_NUMBER             ( 40 )
 
 /*
  * OS task stack sizes.

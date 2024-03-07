@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.h
 //! @author     Ahmed Gazar
-//! @date       2023-11-01
-//! @version    1.19
+//! @date       2024-02-27
+//! @version    1.20
 //!
 //! @brief      GOS kernel header.
 //! @details    The GOS kernel is the core of the GOS system. It contains the basic type
@@ -81,6 +81,7 @@
 //                                          *    GOS_ATOMIC_ENTER and GOS_ATOMIC_EXIT modified
 //                                          *    gos_kernel_privilege_t moved here
 //                                          -    taskIdEx removed from task descriptor structure
+// 1.20       2024-02-27    Ahmed Gazar     +    GOS_CONCAT_RESULT added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -314,6 +315,20 @@
  */
 #define GOS_PRIV_RESERVED_5            ( 1 << 8 )
 
+/**
+ * Result concatenating macro.
+ */
+#define GOS_CONCAT_RESULT(finalResult, currentResult)    {                                     \
+                                                             if (finalResult == GOS_SUCCESS)   \
+                                                             {                                 \
+                                                                  finalResult = currentResult; \
+                                                             }                                 \
+                                                             else                              \
+                                                             {                                 \
+                                                                 finalResult = GOS_ERROR;      \
+                                                             }                                 \
+                                                         }
+
 /*
  * Type definitions
  */
@@ -433,26 +448,26 @@ typedef enum
     GOS_UNPRIVILEGED    = 0b01001    //!< GOS_UNPRIVILEDGED
 }gos_kernel_privilege_t;
 
-typedef u16_t   gos_microsecond_t; //!< Microsecond type.
-typedef u16_t   gos_millisecond_t; //!< Millisecond type.
-typedef u8_t    gos_second_t;      //!< Second type.
-typedef u8_t    gos_minute_t;      //!< Minute type.
-typedef u8_t    gos_hour_t;        //!< Hour type.
-typedef u16_t   gos_day_t;         //!< Day type.
-typedef u8_t    gos_month_t;       //!< Month type.
-typedef u16_t   gos_year_t;        //!< Year type.
+typedef u16_t   gos_microsecond_t;   //!< Microsecond type.
+typedef u16_t   gos_millisecond_t;   //!< Millisecond type.
+typedef u8_t    gos_second_t;        //!< Second type.
+typedef u8_t    gos_minute_t;        //!< Minute type.
+typedef u8_t    gos_hour_t;          //!< Hour type.
+typedef u16_t   gos_day_t;           //!< Day type.
+typedef u8_t    gos_month_t;         //!< Month type.
+typedef u16_t   gos_year_t;          //!< Year type.
 
 /**
  * Run-time type.
  */
 typedef struct __attribute__((packed))
 {
-    gos_microsecond_t microseconds; //!< Microseconds.
-    gos_millisecond_t milliseconds; //!< Milliseconds.
-    gos_second_t      seconds;      //!< Seconds.
-    gos_minute_t      minutes;      //!< Minutes.
-    gos_hour_t        hours;        //!< Hours.
-    gos_day_t         days;         //!< Days.
+    gos_microsecond_t microseconds;  //!< Microseconds.
+    gos_millisecond_t milliseconds;  //!< Milliseconds.
+    gos_second_t      seconds;       //!< Seconds.
+    gos_minute_t      minutes;       //!< Minutes.
+    gos_hour_t        hours;         //!< Hours.
+    gos_day_t         days;          //!< Days.
 }gos_runtime_t;
 
 /**
