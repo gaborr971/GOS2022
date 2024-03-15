@@ -94,39 +94,87 @@ typedef struct
     u32_t                    mode;           //!< Mode.
     u32_t                    hwFlowControl;  //!< Hardware flow control.
     u32_t                    overSampling;   //!< Over-sampling.
-    drv_dmaDescriptor_t*     dmaConfigRx;    //!< TODO
-    drv_dmaDescriptor_t*     dmaConfigTx;    //!< TODO
+    drv_dmaDescriptor_t*     dmaConfigRx;    //!< RX DMA configuration.
+    drv_dmaDescriptor_t*     dmaConfigTx;    //!< TX DMA configuration.
 }drv_uartDescriptor_t;
+
+/**
+ * UART service timeout configuration type.
+ */
+typedef struct
+{
+	u32_t traceMutexTmo;                     //!< Trace mutex lock timeout.
+	u32_t traceTriggerTmo;                   //!< Trace trigger wait timeout.
+	u32_t traceUnsafeTransmitTmo;            //!< Trace unsafe transmit timeout.
+	u32_t shellRxMutexTmo;                   //!< Shell receive mutex lock timeout.
+	u32_t shellRxTriggerTmo;                 //!< Shell receive trigger wait timeout.
+	u32_t shellTxMutexTmo;                   //!< Shell transmit mutex lock timeout.
+	u32_t shellTxTriggerTmo;                 //!< Shell transmit trigger wait timeout.
+	u32_t sysmonRxMutexTmo;                  //!< Sysmon receive mutex lock timeout.
+	u32_t sysmonRxTriggerTmo;                //!< Sysmon receive trigger wait timeout.
+	u32_t sysmonTxMutexTmo;                  //!< Sysmon transmit mutex lock timeout.
+	u32_t sysmonTxTriggerTmo;                //!< Sysmon transmit trigger wait timeout.
+}drv_uartServiceTimeoutConfig_t;
 
 /*
  * Function prototypes
  */
 
-// TODO
+/**
+ * @brief   Initializes the registered UART peripheries.
+ * @details Loops through the UART configuration array and initializes peripheries
+ *          defined by the user (externally).
+ *
+ * @return  Result of initialization.
+ *
+ * @retval  GOS_SUCCESS : Initialization successful.
+ * @retval  GOS_ERROR   : Configuration array is NULL or some peripheries
+ *                        could not be initialized.
+ */
 gos_result_t drv_uartInit (void_t);
 
 // TODO
-gos_result_t drv_uartInitInstance (u8_t uartInstanceIndex);
+gos_result_t drv_uartInitInstance (
+		u8_t uartInstanceIndex
+		);
 
 // TODO
-gos_result_t drv_uartDeInitInstance (u8_t uartInstanceIndex);
+gos_result_t drv_uartDeInitInstance (
+		u8_t uartInstanceIndex
+		);
 
 // TODO
-gos_result_t drv_uartTraceTransmit (char_t* message);
+gos_result_t drv_uartTransmitBlocking (
+		drv_uartPeriphInstance_t instance, u8_t* message,
+		u16_t                    size,     u32_t timeout
+		);
 
 // TODO
-gos_result_t drv_uartTraceTransmitUnsafe (char_t* message);
+gos_result_t drv_uartTransmitDMA (
+		drv_uartPeriphInstance_t instance,  u8_t* message,
+		u16_t                    size,      u32_t mutexTmo,
+		u32_t                    triggerTmo
+		);
 
 // TODO
-gos_result_t drv_uartShellReceiveChar (char_t* buffer);
+gos_result_t drv_uartReceiveDMA (
+		drv_uartPeriphInstance_t instance,  u8_t* message,
+		u16_t                    size,      u32_t mutexTmo,
+		u32_t                    triggerTmo
+		);
 
 // TODO
-gos_result_t drv_uartShellTransmitString (char_t* pString);
+gos_result_t drv_uartTransmitIT (
+		drv_uartPeriphInstance_t instance,  u8_t* message,
+		u16_t                    size,      u32_t mutexTmo,
+		u32_t                    triggerTmo
+		);
 
 // TODO
-gos_result_t drv_uartSysmonTransmit (u8_t* data, u16_t size);
-
-// TODO
-gos_result_t drv_uartSysmonReceive (u8_t* data, u16_t size);
+gos_result_t drv_uartReceiveIT (
+		drv_uartPeriphInstance_t instance,  u8_t* message,
+		u16_t                    size,      u32_t mutexTmo,
+		u32_t                    triggerTmo
+		);
 
 #endif

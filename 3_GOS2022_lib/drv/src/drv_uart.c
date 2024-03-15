@@ -111,6 +111,11 @@ GOS_EXTERN u32_t                              uartConfigSize;
  */
 GOS_EXTERN GOS_CONST drv_uartPeriphInstance_t uartServiceConfig [];
 
+/**
+ * UART service timeout configuration.
+ */
+GOS_EXTERN drv_uartServiceTimeoutConfig_t     uartServiceTmoConfig;
+
 /*
  * Function: drv_uartInit
  */
@@ -119,9 +124,8 @@ gos_result_t drv_uartInit (void_t)
     /*
      * Local variables.
      */
-    gos_result_t             uartDriverInitResult = GOS_SUCCESS;
-    drv_uartPeriphInstance_t instance             = 0u;
-    u8_t                     uartIdx              = 0u;
+    gos_result_t uartDriverInitResult = GOS_SUCCESS;
+    u8_t         uartIdx              = 0u;
 
     /*
      * Function code.
@@ -136,6 +140,7 @@ gos_result_t drv_uartInit (void_t)
     else
     {
         // Configuration array is NULL pointer.
+    	uartDriverInitResult = GOS_ERROR;
     }
 
     return uartDriverInitResult;
@@ -228,285 +233,186 @@ gos_result_t drv_uartDeInitInstance (u8_t uartInstanceIndex)
 }
 
 /*
- * Function: drv_uartTraceTransmit
+ * Function: drv_uartTransmitBlocking
  */
-GOS_INLINE gos_result_t drv_uartTraceTransmit (char_t* message)
+GOS_INLINE gos_result_t drv_uartTransmitBlocking (drv_uartPeriphInstance_t instance, u8_t* message, u16_t size, u32_t timeout)
 {
     /*
      * Local variables.
      */
-    gos_result_t             uartTransmitResult = GOS_ERROR;
-    drv_uartPeriphInstance_t instance           = 0u;
+    gos_result_t uartTransmitResult = GOS_ERROR;
 
     /*
      * Function code.
      */
-    if (uartServiceConfig != NULL)
+    GOS_DISABLE_SCHED
+
+    if (HAL_UART_Abort(&huarts[instance]) == HAL_OK &&
+        HAL_UART_Transmit(&huarts[instance], message, size, timeout) == HAL_OK)
     {
-        instance = uartServiceConfig[DRV_UART_TRACE_INSTANCE];
-
-        if (gos_mutexLock(&uartTxMutexes[instance], 2000u) == GOS_SUCCESS)
-        {
-            if (HAL_UART_Transmit_DMA(&huarts[instance], (u8_t*)message, strlen(message)) == HAL_OK &&
-                gos_triggerWait(&uartTxReadyTriggers[instance], 1, GOS_TRIGGER_ENDLESS_TMO) == GOS_SUCCESS &&
-                gos_triggerReset(&uartTxReadyTriggers[instance]) == GOS_SUCCESS)
-            {
-                /*
-                 * At this point the caller task is unblocked,
-                 * transmission ready, we can return.
-                 */
-                uartTransmitResult = GOS_SUCCESS;
-            }
-            else
-            {
-                // Transmit or trigger error.
-            }
-        }
-        else
-        {
-            // Mutex error.
-        }
-
-        (void_t) gos_mutexUnlock(&uartTxMutexes[instance]);
+        uartTransmitResult = GOS_SUCCESS;
     }
     else
     {
-        // Configuration array is NULL.
+        // Error.
     }
+    GOS_ENABLE_SCHED
 
     return uartTransmitResult;
 }
 
 /*
- * Function: drv_uartTraceTransmitUnsafe
+ * Function: drv_uartTransmitDMA
  */
-GOS_INLINE gos_result_t drv_uartTraceTransmitUnsafe (char_t* message)
+GOS_INLINE gos_result_t drv_uartTransmitDMA (drv_uartPeriphInstance_t instance, u8_t* message, u16_t size, u32_t mutexTmo, u32_t triggerTmo)
 {
     /*
      * Local variables.
      */
-    gos_result_t             uartTransmitResult = GOS_ERROR;
-    drv_uartPeriphInstance_t instance           = 0u;
+    gos_result_t uartTransmitResult = GOS_ERROR;
 
     /*
      * Function code.
      */
-    if (uartServiceConfig != NULL)
+    if (gos_mutexLock(&uartTxMutexes[instance], mutexTmo) == GOS_SUCCESS)
     {
-        instance = uartServiceConfig[DRV_UART_TRACE_INSTANCE];
-        GOS_DISABLE_SCHED
-
-        if (HAL_UART_Abort(&huarts[instance]) == HAL_OK &&
-            HAL_UART_Transmit(&huarts[instance], (u8_t*)message, strlen(message), 1000) == HAL_OK)
+        if (HAL_UART_Transmit_DMA(&huarts[instance], message, size) == HAL_OK &&
+            gos_triggerWait(&uartTxReadyTriggers[instance], 1, triggerTmo) == GOS_SUCCESS &&
+            gos_triggerReset(&uartTxReadyTriggers[instance]) == GOS_SUCCESS)
         {
+            /*
+             * At this point the caller task is unblocked,
+             * transmission ready, we can return.
+             */
             uartTransmitResult = GOS_SUCCESS;
         }
         else
         {
-            // Error.
+            // Transmit or trigger error.
         }
-        GOS_ENABLE_SCHED
     }
     else
     {
-        // Configuration array is NULL.
+        // Mutex error.
     }
+
+    (void_t) gos_mutexUnlock(&uartTxMutexes[instance]);
 
     return uartTransmitResult;
 }
 
 /*
- * Function: drv_uartShellReceiveChar
+ * Function: drv_uartReceiveDMA
  */
-GOS_INLINE gos_result_t drv_uartShellReceiveChar (char_t* buffer)
+GOS_INLINE gos_result_t drv_uartReceiveDMA (drv_uartPeriphInstance_t instance, u8_t* message, u16_t size, u32_t mutexTmo, u32_t triggerTmo)
 {
     /*
      * Local variables.
      */
-    gos_result_t             uartReceiveResult  = GOS_ERROR;
-    drv_uartPeriphInstance_t instance           = 0u;
+    gos_result_t uartReceiveResult = GOS_ERROR;
 
     /*
      * Function code.
      */
-    if (uartServiceConfig != NULL)
+    if (gos_mutexLock(&uartRxMutexes[instance], mutexTmo) == GOS_SUCCESS)
     {
-        instance = uartServiceConfig[DRV_UART_SHELL_INSTANCE];
-
-        if (gos_mutexLock(&uartRxMutexes[instance], GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
+        if (HAL_UART_Receive_DMA(&huarts[instance], message, size) == HAL_OK &&
+            gos_triggerWait(&uartRxReadyTriggers[instance], 1, triggerTmo) == GOS_SUCCESS &&
+            gos_triggerReset(&uartRxReadyTriggers[instance]) == GOS_SUCCESS)
         {
-            if (HAL_UART_Receive_IT(&huarts[instance], (u8_t*)buffer, sizeof(char_t)) == HAL_OK &&
-                gos_triggerWait(&uartRxReadyTriggers[instance], 1, GOS_TRIGGER_ENDLESS_TMO) == GOS_SUCCESS &&
-                gos_triggerReset(&uartRxReadyTriggers[instance]) == GOS_SUCCESS)
-            {
-                /*
-                 * At this point the caller task is unblocked,
-                 * reception ready, we can return.
-                 */
-                uartReceiveResult = GOS_SUCCESS;
-            }
-            else
-            {
-                // Receive or trigger error.
-            }
+            uartReceiveResult = GOS_SUCCESS;
         }
         else
         {
-            // Mutex error.
+            HAL_UART_Abort_IT(&huarts[instance]);
         }
-
-        (void_t) gos_mutexUnlock(&uartRxMutexes[instance]);
     }
     else
     {
-        // Configuration array is NULL.
+        // Mutex error.
     }
+
+    (void_t) gos_mutexUnlock(&uartRxMutexes[instance]);
 
     return uartReceiveResult;
 }
 
 /*
- * Function: drv_uartShellTransmitString
+ * Function: drv_uartTransmitIT
  */
-GOS_INLINE gos_result_t drv_uartShellTransmitString (char_t* pString)
+GOS_INLINE gos_result_t drv_uartTransmitIT (drv_uartPeriphInstance_t instance, u8_t* message, u16_t size, u32_t mutexTmo, u32_t triggerTmo)
 {
     /*
      * Local variables.
      */
-    gos_result_t             uartTransmitResult = GOS_ERROR;
-    drv_uartPeriphInstance_t instance           = 0u;
+    gos_result_t uartTransmitResult = GOS_ERROR;
 
     /*
      * Function code.
      */
-    if (uartServiceConfig != NULL)
+    if (gos_mutexLock(&uartTxMutexes[instance], mutexTmo) == GOS_SUCCESS)
     {
-        instance = uartServiceConfig[DRV_UART_SHELL_INSTANCE];
-
-        if (gos_mutexLock(&uartTxMutexes[instance], 2000u) == GOS_SUCCESS)
+        if (HAL_UART_Transmit_IT(&huarts[instance], message, size) == HAL_OK &&
+            gos_triggerWait(&uartTxReadyTriggers[instance], 1, triggerTmo) == GOS_SUCCESS &&
+            gos_triggerReset(&uartTxReadyTriggers[instance]) == GOS_SUCCESS)
         {
-            if (HAL_UART_Transmit_IT(&huarts[instance], (u8_t*)pString, strlen(pString)) == HAL_OK &&
-                gos_triggerWait(&uartTxReadyTriggers[instance], 1, GOS_TRIGGER_ENDLESS_TMO) == GOS_SUCCESS &&
-                gos_triggerReset(&uartTxReadyTriggers[instance]) == GOS_SUCCESS)
-            {
-                /*
-                 * At this point the caller task is unblocked,
-                 * reception ready, we can return.
-                 */
-                uartTransmitResult = GOS_SUCCESS;
-            }
-            else
-            {
-                // Transmit or trigger error.
-            }
+            /*
+             * At this point the caller task is unblocked,
+             * transmission ready, we can return.
+             */
+            uartTransmitResult = GOS_SUCCESS;
         }
         else
         {
-            // Mutex error.
+            // Transmit or trigger error.
         }
-
-        (void_t) gos_mutexUnlock(&uartTxMutexes[instance]);
     }
     else
     {
-        // Configuration array is NULL.
+        // Mutex error.
     }
+
+    (void_t) gos_mutexUnlock(&uartTxMutexes[instance]);
 
     return uartTransmitResult;
 }
 
 /*
- * Function: drv_uartSysmonTransmit
+ * Function: drv_uartReceiveIT
  */
-GOS_INLINE gos_result_t drv_uartSysmonTransmit (u8_t* data, u16_t size)
+GOS_INLINE gos_result_t drv_uartReceiveIT (drv_uartPeriphInstance_t instance, u8_t* message, u16_t size, u32_t mutexTmo, u32_t triggerTmo)
 {
     /*
      * Local variables.
      */
-    gos_result_t             uartTransmitResult = GOS_ERROR;
-    drv_uartPeriphInstance_t instance           = 0u;
+    gos_result_t uartReceiveResult  = GOS_ERROR;
 
     /*
      * Function code.
      */
-    if (uartServiceConfig != NULL)
+    if (gos_mutexLock(&uartRxMutexes[instance], mutexTmo) == GOS_SUCCESS)
     {
-        instance = uartServiceConfig[DRV_UART_SYSMON_INSTANCE];
-
-        if (gos_mutexLock(&uartTxMutexes[instance], 5000u) == GOS_SUCCESS)
+        if (HAL_UART_Receive_IT(&huarts[instance], message, size) == HAL_OK &&
+            gos_triggerWait(&uartRxReadyTriggers[instance], 1, triggerTmo) == GOS_SUCCESS &&
+            gos_triggerReset(&uartRxReadyTriggers[instance]) == GOS_SUCCESS)
         {
-            if (HAL_UART_Transmit_IT(&huarts[instance], data, size) == HAL_OK &&
-                gos_triggerWait(&uartTxReadyTriggers[instance], 1, GOS_TRIGGER_ENDLESS_TMO) == GOS_SUCCESS &&
-                gos_triggerReset(&uartTxReadyTriggers[instance]) == GOS_SUCCESS)
-            {
-                /*
-                 * At this point the caller task is unblocked,
-                 * reception ready, we can return.
-                 */
-                uartTransmitResult = GOS_SUCCESS;
-            }
-            else
-            {
-                // Transmit or trigger error.
-            }
+            /*
+             * At this point the caller task is unblocked,
+             * reception ready, we can return.
+             */
+            uartReceiveResult = GOS_SUCCESS;
         }
         else
         {
-            // Mutex error.
+            // Receive or trigger error.
         }
-
-        (void_t) gos_mutexUnlock(&uartTxMutexes[instance]);
     }
     else
     {
-        // Configuration array is NULL.
+        // Mutex error.
     }
 
-    return uartTransmitResult;
-}
-
-/*
- * Function: drv_uartSysmonReceive
- */
-GOS_INLINE gos_result_t drv_uartSysmonReceive (u8_t* data, u16_t size)
-{
-    /*
-     * Local variables.
-     */
-    gos_result_t             uartReceiveResult  = GOS_ERROR;
-    drv_uartPeriphInstance_t instance           = 0u;
-
-    /*
-     * Function code.
-     */
-    if (uartServiceConfig != NULL)
-    {
-        instance = uartServiceConfig[DRV_UART_SYSMON_INSTANCE];
-
-        if (gos_mutexLock(&uartRxMutexes[instance], GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS)
-        {
-            if (HAL_UART_Receive_DMA(&huarts[instance], data, size) == HAL_OK &&
-                gos_triggerWait(&uartRxReadyTriggers[instance], 1, 500) == GOS_SUCCESS &&
-                gos_triggerReset(&uartRxReadyTriggers[instance]) == GOS_SUCCESS)
-            {
-                uartReceiveResult = GOS_SUCCESS;
-            }
-            else
-            {
-                HAL_UART_Abort_IT(&huarts[instance]);
-            }
-        }
-        else
-        {
-            // Mutex error.
-        }
-
-        (void_t) gos_mutexUnlock(&uartRxMutexes[instance]);
-    }
-    else
-    {
-        // Configuration array is NULL.
-    }
+    (void_t) gos_mutexUnlock(&uartRxMutexes[instance]);
 
     return uartReceiveResult;
 }
@@ -688,34 +594,4 @@ void_t HAL_UART_MspInit (UART_HandleTypeDef* pHuart)
             // Continue.
         }
     }
-
-
-      if(pHuart->Instance==USART2)
-      {
-        HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
-        HAL_NVIC_EnableIRQ(USART2_IRQn);
-
-        HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
-        HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
-      }
-      else if (pHuart->Instance == UART5)
-      {
-            /* UART5 interrupt Init */
-            HAL_NVIC_SetPriority(UART5_IRQn, 0, 0);
-            HAL_NVIC_EnableIRQ(UART5_IRQn);
-
-            /* DMA1_Stream0_IRQn interrupt configuration */
-            HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
-            HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
-
-            /* DMA1_Stream7_IRQn interrupt configuration */
-            HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 0, 0);
-            HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
-      }
-      else if (pHuart->Instance == USART1)
-      {
-            /* USART1 interrupt Init */
-            HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
-            HAL_NVIC_EnableIRQ(USART1_IRQn);
-      }
 }
