@@ -71,7 +71,7 @@ typedef enum
 {
     DRV_CHKSUM_CHECK_OK    = 0b10100111, //!< CHK match.
     DRV_CHKSUM_CHECK_ERROR = 0b11101001  //!< CHK mismatch.
-}drv_chkSumCheckResult_t;
+}drv_crcChkSumCheckResult_t;
 
 /*
  * Function prototypes
@@ -89,7 +89,7 @@ typedef enum
  * @retval  GOS_SUCCESS : Calculation successful.
  * @retval  GOS_ERROR   : Calculation error (pData or pCrc is NULL).
  */
-gos_result_t gos_drvCrcGetCrc8  (u8_t* pData, u32_t dataSize, u8_t*  pCrc);
+gos_result_t drv_crcGetCrc8  (u8_t* pData, u32_t dataSize, u8_t*  pCrc);
 
 /**
  * @brief   16-bit CRC calculator.
@@ -104,7 +104,7 @@ gos_result_t gos_drvCrcGetCrc8  (u8_t* pData, u32_t dataSize, u8_t*  pCrc);
  * @retval  GOS_SUCCESS : Calculation successful.
  * @retval  GOS_ERROR   : Calculation error (pData or pCrc is NULL).
  */
-gos_result_t gos_drvCrcGetCrc16 (u8_t* pData, u32_t dataSize, u16_t* pCrc);
+gos_result_t drv_crcGetCrc16 (u8_t* pData, u32_t dataSize, u16_t* pCrc);
 
 /**
  * @brief   32-bit CRC calculator.
@@ -119,7 +119,7 @@ gos_result_t gos_drvCrcGetCrc16 (u8_t* pData, u32_t dataSize, u16_t* pCrc);
  * @retval  GOS_SUCCESS : Calculation successful.
  * @retval  GOS_ERROR   : Calculation error (pData or pCrc is NULL).
  */
-gos_result_t gos_drvCrcGetCrc32 (u8_t* pData, u32_t dataSize, u32_t* pCrc);
+gos_result_t drv_crcGetCrc32 (u8_t* pData, u32_t dataSize, u32_t* pCrc);
 
 /**
  * @brief   64-bit CRC calculator.
@@ -134,7 +134,7 @@ gos_result_t gos_drvCrcGetCrc32 (u8_t* pData, u32_t dataSize, u32_t* pCrc);
  * @retval  GOS_SUCCESS : Calculation successful.
  * @retval  GOS_ERROR   : Calculation error (pData or pCrc is NULL).
  */
-gos_result_t gos_drvCrcGetCrc64 (u8_t* pData, u32_t dataSize, u64_t* pCrc);
+gos_result_t drv_crcGetCrc64 (u8_t* pData, u32_t dataSize, u64_t* pCrc);
 
 /**
  * @brief   8-bit CRC checker.
@@ -151,7 +151,7 @@ gos_result_t gos_drvCrcGetCrc64 (u8_t* pData, u32_t dataSize, u64_t* pCrc);
  * @retval  DRV_CRC_CHECK_OK    : CRC match.
  * @retval  DRV_CRC_CHECK_ERROR : CRC mismatch or pData is NULL.
  */
-drv_crcCheckResult_t gos_drvCheckCrc8  (u8_t* pData, u32_t dataSize, u8_t  expCrc, u8_t*  calcCrc);
+drv_crcCheckResult_t drv_crcCheckCrc8  (u8_t* pData, u32_t dataSize, u8_t  expCrc, u8_t*  calcCrc);
 
 /**
  * @brief   16-bit CRC checker.
@@ -168,7 +168,7 @@ drv_crcCheckResult_t gos_drvCheckCrc8  (u8_t* pData, u32_t dataSize, u8_t  expCr
  * @retval  DRV_CRC_CHECK_OK    : CRC match.
  * @retval  DRV_CRC_CHECK_ERROR : CRC mismatch or pData is NULL.
  */
-drv_crcCheckResult_t gos_drvCheckCrc16 (u8_t* pData, u32_t dataSize, u16_t expCrc, u16_t* calcCrc);
+drv_crcCheckResult_t drv_crcCheckCrc16 (u8_t* pData, u32_t dataSize, u16_t expCrc, u16_t* calcCrc);
 
 /**
  * @brief   32-bit CRC checker.
@@ -185,7 +185,7 @@ drv_crcCheckResult_t gos_drvCheckCrc16 (u8_t* pData, u32_t dataSize, u16_t expCr
  * @retval  DRV_CRC_CHECK_OK    : CRC match.
  * @retval  DRV_CRC_CHECK_ERROR : CRC mismatch or pData is NULL.
  */
-drv_crcCheckResult_t gos_drvCheckCrc32 (u8_t* pData, u32_t dataSize, u32_t expCrc, u32_t* calcCrc);
+drv_crcCheckResult_t drv_crcCheckCrc32 (u8_t* pData, u32_t dataSize, u32_t expCrc, u32_t* calcCrc);
 
 /**
  * @brief   64-bit CRC checker.
@@ -202,7 +202,7 @@ drv_crcCheckResult_t gos_drvCheckCrc32 (u8_t* pData, u32_t dataSize, u32_t expCr
  * @retval  DRV_CRC_CHECK_OK    : CRC match.
  * @retval  DRV_CRC_CHECK_ERROR : CRC mismatch or pData is NULL.
  */
-drv_crcCheckResult_t gos_drvCheckCrc64 (u8_t* pData, u32_t dataSize, u64_t expCrc, u64_t* calcCrc);
+drv_crcCheckResult_t drv_crcCheckCrc64 (u8_t* pData, u32_t dataSize, u64_t expCrc, u64_t* calcCrc);
 
 /**
  * @brief   8-bit CHK calculator.
@@ -217,7 +217,7 @@ drv_crcCheckResult_t gos_drvCheckCrc64 (u8_t* pData, u32_t dataSize, u64_t expCr
  * @retval  GOS_SUCCESS : Calculation successful.
  * @retval  GOS_ERROR   : Calculation error (pData or pChkSum is NULL).
  */
-gos_result_t gos_drvCrcGetChkSum8  (u8_t* pData, u32_t dataSize, u8_t*  pChkSum);
+gos_result_t drv_crcGetChkSum8 (u8_t* pData, u32_t dataSize, u8_t*  pChkSum);
 
 /**
  * @brief   16-bit CHK calculator.
@@ -232,7 +232,7 @@ gos_result_t gos_drvCrcGetChkSum8  (u8_t* pData, u32_t dataSize, u8_t*  pChkSum)
  * @retval  GOS_SUCCESS : Calculation successful.
  * @retval  GOS_ERROR   : Calculation error (pData or pChkSum is NULL).
  */
-gos_result_t gos_drvCrcGetChkSum16 (u8_t* pData, u32_t dataSize, u16_t* pChkSum);
+gos_result_t drv_crcGetChkSum16 (u8_t* pData, u32_t dataSize, u16_t* pChkSum);
 
 /**
  * @brief   32-bit CHK calculator.
@@ -247,7 +247,7 @@ gos_result_t gos_drvCrcGetChkSum16 (u8_t* pData, u32_t dataSize, u16_t* pChkSum)
  * @retval  GOS_SUCCESS : Calculation successful.
  * @retval  GOS_ERROR   : Calculation error (pData or pChkSum is NULL).
  */
-gos_result_t gos_drvCrcGetChkSum32 (u8_t* pData, u32_t dataSize, u32_t* pChkSum);
+gos_result_t drv_crcGetChkSum32 (u8_t* pData, u32_t dataSize, u32_t* pChkSum);
 
 /**
  * @brief   64-bit CHK calculator.
@@ -262,7 +262,7 @@ gos_result_t gos_drvCrcGetChkSum32 (u8_t* pData, u32_t dataSize, u32_t* pChkSum)
  * @retval  GOS_SUCCESS : Calculation successful.
  * @retval  GOS_ERROR   : Calculation error (pData or pChkSum is NULL).
  */
-gos_result_t gos_drvCrcGetChkSum64 (u8_t* pData, u32_t dataSize, u64_t* pChkSum);
+gos_result_t drv_crcGetChkSum64 (u8_t* pData, u32_t dataSize, u64_t* pChkSum);
 
 /**
  * @brief   8-bit CHK checker.
@@ -279,7 +279,7 @@ gos_result_t gos_drvCrcGetChkSum64 (u8_t* pData, u32_t dataSize, u64_t* pChkSum)
  * @retval  DRV_CHKSUM_CHECK_OK    : CHK match.
  * @retval  DRV_CHKSUM_CHECK_ERROR : CHK mismatch or pData is NULL.
  */
-drv_chkSumCheckResult_t gos_drvCheckChkSum8  (u8_t* pData, u32_t dataSize, u8_t  expChkSum, u8_t*  calcChkSum);
+drv_crcChkSumCheckResult_t drv_crcCheckChkSum8 (u8_t* pData, u32_t dataSize, u8_t  expChkSum, u8_t*  calcChkSum);
 
 /**
  * @brief   16-bit CHK checker.
@@ -296,7 +296,7 @@ drv_chkSumCheckResult_t gos_drvCheckChkSum8  (u8_t* pData, u32_t dataSize, u8_t 
  * @retval  DRV_CHKSUM_CHECK_OK    : CHK match.
  * @retval  DRV_CHKSUM_CHECK_ERROR : CHK mismatch or pData is NULL.
  */
-drv_chkSumCheckResult_t gos_drvCheckChkSum16 (u8_t* pData, u32_t dataSize, u16_t expChkSum, u16_t* calcChkSum);
+drv_crcChkSumCheckResult_t drv_crcCheckChkSum16 (u8_t* pData, u32_t dataSize, u16_t expChkSum, u16_t* calcChkSum);
 
 /**
  * @brief   32-bit CHK checker.
@@ -313,7 +313,7 @@ drv_chkSumCheckResult_t gos_drvCheckChkSum16 (u8_t* pData, u32_t dataSize, u16_t
  * @retval  DRV_CHKSUM_CHECK_OK    : CHK match.
  * @retval  DRV_CHKSUM_CHECK_ERROR : CHK mismatch or pData is NULL.
  */
-drv_chkSumCheckResult_t gos_drvCheckChkSum32 (u8_t* pData, u32_t dataSize, u32_t expChkSum, u32_t* calcChkSum);
+drv_crcChkSumCheckResult_t drv_crcCheckChkSum32 (u8_t* pData, u32_t dataSize, u32_t expChkSum, u32_t* calcChkSum);
 
 /**
  * @brief   64-bit CHK checker.
@@ -330,6 +330,6 @@ drv_chkSumCheckResult_t gos_drvCheckChkSum32 (u8_t* pData, u32_t dataSize, u32_t
  * @retval  DRV_CHKSUM_CHECK_OK    : CHK match.
  * @retval  DRV_CHKSUM_CHECK_ERROR : CHK mismatch or pData is NULL.
  */
-drv_chkSumCheckResult_t gos_drvCheckChkSum64 (u8_t* pData, u32_t dataSize, u64_t expChkSum, u64_t* calcChkSum);
+drv_crcChkSumCheckResult_t drv_crcCheckChkSum64 (u8_t* pData, u32_t dataSize, u64_t expChkSum, u64_t* calcChkSum);
 
 #endif

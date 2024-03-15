@@ -55,13 +55,13 @@
 /*
  * Function prototypes.
  */
-GOS_STATIC u32_t gos_drvFlashGetSector     (u32_t address);
-GOS_STATIC u32_t gos_drvFlashGetSectorSize (u32_t address);
+GOS_STATIC u32_t drv_flashGetSector     (u32_t address);
+GOS_STATIC u32_t drv_flashGetSectorSize (u32_t address);
 
 /*
- * Function: gos_drvFlashErase
+ * Function: drv_flashErase
  */
-gos_result_t gos_drvFlashErase (u32_t address, u32_t requiredSize)
+gos_result_t drv_flashErase (u32_t address, u32_t requiredSize)
 {
     /*
      * Local variables.
@@ -78,9 +78,9 @@ gos_result_t gos_drvFlashErase (u32_t address, u32_t requiredSize)
      */
     (void_t) HAL_FLASH_Unlock();
 
-    startSector = gos_drvFlashGetSector(address);
+    startSector = drv_flashGetSector(address);
     endSectorAddress = address + requiredSize - 1;
-    endSector = gos_drvFlashGetSector(endSectorAddress);
+    endSector = drv_flashGetSector(endSectorAddress);
 
     eraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
     eraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
@@ -102,9 +102,9 @@ gos_result_t gos_drvFlashErase (u32_t address, u32_t requiredSize)
 }
 
 /*
- * Function: gos_drvFlashWrite
+ * Function: drv_flashWrite
  */
-gos_result_t gos_drvFlashWrite (u32_t address, void_t* pData, u32_t size)
+gos_result_t drv_flashWrite (u32_t address, void_t* pData, u32_t size)
 {
     /*
      * Local variables.
@@ -141,9 +141,9 @@ gos_result_t gos_drvFlashWrite (u32_t address, void_t* pData, u32_t size)
 }
 
 /*
- * Function: gos_drvFlashWriteWithoutLock
+ * Function: drv_flashWriteWithoutLock
  */
-gos_result_t gos_drvFlashWriteWithoutLock (u32_t address, void_t* pData, u32_t size)
+gos_result_t drv_flashWriteWithoutLock (u32_t address, void_t* pData, u32_t size)
 {
     /*
      * Local variables.
@@ -177,9 +177,9 @@ gos_result_t gos_drvFlashWriteWithoutLock (u32_t address, void_t* pData, u32_t s
 }
 
 /*
- * Function: gos_drvFlashUnlock
+ * Function: drv_flashUnlock
  */
-gos_result_t gos_drvFlashUnlock (void_t)
+gos_result_t drv_flashUnlock (void_t)
 {
     /*
      * Local variables.
@@ -202,9 +202,9 @@ gos_result_t gos_drvFlashUnlock (void_t)
 }
 
 /*
- * Function: gos_drvFlashLock
+ * Function: drv_flashLock
  */
-gos_result_t gos_drvFlashLock (void_t)
+gos_result_t drv_flashLock (void_t)
 {
     /*
      * Local variables.
@@ -227,9 +227,9 @@ gos_result_t gos_drvFlashLock (void_t)
 }
 
 /*
- * Function: gos_drvFlashRead
+ * Function: drv_flashRead
  */
-gos_result_t gos_drvFlashRead (u32_t address, void_t* pData, u32_t size)
+gos_result_t drv_flashRead (u32_t address, void_t* pData, u32_t size)
 {
     /*
      * Local variables.
@@ -260,7 +260,7 @@ gos_result_t gos_drvFlashRead (u32_t address, void_t* pData, u32_t size)
  *
  * @return  Sector number.
  */
-GOS_STATIC u32_t gos_drvFlashGetSector (u32_t address)
+GOS_STATIC u32_t drv_flashGetSector (u32_t address)
 {
     /*
      * Local variables.
@@ -318,7 +318,7 @@ GOS_STATIC u32_t gos_drvFlashGetSector (u32_t address)
  *
  * @return  Sector size.
  */
-GOS_STATIC u32_t gos_drvFlashGetSectorSize (u32_t address)
+GOS_STATIC u32_t drv_flashGetSectorSize (u32_t address)
 {
     /*
      * Local variables.
@@ -329,7 +329,7 @@ GOS_STATIC u32_t gos_drvFlashGetSectorSize (u32_t address)
     /*
      * Function code.
      */
-    sector = gos_drvFlashGetSectorSize(address);
+    sector = drv_flashGetSector(address);
 
     switch (sector)
     {

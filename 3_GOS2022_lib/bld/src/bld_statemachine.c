@@ -496,7 +496,7 @@ GOS_STATIC gos_result_t bld_stateMachineHandleAppDataRequest (void_t)
 			(void_t) gos_traceTrace(GOS_FALSE, "Update type:\terase\r\n");
 			(void_t) gos_traceTrace(GOS_FALSE, "Erasing application...\r\n");
 
-			if (gos_drvFlashErase(BLD_APP_ROM_START_ADDRESS, BLD_APP_ROM_SIZE) == GOS_SUCCESS)
+			if (drv_flashErase(BLD_APP_ROM_START_ADDRESS, BLD_APP_ROM_SIZE) == GOS_SUCCESS)
 			{
 				(void_t) bld_dataReset();
 				installDataResponseMessage.result = BLD_COM_ERASE_SUCCESSFUL;
@@ -521,7 +521,7 @@ GOS_STATIC gos_result_t bld_stateMachineHandleAppDataRequest (void_t)
 					installDataMessage.appData.appVersion.build);
 			(void_t) gos_traceTraceFormatted(GOS_FALSE, "Size:       \t%u bytes\r\n", installDataMessage.appData.appSize);
 
-			if (gos_drvCheckCrc32((u8_t*)&installDataMessage.appData,
+			if (drv_crcCheckCrc32((u8_t*)&installDataMessage.appData,
 				sizeof(installDataMessage.appData) - sizeof(installDataMessage.appData.appDataCrc),
 				installDataMessage.appData.appDataCrc, NULL) != DRV_CRC_CHECK_OK)
 			{
@@ -548,7 +548,7 @@ GOS_STATIC gos_result_t bld_stateMachineHandleAppDataRequest (void_t)
 
 			(void_t) gos_traceTrace(GOS_FALSE, "Erasing application...\r\n");
 
-			if (gos_drvFlashErase(BLD_APP_ROM_START_ADDRESS, BLD_APP_ROM_SIZE) == GOS_SUCCESS)
+			if (drv_flashErase(BLD_APP_ROM_START_ADDRESS, BLD_APP_ROM_SIZE) == GOS_SUCCESS)
 			{
 				(void_t) bld_dataReset();
 				installDataResponseMessage.result = BLD_COM_ERASE_SUCCESSFUL;
@@ -599,7 +599,7 @@ GOS_STATIC gos_result_t bld_stateMachineHandleAppInstall (void_t)
 	(void_t) drv_tmrRegisterTimeoutTimer(&tmoTimer);
 	(void_t) drv_tmrStartTimeoutTimer(tmoTimer.id);
 
-	(void_t) gos_drvFlashUnlock();
+	(void_t) drv_flashUnlock();
 
 	while ((appBytesCounter < installDataMessage.appData.appSize) && (timeoutElapsed != GOS_TRUE))
 	{
@@ -619,7 +619,7 @@ GOS_STATIC gos_result_t bld_stateMachineHandleAppInstall (void_t)
 				}
 				else if (installPacketRequestMessage.sequenceCounter == (sequenceCounter + 1))
 				{
-					if (gos_drvCheckCrc32(
+					if (drv_crcCheckCrc32(
 							installPacketRequestMessage.packetBuffer,
 							installPacketRequestMessage.packetSize,
 							installPacketRequestMessage.packetChk,
@@ -627,7 +627,7 @@ GOS_STATIC gos_result_t bld_stateMachineHandleAppInstall (void_t)
 					{
 						// Sequence counter and CRC OK.
 						// Save packet in FLASH.
-						(void_t) gos_drvFlashWriteWithoutLock((BLD_APP_ROM_START_ADDRESS + appBytesCounter), installPacketRequestMessage.packetBuffer, installPacketRequestMessage.packetSize);
+						(void_t) drv_flashWriteWithoutLock((BLD_APP_ROM_START_ADDRESS + appBytesCounter), installPacketRequestMessage.packetBuffer, installPacketRequestMessage.packetSize);
 
 						appBytesCounter += installPacketRequestMessage.packetSize;
 						sequenceCounter = installPacketRequestMessage.sequenceCounter + 1;
@@ -700,7 +700,7 @@ GOS_STATIC gos_result_t bld_stateMachineHandleAppInstall (void_t)
 		}
 	}
 
-	(void_t) gos_drvFlashLock();
+	(void_t) drv_flashLock();
 	(void_t) drv_tmrUnregisterTimeoutTimer(tmoTimer.id);
 
 	// Save new application data.

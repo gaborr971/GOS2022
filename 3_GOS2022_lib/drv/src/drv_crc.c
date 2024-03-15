@@ -106,9 +106,9 @@
 #define DRV_CRC_POLYNOMIAL_CRC64    ( 0x3A7FF201D298EE14u )
 
 /*
- * Function: gos_drvCrcGetCrc8
+ * Function: drv_crcGetCrc8
  */
-gos_result_t gos_drvCrcGetCrc8 (u8_t* pData, u32_t dataSize, u8_t* pCrc)
+gos_result_t drv_crcGetCrc8 (u8_t* pData, u32_t dataSize, u8_t* pCrc)
 {
     /*
      * Local variables.
@@ -153,9 +153,9 @@ gos_result_t gos_drvCrcGetCrc8 (u8_t* pData, u32_t dataSize, u8_t* pCrc)
 }
 
 /*
- * Function: gos_drvCrcGetCrc16
+ * Function: drv_crcGetCrc16
  */
-gos_result_t gos_drvCrcGetCrc16 (u8_t* pData, u32_t dataSize, u16_t* pCrc)
+gos_result_t drv_crcGetCrc16 (u8_t* pData, u32_t dataSize, u16_t* pCrc)
 {
     /*
      * Local variables.
@@ -200,9 +200,9 @@ gos_result_t gos_drvCrcGetCrc16 (u8_t* pData, u32_t dataSize, u16_t* pCrc)
 }
 
 /*
- * Function: gos_drvCrcGetCrc32
+ * Function: drv_crcGetCrc32
  */
-gos_result_t gos_drvCrcGetCrc32 (u8_t* pData, u32_t dataSize, u32_t* pCrc)
+gos_result_t drv_crcGetCrc32 (u8_t* pData, u32_t dataSize, u32_t* pCrc)
 {
     /*
      * Local variables.
@@ -247,9 +247,9 @@ gos_result_t gos_drvCrcGetCrc32 (u8_t* pData, u32_t dataSize, u32_t* pCrc)
 }
 
 /*
- * Function: gos_drvCrcGetCrc64
+ * Function: drv_crcGetCrc64
  */
-gos_result_t gos_drvCrcGetCrc64 (u8_t* pData, u32_t dataSize, u64_t* pCrc)
+gos_result_t drv_crcGetCrc64 (u8_t* pData, u32_t dataSize, u64_t* pCrc)
 {
     /*
      * Local variables.
@@ -294,9 +294,9 @@ gos_result_t gos_drvCrcGetCrc64 (u8_t* pData, u32_t dataSize, u64_t* pCrc)
 }
 
 /*
- * Function: gos_drvCheckCrc8
+ * Function: drv_crcCheckCrc8
  */
-drv_crcCheckResult_t gos_drvCheckCrc8  (u8_t* pData, u32_t dataSize, u8_t expCrc, u8_t* calcCrc)
+drv_crcCheckResult_t drv_crcCheckCrc8  (u8_t* pData, u32_t dataSize, u8_t expCrc, u8_t* calcCrc)
 {
     /*
      * Local variables.
@@ -307,7 +307,7 @@ drv_crcCheckResult_t gos_drvCheckCrc8  (u8_t* pData, u32_t dataSize, u8_t expCrc
     /*
      * Function code.
      */
-    if (pData != NULL && gos_drvCrcGetCrc8(pData, dataSize, &crcTempValue) == GOS_SUCCESS)
+    if (pData != NULL && drv_crcGetCrc8(pData, dataSize, &crcTempValue) == GOS_SUCCESS)
     {
         // Check if CRCs match.
         if (crcTempValue == expCrc)
@@ -338,9 +338,9 @@ drv_crcCheckResult_t gos_drvCheckCrc8  (u8_t* pData, u32_t dataSize, u8_t expCrc
 }
 
 /*
- * Function: gos_drvCheckCrc16
+ * Function: drv_crcCheckCrc16
  */
-drv_crcCheckResult_t gos_drvCheckCrc16 (u8_t* pData, u32_t dataSize, u16_t expCrc, u16_t* calcCrc)
+drv_crcCheckResult_t drv_crcCheckCrc16 (u8_t* pData, u32_t dataSize, u16_t expCrc, u16_t* calcCrc)
 {
     /*
      * Local variables.
@@ -351,7 +351,7 @@ drv_crcCheckResult_t gos_drvCheckCrc16 (u8_t* pData, u32_t dataSize, u16_t expCr
     /*
      * Function code.
      */
-    if (pData != NULL && gos_drvCrcGetCrc16(pData, dataSize, &crcTempValue) == GOS_SUCCESS)
+    if (pData != NULL && drv_crcGetCrc16(pData, dataSize, &crcTempValue) == GOS_SUCCESS)
     {
         // Check if CRCs match.
         if (crcTempValue == expCrc)
@@ -382,9 +382,9 @@ drv_crcCheckResult_t gos_drvCheckCrc16 (u8_t* pData, u32_t dataSize, u16_t expCr
 }
 
 /*
- * Function: gos_drvCheckCrc32
+ * Function: drv_crcCheckCrc32
  */
-drv_crcCheckResult_t gos_drvCheckCrc32 (u8_t* pData, u32_t dataSize, u32_t expCrc, u32_t* calcCrc)
+drv_crcCheckResult_t drv_crcCheckCrc32 (u8_t* pData, u32_t dataSize, u32_t expCrc, u32_t* calcCrc)
 {
     /*
      * Local variables.
@@ -395,7 +395,7 @@ drv_crcCheckResult_t gos_drvCheckCrc32 (u8_t* pData, u32_t dataSize, u32_t expCr
     /*
      * Function code.
      */
-    if (pData != NULL && gos_drvCrcGetCrc32(pData, dataSize, &crcTempValue) == GOS_SUCCESS)
+    if (pData != NULL && drv_crcGetCrc32(pData, dataSize, &crcTempValue) == GOS_SUCCESS)
     {
         // Check if CRCs match.
         if (crcTempValue == expCrc)
@@ -426,9 +426,9 @@ drv_crcCheckResult_t gos_drvCheckCrc32 (u8_t* pData, u32_t dataSize, u32_t expCr
 }
 
 /*
- * Function: gos_drvCheckCrc64
+ * Function: drv_crcCheckCrc64
  */
-drv_crcCheckResult_t gos_drvCheckCrc64 (u8_t* pData, u32_t dataSize, u64_t expCrc, u64_t* calcCrc)
+drv_crcCheckResult_t drv_crcCheckCrc64 (u8_t* pData, u32_t dataSize, u64_t expCrc, u64_t* calcCrc)
 {
     /*
      * Local variables.
@@ -439,7 +439,7 @@ drv_crcCheckResult_t gos_drvCheckCrc64 (u8_t* pData, u32_t dataSize, u64_t expCr
     /*
      * Function code.
      */
-    if (pData != NULL && gos_drvCrcGetCrc64(pData, dataSize, &crcTempValue) == GOS_SUCCESS)
+    if (pData != NULL && drv_crcGetCrc64(pData, dataSize, &crcTempValue) == GOS_SUCCESS)
     {
         // Check if CRCs match.
         if (crcTempValue == expCrc)
@@ -470,9 +470,9 @@ drv_crcCheckResult_t gos_drvCheckCrc64 (u8_t* pData, u32_t dataSize, u64_t expCr
 }
 
 /*
- * Function: gos_drvCrcGetChkSum8
+ * Function: drv_crcGetChkSum8
  */
-gos_result_t gos_drvCrcGetChkSum8 (u8_t* pData, u32_t dataSize, u8_t* pChkSum)
+gos_result_t drv_crcGetChkSum8 (u8_t* pData, u32_t dataSize, u8_t* pChkSum)
 {
     /*
      * Local variables.
@@ -503,9 +503,9 @@ gos_result_t gos_drvCrcGetChkSum8 (u8_t* pData, u32_t dataSize, u8_t* pChkSum)
 }
 
 /*
- * Function: gos_drvCrcGetChkSum16
+ * Function: drv_crcGetChkSum16
  */
-gos_result_t gos_drvCrcGetChkSum16 (u8_t* pData, u32_t dataSize, u16_t* pChkSum)
+gos_result_t drv_crcGetChkSum16 (u8_t* pData, u32_t dataSize, u16_t* pChkSum)
 {
     /*
      * Local variables.
@@ -536,9 +536,9 @@ gos_result_t gos_drvCrcGetChkSum16 (u8_t* pData, u32_t dataSize, u16_t* pChkSum)
 }
 
 /*
- * Function: gos_drvCrcGetChkSum32
+ * Function: drv_crcGetChkSum32
  */
-gos_result_t gos_drvCrcGetChkSum32 (u8_t* pData, u32_t dataSize, u32_t* pChkSum)
+gos_result_t drv_crcGetChkSum32 (u8_t* pData, u32_t dataSize, u32_t* pChkSum)
 {
     /*
      * Local variables.
@@ -569,9 +569,9 @@ gos_result_t gos_drvCrcGetChkSum32 (u8_t* pData, u32_t dataSize, u32_t* pChkSum)
 }
 
 /*
- * Function: gos_drvCrcGetChkSum64
+ * Function: drv_crcGetChkSum64
  */
-gos_result_t gos_drvCrcGetChkSum64 (u8_t* pData, u32_t dataSize, u64_t* pChkSum)
+gos_result_t drv_crcGetChkSum64 (u8_t* pData, u32_t dataSize, u64_t* pChkSum)
 {
     /*
      * Local variables.
@@ -602,20 +602,20 @@ gos_result_t gos_drvCrcGetChkSum64 (u8_t* pData, u32_t dataSize, u64_t* pChkSum)
 }
 
 /*
- * Function: gos_drvCheckChkSum8
+ * Function: drv_crcCheckChkSum8
  */
-drv_chkSumCheckResult_t gos_drvCheckChkSum8 (u8_t* pData, u32_t dataSize, u8_t expChkSum, u8_t* calcChkSum)
+drv_crcChkSumCheckResult_t drv_crcCheckChkSum8 (u8_t* pData, u32_t dataSize, u8_t expChkSum, u8_t* calcChkSum)
 {
     /*
      * Local variables.
      */
-    drv_chkSumCheckResult_t chkSumCheckResult = DRV_CHKSUM_CHECK_ERROR;
-    u8_t                    chkSumTempValue   = 0u;
+	drv_crcChkSumCheckResult_t chkSumCheckResult = DRV_CHKSUM_CHECK_ERROR;
+    u8_t                       chkSumTempValue   = 0u;
 
     /*
      * Function code.
      */
-    if (pData != NULL && gos_drvCrcGetChkSum8(pData, dataSize, &chkSumTempValue) == GOS_SUCCESS)
+    if (pData != NULL && drv_crcGetChkSum8(pData, dataSize, &chkSumTempValue) == GOS_SUCCESS)
     {
         // Check if CHKs match.
         if (chkSumTempValue == expChkSum)
@@ -646,20 +646,20 @@ drv_chkSumCheckResult_t gos_drvCheckChkSum8 (u8_t* pData, u32_t dataSize, u8_t e
 }
 
 /*
- * Function: gos_drvCheckChkSum16
+ * Function: drv_crcCheckChkSum16
  */
-drv_chkSumCheckResult_t gos_drvCheckChkSum16 (u8_t* pData, u32_t dataSize, u16_t expChkSum, u16_t* calcChkSum)
+drv_crcChkSumCheckResult_t drv_crcCheckChkSum16 (u8_t* pData, u32_t dataSize, u16_t expChkSum, u16_t* calcChkSum)
 {
     /*
      * Local variables.
      */
-    drv_chkSumCheckResult_t chkSumCheckResult = DRV_CHKSUM_CHECK_ERROR;
-    u16_t                   chkSumTempValue   = 0u;
+	drv_crcChkSumCheckResult_t chkSumCheckResult = DRV_CHKSUM_CHECK_ERROR;
+    u16_t                      chkSumTempValue   = 0u;
 
     /*
      * Function code.
      */
-    if (pData != NULL && gos_drvCrcGetChkSum16(pData, dataSize, &chkSumTempValue) == GOS_SUCCESS)
+    if (pData != NULL && drv_crcGetChkSum16(pData, dataSize, &chkSumTempValue) == GOS_SUCCESS)
     {
         // Check if CHKs match.
         if (chkSumTempValue == expChkSum)
@@ -690,20 +690,20 @@ drv_chkSumCheckResult_t gos_drvCheckChkSum16 (u8_t* pData, u32_t dataSize, u16_t
 }
 
 /*
- * Function: gos_drvCheckChkSum32
+ * Function: drv_crcCheckChkSum32
  */
-drv_chkSumCheckResult_t gos_drvCheckChkSum32 (u8_t* pData, u32_t dataSize, u32_t expChkSum, u32_t* calcChkSum)
+drv_crcChkSumCheckResult_t drv_crcCheckChkSum32 (u8_t* pData, u32_t dataSize, u32_t expChkSum, u32_t* calcChkSum)
 {
     /*
      * Local variables.
      */
-    drv_chkSumCheckResult_t chkSumCheckResult = DRV_CHKSUM_CHECK_ERROR;
-    u32_t                   chkSumTempValue   = 0u;
+	drv_crcChkSumCheckResult_t chkSumCheckResult = DRV_CHKSUM_CHECK_ERROR;
+    u32_t                      chkSumTempValue   = 0u;
 
     /*
      * Function code.
      */
-    if (pData != NULL && gos_drvCrcGetChkSum32(pData, dataSize, &chkSumTempValue) == GOS_SUCCESS)
+    if (pData != NULL && drv_crcGetChkSum32(pData, dataSize, &chkSumTempValue) == GOS_SUCCESS)
     {
         // Check if CHKs match.
         if (chkSumTempValue == expChkSum)
@@ -734,20 +734,20 @@ drv_chkSumCheckResult_t gos_drvCheckChkSum32 (u8_t* pData, u32_t dataSize, u32_t
 }
 
 /*
- * Function: gos_drvCheckChkSum64
+ * Function: drv_crcCheckChkSum64
  */
-drv_chkSumCheckResult_t gos_drvCheckChkSum64 (u8_t* pData, u32_t dataSize, u64_t expChkSum, u64_t* calcChkSum)
+drv_crcChkSumCheckResult_t drv_crcCheckChkSum64 (u8_t* pData, u32_t dataSize, u64_t expChkSum, u64_t* calcChkSum)
 {
     /*
      * Local variables.
      */
-    drv_chkSumCheckResult_t chkSumCheckResult = DRV_CHKSUM_CHECK_ERROR;
-    u64_t                   chkSumTempValue   = 0u;
+	drv_crcChkSumCheckResult_t chkSumCheckResult = DRV_CHKSUM_CHECK_ERROR;
+    u64_t                      chkSumTempValue   = 0u;
 
     /*
      * Function code.
      */
-    if (pData != NULL && gos_drvCrcGetChkSum64(pData, dataSize, &chkSumTempValue) == GOS_SUCCESS)
+    if (pData != NULL && drv_crcGetChkSum64(pData, dataSize, &chkSumTempValue) == GOS_SUCCESS)
     {
         // Check if CHKs match.
         if (chkSumTempValue == expChkSum)

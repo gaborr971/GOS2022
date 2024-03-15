@@ -23,7 +23,7 @@ gos_result_t bld_dataInitialize (void_t)
 	/*
 	 * Function code.
 	 */
-	if (gos_drvFlashRead(BLD_DATA_START_ADDRESS, (void_t*)&bootloaderData, sizeof(bootloaderData)) == GOS_SUCCESS)
+	if (drv_flashRead(BLD_DATA_START_ADDRESS, (void_t*)&bootloaderData, sizeof(bootloaderData)) == GOS_SUCCESS)
 	{
 		// Force update bootloader version info.
 		bld_getVersion(&bootloaderData.bldVersion);
@@ -32,7 +32,7 @@ gos_result_t bld_dataInitialize (void_t)
 		{
 			// Data already initialized.
 			// Check data CRC.
-			if (gos_drvCheckCrc32((u8_t*)&bootloaderData, sizeof(bootloaderData) - sizeof(u32_t),
+			if (drv_crcCheckCrc32((u8_t*)&bootloaderData, sizeof(bootloaderData) - sizeof(u32_t),
 				bootloaderData.bldDataCrc, NULL) == DRV_CRC_CHECK_OK)
 			{
 				// CRC OK, initialization successful.
@@ -90,7 +90,7 @@ gos_result_t bld_dataReset (void_t)
 	(void_t) strcpy(bootloaderData.appData.appVersion.description, "N/A");
 	(void_t) strcpy(bootloaderData.appData.appVersion.name, "N/A");
 
-	(void_t) gos_drvCrcGetCrc32((u8_t*)&bootloaderData.appData, sizeof(bootloaderData.appData) - sizeof(bootloaderData.appData.appDataCrc), &bootloaderData.appData.appDataCrc);
+	(void_t) drv_crcGetCrc32((u8_t*)&bootloaderData.appData, sizeof(bootloaderData.appData) - sizeof(bootloaderData.appData.appDataCrc), &bootloaderData.appData.appDataCrc);
 
 	// Get bootloader version info.
 	bld_getVersion(&bootloaderData.bldVersion);
@@ -98,11 +98,11 @@ gos_result_t bld_dataReset (void_t)
 	bootloaderData.bldStartAddress                = BLD_ROM_START_ADDRESS;
 	bootloaderData.bldSize                        = bld_dataGetBootloaderSize();
 
-	(void_t) gos_drvCrcGetCrc32((u8_t*)BLD_ROM_START_ADDRESS, bootloaderData.bldSize, &bootloaderData.bldCrc);
-	(void_t) gos_drvCrcGetCrc32((u8_t*)&bootloaderData, sizeof(bootloaderData) - sizeof(bootloaderData.bldDataCrc), &bootloaderData.bldDataCrc);
+	(void_t) drv_crcGetCrc32((u8_t*)BLD_ROM_START_ADDRESS, bootloaderData.bldSize, &bootloaderData.bldCrc);
+	(void_t) drv_crcGetCrc32((u8_t*)&bootloaderData, sizeof(bootloaderData) - sizeof(bootloaderData.bldDataCrc), &bootloaderData.bldDataCrc);
 
-	if (gos_drvFlashErase(BLD_DATA_START_ADDRESS, sizeof(bootloaderData)) != GOS_SUCCESS ||
-		gos_drvFlashWrite(BLD_DATA_START_ADDRESS, (void_t*)&bootloaderData, sizeof(bootloaderData)) != GOS_SUCCESS)
+	if (drv_flashErase(BLD_DATA_START_ADDRESS, sizeof(bootloaderData)) != GOS_SUCCESS ||
+		drv_flashWrite(BLD_DATA_START_ADDRESS, (void_t*)&bootloaderData, sizeof(bootloaderData)) != GOS_SUCCESS)
 	{
 		(void_t) gos_traceTraceFormattedUnsafe("Bootloader data initialization ERROR\r\n");
 	}
@@ -129,7 +129,7 @@ gos_result_t bld_dataGet (bld_data_struct_t* pData)
 	 */
 	if (pData != NULL)
 	{
-		dataGetResult = gos_drvFlashRead(BLD_DATA_START_ADDRESS, (void_t*)pData, sizeof(*pData));
+		dataGetResult = drv_flashRead(BLD_DATA_START_ADDRESS, (void_t*)pData, sizeof(*pData));
 	}
 	else
 	{
@@ -155,10 +155,10 @@ gos_result_t bld_dataSet (bld_data_struct_t* pData)
 	if (pData != NULL)
 	{
 		// Calculate CRC.
-		(void_t) gos_drvCrcGetCrc32((u8_t*)pData, sizeof(*pData) - sizeof(pData->bldDataCrc), &pData->bldDataCrc);
+		(void_t) drv_crcGetCrc32((u8_t*)pData, sizeof(*pData) - sizeof(pData->bldDataCrc), &pData->bldDataCrc);
 
-		if (gos_drvFlashErase(BLD_DATA_START_ADDRESS, sizeof(*pData)) != GOS_SUCCESS ||
-			gos_drvFlashWrite(BLD_DATA_START_ADDRESS, (void_t*)pData, sizeof(*pData)) != GOS_SUCCESS)
+		if (drv_flashErase(BLD_DATA_START_ADDRESS, sizeof(*pData)) != GOS_SUCCESS ||
+			drv_flashWrite(BLD_DATA_START_ADDRESS, (void_t*)pData, sizeof(*pData)) != GOS_SUCCESS)
 		{
 			(void_t) gos_traceTraceFormattedUnsafe("Bootloader data set ERROR\r\n");
 		}

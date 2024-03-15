@@ -70,7 +70,7 @@ gos_result_t bld_checkApplication (bld_app_data_struct_t* pAppData)
 	 */
 	if (pAppData->appSize >= 0u)
 	{
-		if (gos_drvCheckCrc32((u8_t*)pAppData->appStartAddress, pAppData->appSize, pAppData->appCrc, NULL) == DRV_CRC_CHECK_OK)
+		if (drv_crcCheckCrc32((u8_t*)pAppData->appStartAddress, pAppData->appSize, pAppData->appCrc, NULL) == DRV_CRC_CHECK_OK)
 		{
 			appCheckResult = GOS_SUCCESS;
 		}

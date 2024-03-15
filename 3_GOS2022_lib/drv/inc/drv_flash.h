@@ -54,21 +54,21 @@
 #include <gos.h>
 
 // TODO
-gos_result_t gos_drvFlashErase (u32_t address, u32_t requiredSize);
+gos_result_t drv_flashErase (u32_t address, u32_t requiredSize);
 
 // TODO
-gos_result_t gos_drvFlashWrite (u32_t address, void_t* pData, u32_t size);
+gos_result_t drv_flashWrite (u32_t address, void_t* pData, u32_t size);
 
 // TODO
-gos_result_t gos_drvFlashWriteWithoutLock (u32_t address, void_t* pData, u32_t size);
+gos_result_t drv_flashWriteWithoutLock (u32_t address, void_t* pData, u32_t size);
 
 // TODO
-gos_result_t gos_drvFlashUnlock (void_t);
+gos_result_t drv_flashUnlock (void_t);
 
 // TODO
-gos_result_t gos_drvFlashLock (void_t);
+gos_result_t drv_flashLock (void_t);
 
 // TODO
-gos_result_t gos_drvFlashRead (u32_t address, void_t* pData, u32_t size);
+gos_result_t drv_flashRead (u32_t address, void_t* pData, u32_t size);
 
 #endif
