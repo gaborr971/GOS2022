@@ -74,19 +74,39 @@ gos_result_t drv_tmrUnregisterTimeoutTimer (drv_tmrTimeoutTimerId id)
 
 gos_result_t drv_tmrStartTimeoutTimer (drv_tmrTimeoutTimerId id)
 {
+	gos_result_t startResult = GOS_ERROR;
+
 	if (id < DRV_TMR_MAX_TIMEOUT_TIMERS && timeoutTimers[id].enabled == GOS_FALSE)
 	{
 		timeoutTimers[id].ticks   = 0;
 		timeoutTimers[id].enabled = GOS_TRUE;
+
+		startResult = GOS_SUCCESS;
 	}
+	else
+	{
+		//
+	}
+
+	return startResult;
 }
 
 gos_result_t drv_tmrResetTimeoutTimer (drv_tmrTimeoutTimerId id)
 {
+	gos_result_t resetResult = GOS_ERROR;
+
 	if (id < DRV_TMR_MAX_TIMEOUT_TIMERS && timeoutTimers[id].enabled == GOS_TRUE)
 	{
-		timeoutTimers[id].ticks   = 0;
+		timeoutTimers[id].ticks = 0;
+
+		resetResult = GOS_SUCCESS;
 	}
+	else
+	{
+		//
+	}
+
+	return resetResult;
 }
 
 void_t TIM3_IRQHandler (void_t)
