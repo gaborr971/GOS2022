@@ -53,6 +53,9 @@
  */
 #include <gos.h>
 
+/*
+ * Function prototypes
+ */
 // TODO
 gos_result_t drv_flashErase (u32_t address, u32_t requiredSize);
 
