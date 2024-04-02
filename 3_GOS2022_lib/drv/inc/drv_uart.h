@@ -119,7 +119,6 @@ typedef struct
 /*
  * Function prototypes
  */
-
 /**
  * @brief   Initializes the registered UART peripheries.
  * @details Loops through the UART configuration array and initializes peripheries
@@ -131,7 +130,9 @@ typedef struct
  * @retval  GOS_ERROR   : Configuration array is NULL or some peripheries
  *                        could not be initialized.
  */
-gos_result_t drv_uartInit (void_t);
+gos_result_t drv_uartInit (
+		void_t
+		);
 
 // TODO
 gos_result_t drv_uartInitInstance (
