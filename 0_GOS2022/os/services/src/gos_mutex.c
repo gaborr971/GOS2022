@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_mutex.c
 //! @author     Ahmed Gazar
-//! @date       2024-03-07
-//! @version    1.7
+//! @date       2024-04-02
+//! @version    1.8
 //!
 //! @brief      GOS mutex service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_mutex.h
@@ -35,6 +35,8 @@
 // 1.5        2023-11-06    Ahmed Gazar     +    void_t casts added to unused return values
 // 1.6        2023-11-09    Ahmed Gazar     *    Lock zero timeout handling added
 // 1.7        2024-03-07    Ahmed Gazar     +    Priority inheritance reintroduced
+// 1.8        2024-04-02    Ahmed Gazar     *    Mutex lock sleep time changed to 2 ms
+//                                          *    Inline macros removed from functions
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -64,9 +66,9 @@
  * Macros
  */
 /**
- * Sleep time in [ms] when trigger timeout is set to endless.
+ * Sleep time in [ms] before re-attempting to lock mutex.
  */
-#define MUTEX_LOCK_SLEEP_MS ( 5u )
+#define MUTEX_LOCK_SLEEP_MS ( 2u )
 
 /*
  * Function: gos_mutexInit
@@ -98,7 +100,7 @@ gos_result_t gos_mutexInit (gos_mutex_t* pMutex)
 /*
  * Function: gos_mutexLock
  */
-GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
+gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
 {
     /*
      * Local variables.
@@ -197,7 +199,7 @@ GOS_INLINE gos_result_t gos_mutexLock (gos_mutex_t* pMutex, u32_t timeout)
 /*
  * Function: gos_mutexUnlock
  */
-GOS_INLINE gos_result_t gos_mutexUnlock (gos_mutex_t* pMutex)
+gos_result_t gos_mutexUnlock (gos_mutex_t* pMutex)
 {
     /*
      * Local variables.
