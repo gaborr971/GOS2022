@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       drv.c
 //! @author     Ahmed Gazar
-//! @date       2024-02-23
-//! @version    1.0
+//! @date       2024-04-02
+//! @version    1.1
 //!
 //! @brief      GOS2022 Library / Driver source.
 //! @details    For a more detailed description of this driver, please refer to @ref drv.h
@@ -25,6 +25,7 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2024-02-23    Ahmed Gazar     Initial version created.
+// 1.1        2024-04-02    Ahmed Gazar     *    Library minor version incremented (0.2.0)
 //*************************************************************************************************
 //
 // Copyright (c) 2024 Ahmed Gazar
@@ -62,7 +63,7 @@
 /**
  * Driver minor version.
  */
-#define DRIVER_VERSION_MINOR      ( 1                 )
+#define DRIVER_VERSION_MINOR      ( 2                 )
 
 /**
  * Driver build number.
