@@ -93,6 +93,9 @@ typedef enum
     GPIO_STATE_HIGH      //!< GPIO high.
 }drv_gpioState_t;
 
+/*
+ * Function prototypes
+ */
 // TODO
 gos_result_t drv_gpioInit (void_t);
 
