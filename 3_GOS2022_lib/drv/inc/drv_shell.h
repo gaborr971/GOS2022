@@ -53,6 +53,9 @@
  */
 #include <gos.h>
 
+/*
+ * Function prototypes
+ */
 /**
  * @brief   Shell transmit function.
  * @details This function uses the configured shell UART instance to

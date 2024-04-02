@@ -53,6 +53,9 @@
  */
 #include <gos.h>
 
+/*
+ * Function prototypes
+ */
 /**
  * @brief   Unsafe trace transmit function.
  * @details This function uses the configured trace UART instance to

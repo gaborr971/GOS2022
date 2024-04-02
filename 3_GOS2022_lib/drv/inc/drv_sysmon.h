@@ -53,6 +53,9 @@
  */
 #include <gos.h>
 
+/*
+ * Function prototypes
+ */
 /**
  * @brief   Sysmon transmit function.
  * @details This function uses the configured sysmon UART instance to
