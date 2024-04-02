@@ -87,7 +87,7 @@
 /**
  * Priority inheritance flag for lock.
  */
-#define CFG_USE_PRIO_INHERITANCE        ( 0 )
+#define CFG_USE_PRIO_INHERITANCE        ( 1 )
 
 /*
  * General task parameters.

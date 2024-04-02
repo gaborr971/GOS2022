@@ -665,7 +665,8 @@ GOS_STATIC void_t gos_sysmonDaemonTask (void_t)
         }
         else
         {
-            // Reception error.
+            // Reception error. TODO
+        	(void_t) gos_taskSleep(10);
         }
     }
 }
