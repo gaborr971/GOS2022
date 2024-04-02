@@ -104,10 +104,10 @@ gos_result_t gos_triggerInit (gos_trigger_t* pTrigger)
  */
 GOS_INLINE gos_result_t gos_triggerReset (gos_trigger_t* pTrigger)
 {
-	/*
-	 * Local variables.
-	 */
-	gos_result_t resetResult = GOS_ERROR;
+    /*
+     * Local variables.
+     */
+    gos_result_t resetResult = GOS_ERROR;
 
     /*
      * Function code.
