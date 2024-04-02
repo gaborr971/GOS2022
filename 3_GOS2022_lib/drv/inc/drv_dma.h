@@ -78,6 +78,7 @@ typedef enum
     DRV_DMA_2_STREAM_5,                     //!< DRV_DMA_2_STREAM_5
     DRV_DMA_2_STREAM_6,                     //!< DRV_DMA_2_STREAM_6
     DRV_DMA_2_STREAM_7,                     //!< DRV_DMA_2_STREAM_7
+    DRV_DMA_X_STREAM_NUM                    //!< Number of DMA streams.
 }drv_dmaStream_t;
 
 /**
@@ -112,5 +113,12 @@ typedef struct
  * @retval  GOS_ERROR   : Initialization failed.
  */
 gos_result_t drv_dmaInit (void_t);
+
+/**
+ * TODO
+ * @param pDMA
+ * @return
+ */
+bool_t drv_dmaIsBusy (drv_dmaDescriptor_t* pDMA);
 
 #endif
