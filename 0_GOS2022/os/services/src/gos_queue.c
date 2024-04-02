@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_queue.c
 //! @author     Ahmed Gazar
-//! @date       2023-09-14
-//! @version    1.7
+//! @date       2024-04-02
+//! @version    1.8
 //!
 //! @brief      GOS queue service source.
 //! @details    For a more detailed description of this service, please refer to @ref gos_queue.h
@@ -37,6 +37,8 @@
 //                                          *    Queue dump remapped to shell driver
 //                                          +    Timeout parameter added to queue peek, put, get
 // 1.7        2023-09-14    Ahmed Gazar     +    Mutex initialization result processing added
+// 1.8        2024-04-02    Ahmed Gazar     *    Inline macros removed from functions
+//                                          +    gos_queueReset added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -225,7 +227,7 @@ gos_result_t gos_queueCreate (gos_queueDescriptor_t* pQueueDescriptor)
 /*
  * Function: gos_queuePut
  */
-GOS_INLINE gos_result_t gos_queuePut (
+gos_result_t gos_queuePut (
         gos_queueId_t     queueId,     void_t* element,
         gos_queueLength_t elementSize, u32_t   timeout
         )
@@ -304,7 +306,7 @@ GOS_INLINE gos_result_t gos_queuePut (
 /*
  * Function: gos_queueGet
  */
-GOS_INLINE gos_result_t gos_queueGet (
+gos_result_t gos_queueGet (
         gos_queueId_t     queueId,    void_t* target,
         gos_queueLength_t targetSize, u32_t   timeout
         )
@@ -379,7 +381,7 @@ GOS_INLINE gos_result_t gos_queueGet (
 /*
  * Function: gos_queuePeek
  */
-GOS_INLINE gos_result_t gos_queuePeek (
+gos_result_t gos_queuePeek (
         gos_queueId_t     queueId,    void_t* target,
         gos_queueLength_t targetSize, u32_t   timeout
         )
@@ -424,6 +426,44 @@ GOS_INLINE gos_result_t gos_queuePeek (
     (void_t) gos_mutexUnlock(&queueMutex);
 
     return queuePeekResult;
+}
+
+/*
+ * Function: gos_queueReset
+ */
+gos_result_t gos_queueReset (gos_queueId_t queueId)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t     queueResetResult = GOS_ERROR;
+    gos_queueIndex_t queueIndex       = 0u;
+
+    /*
+     * Function code.
+     */
+    if (gos_mutexLock(&queueMutex, GOS_MUTEX_ENDLESS_TMO) == GOS_SUCCESS          &&
+        queueId                                           >= GOS_DEFAULT_QUEUE_ID &&
+        (queueId - GOS_DEFAULT_QUEUE_ID)                  <  CFG_QUEUE_MAX_NUMBER &&
+        queues[(queueId - GOS_DEFAULT_QUEUE_ID)].queueId  != GOS_INVALID_QUEUE_ID
+        )
+    {
+        queueIndex = (gos_queueIndex_t)(queueId - GOS_DEFAULT_QUEUE_ID);
+
+        readCounters[queueIndex]  = 0u;
+        writeCounters[queueIndex] = 0u;
+
+        queueResetResult = GOS_SUCCESS;
+    }
+    else
+    {
+        // Nothing to do.
+    }
+
+    // Unlock mutex.
+    (void_t) gos_mutexUnlock(&queueMutex);
+
+    return queueResetResult;
 }
 
 /*

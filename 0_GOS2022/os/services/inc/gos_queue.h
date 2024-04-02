@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_queue.h
 //! @author     Ahmed Gazar
-//! @date       2023-06-30
-//! @version    1.5
+//! @date       2024-04-02
+//! @version    1.6
 //!
 //! @brief      GOS queue service header.
 //! @details    Queue service is one of the inter-task communication solutions offered by the OS.
@@ -40,6 +40,7 @@
 // 1.3        2022-12-11    Ahmed Gazar     +    Function descriptions completed
 // 1.4        2023-06-17    Ahmed Gazar     *    Queue dump moved to function
 // 1.5        2023-06-30    Ahmed Gazar     +    Timeout parameter added to queue peek, put, get
+// 1.6        2024-04-02    Ahmed Gazar     +    gos_queueReset added
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -216,6 +217,19 @@ gos_result_t gos_queuePeek (
         gos_queueId_t     queueId,    void_t* target,
         gos_queueLength_t targetSize, u32_t   timeout
         );
+
+/**
+ * @brief   Resets the given queue.
+ * @details Sets the read and write counter to zero, making the queue empty.
+ *
+ * @param   queueId     : Queue ID.
+ *
+ * @return  Result of queue resetting.
+ *
+ * @retval  GOS_SUCCESS : Reset successful.
+ * @retval  GOS_ERROR   : Invalid queue ID.
+ */
+gos_result_t gos_queueReset (gos_queueId_t queueId);
 
 /**
  * @brief   This function registers a queue full hook function.
