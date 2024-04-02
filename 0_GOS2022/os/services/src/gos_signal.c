@@ -257,7 +257,7 @@ GOS_INLINE gos_result_t gos_signalInvoke (gos_signalId_t signalId, gos_signalSen
      */
     if (signalId < CFG_SIGNAL_MAX_NUMBER && signalArray[signalId].inUse == GOS_TRUE)
     {
-        if ((gos_kernelIsCallerIsr()                                 == GOS_TRUE    ||
+        if ((gos_kernelIsCallerIsr()                           == GOS_TRUE    ||
             (gos_taskGetCurrentId(&callerTaskId)               == GOS_SUCCESS &&
             gos_taskGetData(callerTaskId, &callerTaskDesc)     == GOS_SUCCESS &&
             (callerTaskDesc.taskPrivilegeLevel & GOS_PRIV_SIGNALING) == GOS_PRIV_SIGNALING))
