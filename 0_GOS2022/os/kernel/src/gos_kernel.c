@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.c
 //! @author     Ahmed Gazar
-//! @date       2023-11-10
-//! @version    1.17
+//! @date       2024-04-02
+//! @version    1.18
 //!
 //! @brief      GOS kernel source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -70,6 +70,8 @@
 //                                               removed
 //                                          +    inIsr and atomic counters, primask added
 // 1.17       2023-11-10    Ahmed Gazar     +    Missing else branches and void casts added
+// 1.18       2024-04-02    Ahmed Gazar     *    gos_kernelCalculateTaskCpuUsages: break from loop
+//                                               moved to the beginning of loop
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -633,6 +635,15 @@ GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
 
     for (taskIndex = 0u; taskIndex < CFG_TASK_MAX_NUMBER; taskIndex++)
     {
+        if (taskDescriptors[taskIndex].taskFunction == NULL)
+        {
+            break;
+        }
+        else
+        {
+            // Continue.
+        }
+
         taskConvertedTime   = taskDescriptors[taskIndex].taskMonitoringRunTime.minutes * 60 * 1000 * 1000 +
                               taskDescriptors[taskIndex].taskMonitoringRunTime.seconds * 1000 * 1000 +
                               taskDescriptors[taskIndex].taskMonitoringRunTime.milliseconds * 1000 +
@@ -684,15 +695,6 @@ GOS_INLINE void_t gos_kernelCalculateTaskCpuUsages (bool_t isResetRequired)
         else
         {
             // Nothing to do.
-        }
-
-        if (taskDescriptors[taskIndex].taskFunction == NULL)
-        {
-            break;
-        }
-        else
-        {
-            // Continue.
         }
     }
 
