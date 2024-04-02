@@ -69,7 +69,6 @@ typedef struct
 /*
  * Function prototypes
  */
-
 /**
  * @brief   Initializes the registered interrupts.
  * @details Loops through the IT configuration array and initializes and enables
