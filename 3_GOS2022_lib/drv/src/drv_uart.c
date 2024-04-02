@@ -289,6 +289,7 @@ GOS_INLINE gos_result_t drv_uartTransmitDMA (drv_uartPeriphInstance_t instance, 
         else
         {
             // Transmit or trigger error.
+            (void_t) HAL_UART_Abort_IT(&huarts[instance]);
         }
     }
     else
@@ -324,7 +325,8 @@ GOS_INLINE gos_result_t drv_uartReceiveDMA (drv_uartPeriphInstance_t instance, u
         }
         else
         {
-            HAL_UART_Abort_IT(&huarts[instance]);
+        	// Receive or trigger error.
+            (void_t) HAL_UART_Abort_IT(&huarts[instance]);
         }
     }
     else
@@ -365,6 +367,7 @@ GOS_INLINE gos_result_t drv_uartTransmitIT (drv_uartPeriphInstance_t instance, u
         else
         {
             // Transmit or trigger error.
+            (void_t) HAL_UART_Abort_IT(&huarts[instance]);
         }
     }
     else
@@ -405,6 +408,7 @@ GOS_INLINE gos_result_t drv_uartReceiveIT (drv_uartPeriphInstance_t instance, u8
         else
         {
             // Receive or trigger error.
+            (void_t) HAL_UART_Abort_IT(&huarts[instance]);
         }
     }
     else
