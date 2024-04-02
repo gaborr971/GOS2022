@@ -14,12 +14,12 @@
 //*************************************************************************************************
 //! @file       gos.h
 //! @author     Ahmed Gazar
-//! @date       2023-11-06
-//! @version    1.8
+//! @date       2024-04-02
+//! @version    1.9
 //!
 //! @brief      GOS header.
 //! @details    This header is a wrapper for the inclusion of all OS services and drivers for
-//!             GOS2022 v0.7
+//!             GOS2022 v0.8
 //*************************************************************************************************
 // History
 // ------------------------------------------------------------------------------------------------
@@ -38,6 +38,7 @@
 // 1.7        2023-11-06    Ahmed Gazar     *    OS version number changed to v0.6
 // 1.8        2024-02-13    Ahmed Gazar     +    GOS_VERSION_MAJOR and GOS_VERSION_MINOR added
 //                                          *    OS version number changed to v0.7
+// 1.9        2024-04-02    Ahmed Gazar     *    OS version number changed to v0.8
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -88,7 +89,7 @@
 /**
  * OS minor version.
  */
-#define GOS_VERSION_MINOR    ( 7 )
+#define GOS_VERSION_MINOR    ( 8 )
 
 /*
  * Function prototypes
