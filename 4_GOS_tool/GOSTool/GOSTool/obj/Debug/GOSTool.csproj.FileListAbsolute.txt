@@ -1,0 +1,13 @@
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\bin\Debug\GOSTool.exe.config
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\bin\Debug\GOSTool.exe
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\bin\Debug\GOSTool.pdb
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.csproj.AssemblyReference.cache
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.ProjectManager.resources
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.Properties.Resources.resources
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.csproj.GenerateResource.cache
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.csproj.CoreCompileInputs.cache
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.exe
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.pdb
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.MainWindow.resources
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.ProjectDataUserControl.resources
+C:\Users\Gabor\Documents\GitHub\GOS2022\4_GOS_tool\GOSTool\GOSTool\obj\Debug\GOSTool.GOSConfigWindow.resources
