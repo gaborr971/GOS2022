@@ -46,12 +46,43 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Converter\Converter.cs" />
-    <Compile Include="DataHandler\DataVariable.cs" />
-    <Compile Include="GOSConfigWindow.cs">
+    <Compile Include="AppConfig\AppConfigWindow.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="GOSConfigWindow.Designer.cs">
+    <Compile Include="AppConfig\AppConfigWindow.Designer.cs">
+      <DependentUpon>AppConfigWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AppConfig\ModuleConfigWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AppConfig\ModuleConfigWindow.Designer.cs">
+      <DependentUpon>ModuleConfigWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AppConfig\TaskConfigUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="AppConfig\TaskConfigUserControl.Designer.cs">
+      <DependentUpon>TaskConfigUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AppConfig\TaskPrivilegeSelector.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="AppConfig\TaskPrivilegeSelector.Designer.cs">
+      <DependentUpon>TaskPrivilegeSelector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Converter\Converter.cs" />
+    <Compile Include="DataHandler\DataVariable.cs" />
+    <Compile Include="FileViewer\FileViewerWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FileViewer\FileViewerWindow.Designer.cs">
+      <DependentUpon>FileViewerWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Helper\Helper.cs" />
+    <Compile Include="OSConfig\GOSConfigWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="OSConfig\GOSConfigWindow.Designer.cs">
       <DependentUpon>GOSConfigWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="MainWindow.cs">
@@ -77,7 +108,22 @@
     <Compile Include="ProjectHandler\ProjectHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ValueHandler\ValueHandler.cs" />
-    <EmbeddedResource Include="GOSConfigWindow.resx">
+    <EmbeddedResource Include="AppConfig\AppConfigWindow.resx">
+      <DependentUpon>AppConfigWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AppConfig\ModuleConfigWindow.resx">
+      <DependentUpon>ModuleConfigWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AppConfig\TaskConfigUserControl.resx">
+      <DependentUpon>TaskConfigUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AppConfig\TaskPrivilegeSelector.resx">
+      <DependentUpon>TaskPrivilegeSelector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FileViewer\FileViewerWindow.resx">
+      <DependentUpon>FileViewerWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="OSConfig\GOSConfigWindow.resx">
       <DependentUpon>GOSConfigWindow.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainWindow.resx">

@@ -14,10 +14,10 @@ namespace GOSTool
     public partial class GOSConfigWindow : Form
     {
         private ProjectData _projectData;
-        public GOSConfigWindow(ProjectData projectData)
+        public GOSConfigWindow()
         {
             InitializeComponent();
-            _projectData = projectData;
+            _projectData = ProjectHandler.GetProjectData();
         }
 
         private List<string> osVersions = new List<string>();
@@ -121,24 +121,9 @@ namespace GOSTool
             _projectData.OsConfig.Configuration = configParameters;
             ProjectHandler.SaveProjectData(_projectData);
 
-            CopyFilesRecursively(ProgramData.OSPath + "\\" + _projectData.OsConfig.Version, ProjectHandler.WorkspacePath.Value + "\\" + ProjectHandler.ProjectName.Value + "\\Build\\GOS2022");
+            Helper.CopyFilesRecursively(ProgramData.OSPath + "\\" + _projectData.OsConfig.Version, ProjectHandler.WorkspacePath.Value + "\\" + ProjectHandler.ProjectName.Value + "\\Build\\GOS2022");
             OverwriteConfig();
             Close();
-        }
-
-        private void CopyFilesRecursively(string sourcePath, string targetPath)
-        {
-            //Now Create all of the directories
-            foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
-            {
-                Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
-            }
-
-            //Copy all the files & Replaces any files with the same name
-            foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-            {
-                File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
-            }
         }
 
         private void OverwriteConfig()

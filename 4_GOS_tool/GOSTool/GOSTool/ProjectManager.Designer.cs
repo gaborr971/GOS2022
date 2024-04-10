@@ -149,6 +149,7 @@ namespace GOSTool
             this.Controls.Add(this.label1);
             this.MinimumSize = new System.Drawing.Size(524, 278);
             this.Name = "ProjectManager";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Load += new System.EventHandler(this.ProjectManager_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

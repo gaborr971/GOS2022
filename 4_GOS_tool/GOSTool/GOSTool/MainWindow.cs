@@ -19,6 +19,19 @@ namespace GOSTool
             InitializeComponent();
             ProjectData = projectData;
             Text = ProgramData.Name + " " + ProgramData.Version + " [" + ProgramData.Date + "]";
+
+            treeView1.NodeMouseDoubleClick += (sender, e) =>
+            {
+                DirectoryInfo directoryInfo = new DirectoryInfo(ProjectHandler.WorkspacePath.Value + "\\" + ProjectHandler.ProjectName.Value + "\\Build");
+                string fileName = e.Node.Text;
+                var fileInfos = directoryInfo.GetFiles(fileName, SearchOption.AllDirectories);
+                if (fileInfos.Length == 1)
+                {
+                    FileViewerWindow fileViewer = new FileViewerWindow();
+                    fileViewer.OpenFileForView(fileInfos[0].FullName);
+                    fileViewer.ShowDialog();
+                }
+            };
         }
 
         private void MainWindow_Load(object sender, EventArgs e)
@@ -31,7 +44,7 @@ namespace GOSTool
 
         private void configureOSToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            GOSConfigWindow configWindow = new GOSConfigWindow(ProjectData);
+            GOSConfigWindow configWindow = new GOSConfigWindow();
             configWindow.ShowDialog();
             ProjectData = ProjectHandler.GetProjectData();
             projectDataUserControl1.SetProjectData(ProjectData);
@@ -48,12 +61,12 @@ namespace GOSTool
         private void UpdateProjectTree()
         {
             treeView1.Nodes.Clear();
-            DirectoryInfo directoryInfo = new DirectoryInfo(ProjectHandler.WorkspacePath.Value + "\\" + ProjectHandler.ProjectName.Value + "\\Build\\GOS2022");
+            DirectoryInfo directoryInfo = new DirectoryInfo(ProjectHandler.WorkspacePath.Value + "\\" + ProjectHandler.ProjectName.Value + "\\Build");
             if (directoryInfo.Exists)
             {
-                //treeView1.AfterSelect += treeView1_AfterSelect;
                 BuildTree(directoryInfo, treeView1.Nodes);
             }
+            Helper.ExpandTreeView(treeView1.Nodes, 2);
         }
 
         private void BuildTree(DirectoryInfo directoryInfo, TreeNodeCollection addInMe)
@@ -68,6 +81,18 @@ namespace GOSTool
             {
                 BuildTree(subdir, curNode.Nodes);
             }
+        }
+
+        private void configureApplicationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AppConfigWindow appConfigWindow = new AppConfigWindow();
+            appConfigWindow.ShowDialog();
+            UpdateProjectTree();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Environment.Exit(-1);
         }
     }
 }

@@ -84,6 +84,7 @@ namespace GOSTool
         {
             if (ProjectName.Value != "")
             {
+                SelectedProject.SetValue(ProjectName.Value);
                 Directory.CreateDirectory(WorkspacePath.Value + "/" + ProjectName.Value);
                 XmlSerializer ser = new XmlSerializer(typeof(ProjectData));
                 ProjectData pd = new ProjectData();
@@ -116,6 +117,7 @@ namespace GOSTool
         public string ProjectName { get; set; }
         public string Workspace { get; set; }
         public OSConfig OsConfig { get; set; } = new OSConfig();
+        public AppConfiguration AppConfig { get; set; } = new AppConfiguration();
         public ProjectData()
         {
             CreationTime = DateTime.Now;
@@ -128,5 +130,39 @@ namespace GOSTool
     {
         public string Version { get; set; } = "";
         public List<(string, string)> Configuration { get; set; } = new List<(string, string)>();
+    }
+
+    public class AppConfiguration
+    {
+        public bool UseConfigPattern { get; set; }
+        public string Name { get; set; } = "New Application";
+        public int Major { get; set; } = 0;
+        public int Minor { get; set; } = 1;
+        public List<ModuleConfig> Modules { get; set; } = new List<ModuleConfig>();
+    }
+
+    public class ModuleConfig
+    {
+        public string ModuleName { get; set; }
+        public List<TaskConfig> Tasks { get; set; } = new List<TaskConfig>();
+    }
+
+    public class TaskConfig
+    {
+        public string TaskName { get; set; } = "NewTask";
+        public int TaskPrivileges { get; set; } = 0x00FF;
+        public int TaskStackSize { get; set; } = 0x200;
+        public int TaskMaxCpu { get; set; } = 10000;
+        public int TaskPriority { get; set; } = 0;
+        public TaskType TaskType { get; set; } = TaskType.Normal;
+    }
+
+    public enum TaskType
+    {
+        Normal,
+        SingleShot,
+        Startup,
+        StartupNormal,
+        StartupSingleShot
     }
 }
