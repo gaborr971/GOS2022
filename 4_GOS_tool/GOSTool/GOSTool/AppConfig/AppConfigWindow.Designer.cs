@@ -42,6 +42,7 @@ namespace GOSTool
             this.label1 = new System.Windows.Forms.Label();
             this.useConfigPatternCb = new System.Windows.Forms.CheckBox();
             this.taskConfigUserControl1 = new GOSTool.AppConfig.TaskConfigUserControl();
+            this.moduleConfigUserControl1 = new GOSTool.AppConfig.ModuleConfigUserControl();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.appMinorNUD)).BeginInit();
@@ -77,6 +78,7 @@ namespace GOSTool
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.moduleConfigUserControl1);
             this.groupBox1.Controls.Add(this.taskConfigUserControl1);
             this.groupBox1.Location = new System.Drawing.Point(480, 143);
             this.groupBox1.Name = "groupBox1";
@@ -179,6 +181,13 @@ namespace GOSTool
             this.taskConfigUserControl1.Size = new System.Drawing.Size(486, 463);
             this.taskConfigUserControl1.TabIndex = 4;
             // 
+            // moduleConfigUserControl1
+            // 
+            this.moduleConfigUserControl1.Location = new System.Drawing.Point(6, 24);
+            this.moduleConfigUserControl1.Name = "moduleConfigUserControl1";
+            this.moduleConfigUserControl1.Size = new System.Drawing.Size(508, 136);
+            this.moduleConfigUserControl1.TabIndex = 5;
+            // 
             // AppConfigWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -218,5 +227,6 @@ namespace GOSTool
         private System.Windows.Forms.TextBox appNameTB;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox useConfigPatternCb;
+        private AppConfig.ModuleConfigUserControl moduleConfigUserControl1;
     }
 }

@@ -52,11 +52,11 @@
     <Compile Include="AppConfig\AppConfigWindow.Designer.cs">
       <DependentUpon>AppConfigWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="AppConfig\ModuleConfigWindow.cs">
-      <SubType>Form</SubType>
+    <Compile Include="AppConfig\ModuleConfigUserControl.cs">
+      <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="AppConfig\ModuleConfigWindow.Designer.cs">
-      <DependentUpon>ModuleConfigWindow.cs</DependentUpon>
+    <Compile Include="AppConfig\ModuleConfigUserControl.Designer.cs">
+      <DependentUpon>ModuleConfigUserControl.cs</DependentUpon>
     </Compile>
     <Compile Include="AppConfig\TaskConfigUserControl.cs">
       <SubType>UserControl</SubType>
@@ -70,6 +70,7 @@
     <Compile Include="AppConfig\TaskPrivilegeSelector.Designer.cs">
       <DependentUpon>TaskPrivilegeSelector.cs</DependentUpon>
     </Compile>
+    <Compile Include="CodeGenerator\CodeGenerator.cs" />
     <Compile Include="Converter\Converter.cs" />
     <Compile Include="DataHandler\DataVariable.cs" />
     <Compile Include="FileViewer\FileViewerWindow.cs">
@@ -111,8 +112,8 @@
     <EmbeddedResource Include="AppConfig\AppConfigWindow.resx">
       <DependentUpon>AppConfigWindow.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="AppConfig\ModuleConfigWindow.resx">
-      <DependentUpon>ModuleConfigWindow.cs</DependentUpon>
+    <EmbeddedResource Include="AppConfig\ModuleConfigUserControl.resx">
+      <DependentUpon>ModuleConfigUserControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="AppConfig\TaskConfigUserControl.resx">
       <DependentUpon>TaskConfigUserControl.cs</DependentUpon>

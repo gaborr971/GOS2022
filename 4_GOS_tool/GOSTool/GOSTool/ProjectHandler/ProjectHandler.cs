@@ -143,7 +143,7 @@ namespace GOSTool
 
     public class ModuleConfig
     {
-        public string ModuleName { get; set; }
+        public string ModuleName { get; set; } = "NewModule";
         public List<TaskConfig> Tasks { get; set; } = new List<TaskConfig>();
     }
 
@@ -162,7 +162,6 @@ namespace GOSTool
         Normal,
         SingleShot,
         Startup,
-        StartupNormal,
         StartupSingleShot
     }
 }
