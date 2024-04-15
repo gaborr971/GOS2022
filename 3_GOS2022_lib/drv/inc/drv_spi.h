@@ -75,17 +75,17 @@ typedef enum
 typedef struct
 {
 	drv_spiPeriphInstance_t periphInstance;    //!< Periphery instance.
-    u32_t                   mode;              //!< Clock speed.
-    u32_t                   direction;         //!< Duty cycle.
-    u32_t                   dataSize;          //!< Own address.
-    u32_t                   clkPolarity;       //!< Addressing mode.
-    u32_t                   clkPhase;          //!< Dual address mode.
-    u32_t                   nss;               //!< Own address 2.
-    u32_t                   baudRatePrescaler; //!< General call mode.
-    u32_t                   firstBit;          //!< No stretch mode.
-    u32_t                   tiMode;            //!< Own address 2.
-    u32_t                   crcCalculation;    //!< General call mode.
-    u32_t                   crcPolynomial;     //!< No stretch mode.
+    u32_t                   mode;              //!< Mode.
+    u32_t                   direction;         //!< Direction.
+    u32_t                   dataSize;          //!< Data size.
+    u32_t                   clkPolarity;       //!< Clock polarity.
+    u32_t                   clkPhase;          //!< Clock phase.
+    u32_t                   nss;               //!< NSS.
+    u32_t                   baudRatePrescaler; //!< Baud rate prescaler.
+    u32_t                   firstBit;          //!< First bit.
+    u32_t                   tiMode;            //!< TI mode.
+    u32_t                   crcCalculation;    //!< CRC calculation.
+    u32_t                   crcPolynomial;     //!< CRC polynomial.
     drv_dmaDescriptor_t*    dmaConfigRx;       //!< RX DMA configuration.
     drv_dmaDescriptor_t*    dmaConfigTx;       //!< TX DMA configuration.
 }drv_spiDescriptor_t;

@@ -99,7 +99,7 @@
 /**
  * Maximum number of tasks.
  */
-#define CFG_TASK_MAX_NUMBER             ( 40 )
+#define CFG_TASK_MAX_NUMBER             ( 48 )
 
 /*
  * OS task stack sizes.
