@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       drv_i2c.c
 //! @author     Ahmed Gazar
-//! @date       2024-04-02
-//! @version    1.1
+//! @date       2024-04-13
+//! @version    1.2
 //!
 //! @brief      GOS2022 Library / I2C driver source.
 //! @details    For a more detailed description of this driver, please refer to @ref drv_i2c.h
@@ -27,6 +27,7 @@
 // 1.0        2024-03-15    Ahmed Gazar     Initial version created.
 // 1.1        2024-04-02    Ahmed Gazar     *    Complete callbacks made faster by removing loops
 //                                          *    Inline macros removed from functions
+// 1.2        2024-04-13    Ahmed Gazar     *    Instance initializer parameter changed
 //*************************************************************************************************
 //
 // Copyright (c) 2024 Ahmed Gazar
@@ -128,7 +129,7 @@ gos_result_t drv_i2cInit (void_t)
     {
         for (i2cIdx = 0u; i2cIdx < i2cConfigSize / sizeof(drv_i2cDescriptor_t); i2cIdx++)
         {
-            GOS_CONCAT_RESULT(i2cDriverInitResult, drv_i2cInitInstance(i2cIdx));
+            GOS_CONCAT_RESULT(i2cDriverInitResult, drv_i2cInitInstance(&i2cConfig[i2cIdx]));
         }
     }
     else
@@ -143,7 +144,7 @@ gos_result_t drv_i2cInit (void_t)
 /*
  * Function: drv_i2cInitInstance
  */
-gos_result_t drv_i2cInitInstance (u8_t i2cInstanceIndex)
+gos_result_t drv_i2cInitInstance (/*u8_t i2cInstanceIndex*/GOS_CONST drv_i2cDescriptor_t* pInstance)
 {
     /*
      * Local variables.
@@ -154,19 +155,21 @@ gos_result_t drv_i2cInitInstance (u8_t i2cInstanceIndex)
     /*
      * Function code.
      */
-    if (i2cConfig != NULL && i2cInstanceIndex < (i2cConfigSize / sizeof(drv_i2cDescriptor_t)))
+    if (pInstance != NULL)
     {
-        instance = i2cConfig[i2cInstanceIndex].periphInstance;
+        instance = pInstance->periphInstance;
 
         hi2cs[instance].Instance             = i2cInstanceLut[instance];
-        hi2cs[instance].Init.ClockSpeed      = i2cConfig[i2cInstanceIndex].clockSpeed;
-        hi2cs[instance].Init.DutyCycle       = i2cConfig[i2cInstanceIndex].dutyCycle;
-        hi2cs[instance].Init.AddressingMode  = i2cConfig[i2cInstanceIndex].addressingMode;
-        hi2cs[instance].Init.OwnAddress1     = i2cConfig[i2cInstanceIndex].ownAddress1;
-        hi2cs[instance].Init.OwnAddress2     = i2cConfig[i2cInstanceIndex].ownAddress2;
-        hi2cs[instance].Init.DualAddressMode = i2cConfig[i2cInstanceIndex].dualAddressMode;
-        hi2cs[instance].Init.GeneralCallMode = i2cConfig[i2cInstanceIndex].generalCallMode;
-        hi2cs[instance].Init.NoStretchMode   = i2cConfig[i2cInstanceIndex].noStretchMode;
+        hi2cs[instance].Init.ClockSpeed      = pInstance->clockSpeed;
+        hi2cs[instance].Init.DutyCycle       = pInstance->dutyCycle;
+        hi2cs[instance].Init.AddressingMode  = pInstance->addressingMode;
+        hi2cs[instance].Init.OwnAddress1     = pInstance->ownAddress1;
+        hi2cs[instance].Init.OwnAddress2     = pInstance->ownAddress2;
+        hi2cs[instance].Init.DualAddressMode = pInstance->dualAddressMode;
+        hi2cs[instance].Init.GeneralCallMode = pInstance->generalCallMode;
+        hi2cs[instance].Init.NoStretchMode   = pInstance->noStretchMode;
+
+        HAL_I2C_DeInit(&hi2cs[instance]);
 
         if (HAL_I2C_Init    (&hi2cs[instance])                 == HAL_OK      &&
             gos_mutexInit   (&i2cMutexes[instance])            == GOS_SUCCESS &&
@@ -222,6 +225,7 @@ gos_result_t drv_i2cMemWrite (
         else
         {
             // Transmit or trigger error.
+        	HAL_I2C_Master_Abort_IT(&hi2cs[instance], address);
         }
     }
     else
@@ -261,6 +265,7 @@ gos_result_t drv_i2cMemRead (
         else
         {
             // Receive or trigger error.
+        	(void_t) HAL_I2C_Master_Abort_IT(&hi2cs[instance], address);
         }
     }
     else
@@ -377,6 +382,7 @@ gos_result_t drv_i2cTransmitIT (
         else
         {
             // Transmit or trigger error.
+        	HAL_I2C_Master_Abort_IT(&hi2cs[instance], address);
         }
     }
     else
@@ -416,6 +422,7 @@ gos_result_t drv_i2cReceiveIT (
         else
         {
             // Receive or trigger error.
+        	HAL_I2C_Master_Abort_IT(&hi2cs[instance], address);
         }
     }
     else
@@ -456,6 +463,7 @@ gos_result_t drv_i2cTransmitDMA (
         else
         {
             // Transmit or trigger error.
+        	HAL_I2C_Master_Abort_IT(&hi2cs[instance], address);
         }
     }
     else
@@ -495,6 +503,7 @@ gos_result_t drv_i2cReceiveDMA (
         else
         {
             // Receive or trigger error.
+        	HAL_I2C_Master_Abort_IT(&hi2cs[instance], address);
         }
     }
     else

@@ -93,7 +93,7 @@ gos_result_t drv_i2cInit (
 
 // TODO
 gos_result_t drv_i2cInitInstance (
-		u8_t i2cInstanceIndex
+		GOS_CONST drv_i2cDescriptor_t* pInstance
 		);
 
 // TODO
