@@ -94,5 +94,11 @@ namespace GOSTool
         {
             Environment.Exit(-1);
         }
+
+        private void systemMonitoringToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MonitoringWindow monitoringWindow = new MonitoringWindow();
+            monitoringWindow.Show();
+        }
     }
 }

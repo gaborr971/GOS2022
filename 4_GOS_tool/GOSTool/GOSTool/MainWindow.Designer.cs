@@ -41,31 +41,31 @@ namespace GOSTool
             this.configureBootloaderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configureApplicationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.monitoringToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.softwareInstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.systemMonitoringToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.graphicsDesignerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.imageToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.createFLASHImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.projectDataUserControl1 = new GOSTool.ProjectDataUserControl();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.useBldCheckBox = new System.Windows.Forms.CheckBox();
+            this.bldVersionLabel = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.useLibCheckBox = new System.Windows.Forms.CheckBox();
+            this.libVersionLabel = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.osVersionLabel = new System.Windows.Forms.Label();
             this.useOsCheckBox = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.libVersionLabel = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
-            this.useLibCheckBox = new System.Windows.Forms.CheckBox();
-            this.useBldCheckBox = new System.Windows.Forms.CheckBox();
-            this.bldVersionLabel = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.imageToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.createFLASHImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.softwareInstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.systemMonitoringToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.projectDataUserControl1 = new GOSTool.ProjectDataUserControl();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -85,7 +85,7 @@ namespace GOSTool
             this.aboutToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1020, 28);
+            this.menuStrip1.Size = new System.Drawing.Size(1275, 38);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -95,20 +95,20 @@ namespace GOSTool
             this.saveProjectToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 24);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(46, 34);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // saveProjectToolStripMenuItem
             // 
             this.saveProjectToolStripMenuItem.Enabled = false;
             this.saveProjectToolStripMenuItem.Name = "saveProjectToolStripMenuItem";
-            this.saveProjectToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.saveProjectToolStripMenuItem.Size = new System.Drawing.Size(174, 26);
             this.saveProjectToolStripMenuItem.Text = "Save project";
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(174, 26);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -116,7 +116,7 @@ namespace GOSTool
             // 
             this.templateGeneratorToolStripMenuItem.Enabled = false;
             this.templateGeneratorToolStripMenuItem.Name = "templateGeneratorToolStripMenuItem";
-            this.templateGeneratorToolStripMenuItem.Size = new System.Drawing.Size(154, 24);
+            this.templateGeneratorToolStripMenuItem.Size = new System.Drawing.Size(154, 34);
             this.templateGeneratorToolStripMenuItem.Text = "Template generator";
             // 
             // configuratorToolStripMenuItem
@@ -127,7 +127,7 @@ namespace GOSTool
             this.configureBootloaderToolStripMenuItem,
             this.configureApplicationToolStripMenuItem});
             this.configuratorToolStripMenuItem.Name = "configuratorToolStripMenuItem";
-            this.configuratorToolStripMenuItem.Size = new System.Drawing.Size(156, 24);
+            this.configuratorToolStripMenuItem.Size = new System.Drawing.Size(156, 34);
             this.configuratorToolStripMenuItem.Text = "System configurator";
             // 
             // configureOSToolStripMenuItem
@@ -164,29 +164,65 @@ namespace GOSTool
             this.softwareInstallToolStripMenuItem,
             this.systemMonitoringToolStripMenuItem});
             this.monitoringToolToolStripMenuItem.Name = "monitoringToolToolStripMenuItem";
-            this.monitoringToolToolStripMenuItem.Size = new System.Drawing.Size(128, 24);
+            this.monitoringToolToolStripMenuItem.Size = new System.Drawing.Size(128, 34);
             this.monitoringToolToolStripMenuItem.Text = "Monitoring tool";
+            // 
+            // softwareInstallToolStripMenuItem
+            // 
+            this.softwareInstallToolStripMenuItem.Enabled = false;
+            this.softwareInstallToolStripMenuItem.Name = "softwareInstallToolStripMenuItem";
+            this.softwareInstallToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.softwareInstallToolStripMenuItem.Text = "Software install";
+            // 
+            // systemMonitoringToolStripMenuItem
+            // 
+            this.systemMonitoringToolStripMenuItem.Name = "systemMonitoringToolStripMenuItem";
+            this.systemMonitoringToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.systemMonitoringToolStripMenuItem.Text = "System monitoring";
+            this.systemMonitoringToolStripMenuItem.Click += new System.EventHandler(this.systemMonitoringToolStripMenuItem_Click);
             // 
             // graphicsDesignerToolStripMenuItem
             // 
             this.graphicsDesignerToolStripMenuItem.Enabled = false;
             this.graphicsDesignerToolStripMenuItem.Name = "graphicsDesignerToolStripMenuItem";
-            this.graphicsDesignerToolStripMenuItem.Size = new System.Drawing.Size(141, 24);
+            this.graphicsDesignerToolStripMenuItem.Size = new System.Drawing.Size(141, 34);
             this.graphicsDesignerToolStripMenuItem.Text = "Graphics designer";
+            // 
+            // imageToolToolStripMenuItem
+            // 
+            this.imageToolToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.createFLASHImageToolStripMenuItem});
+            this.imageToolToolStripMenuItem.Name = "imageToolToolStripMenuItem";
+            this.imageToolToolStripMenuItem.Size = new System.Drawing.Size(116, 34);
+            this.imageToolToolStripMenuItem.Text = "Binary merger";
+            // 
+            // createFLASHImageToolStripMenuItem
+            // 
+            this.createFLASHImageToolStripMenuItem.Enabled = false;
+            this.createFLASHImageToolStripMenuItem.Name = "createFLASHImageToolStripMenuItem";
+            this.createFLASHImageToolStripMenuItem.Size = new System.Drawing.Size(228, 26);
+            this.createFLASHImageToolStripMenuItem.Text = "Create FLASH image";
+            // 
+            // aboutToolStripMenuItem
+            // 
+            this.aboutToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.aboutToolStripMenuItem1});
+            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(55, 34);
+            this.aboutToolStripMenuItem.Text = "Help";
+            // 
+            // aboutToolStripMenuItem1
+            // 
+            this.aboutToolStripMenuItem1.Enabled = false;
+            this.aboutToolStripMenuItem1.Name = "aboutToolStripMenuItem1";
+            this.aboutToolStripMenuItem1.Size = new System.Drawing.Size(133, 26);
+            this.aboutToolStripMenuItem1.Text = "About";
             // 
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
-            // 
-            // projectDataUserControl1
-            // 
-            this.projectDataUserControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.projectDataUserControl1.Location = new System.Drawing.Point(3, 18);
-            this.projectDataUserControl1.Name = "projectDataUserControl1";
-            this.projectDataUserControl1.Size = new System.Drawing.Size(990, 101);
-            this.projectDataUserControl1.TabIndex = 1;
             // 
             // groupBox1
             // 
@@ -231,6 +267,80 @@ namespace GOSTool
             this.groupBox2.TabIndex = 4;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Project Configuration";
+            // 
+            // useBldCheckBox
+            // 
+            this.useBldCheckBox.AutoSize = true;
+            this.useBldCheckBox.Enabled = false;
+            this.useBldCheckBox.Location = new System.Drawing.Point(286, 31);
+            this.useBldCheckBox.Name = "useBldCheckBox";
+            this.useBldCheckBox.Size = new System.Drawing.Size(18, 17);
+            this.useBldCheckBox.TabIndex = 11;
+            this.useBldCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // bldVersionLabel
+            // 
+            this.bldVersionLabel.AutoSize = true;
+            this.bldVersionLabel.Location = new System.Drawing.Point(283, 67);
+            this.bldVersionLabel.Name = "bldVersionLabel";
+            this.bldVersionLabel.Size = new System.Drawing.Size(30, 17);
+            this.bldVersionLabel.TabIndex = 10;
+            this.bldVersionLabel.Text = "X.X";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(191, 67);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(85, 17);
+            this.label6.TabIndex = 9;
+            this.label6.Text = "BLD version";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(191, 31);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(64, 17);
+            this.label7.TabIndex = 8;
+            this.label7.Text = "Use BLD";
+            // 
+            // useLibCheckBox
+            // 
+            this.useLibCheckBox.AutoSize = true;
+            this.useLibCheckBox.Enabled = false;
+            this.useLibCheckBox.Location = new System.Drawing.Point(101, 95);
+            this.useLibCheckBox.Name = "useLibCheckBox";
+            this.useLibCheckBox.Size = new System.Drawing.Size(18, 17);
+            this.useLibCheckBox.TabIndex = 7;
+            this.useLibCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // libVersionLabel
+            // 
+            this.libVersionLabel.AutoSize = true;
+            this.libVersionLabel.Location = new System.Drawing.Point(98, 131);
+            this.libVersionLabel.Name = "libVersionLabel";
+            this.libVersionLabel.Size = new System.Drawing.Size(30, 17);
+            this.libVersionLabel.TabIndex = 6;
+            this.libVersionLabel.Text = "X.X";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(6, 131);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(78, 17);
+            this.label5.TabIndex = 5;
+            this.label5.Text = "LIB version";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 95);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(57, 17);
+            this.label3.TabIndex = 4;
+            this.label3.Text = "Use LIB";
             // 
             // osVersionLabel
             // 
@@ -281,123 +391,13 @@ namespace GOSTool
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Project Tree";
             // 
-            // label3
+            // projectDataUserControl1
             // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(6, 95);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(57, 17);
-            this.label3.TabIndex = 4;
-            this.label3.Text = "Use LIB";
-            // 
-            // libVersionLabel
-            // 
-            this.libVersionLabel.AutoSize = true;
-            this.libVersionLabel.Location = new System.Drawing.Point(98, 131);
-            this.libVersionLabel.Name = "libVersionLabel";
-            this.libVersionLabel.Size = new System.Drawing.Size(30, 17);
-            this.libVersionLabel.TabIndex = 6;
-            this.libVersionLabel.Text = "X.X";
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(6, 131);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(78, 17);
-            this.label5.TabIndex = 5;
-            this.label5.Text = "LIB version";
-            // 
-            // useLibCheckBox
-            // 
-            this.useLibCheckBox.AutoSize = true;
-            this.useLibCheckBox.Enabled = false;
-            this.useLibCheckBox.Location = new System.Drawing.Point(101, 95);
-            this.useLibCheckBox.Name = "useLibCheckBox";
-            this.useLibCheckBox.Size = new System.Drawing.Size(18, 17);
-            this.useLibCheckBox.TabIndex = 7;
-            this.useLibCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // useBldCheckBox
-            // 
-            this.useBldCheckBox.AutoSize = true;
-            this.useBldCheckBox.Enabled = false;
-            this.useBldCheckBox.Location = new System.Drawing.Point(286, 31);
-            this.useBldCheckBox.Name = "useBldCheckBox";
-            this.useBldCheckBox.Size = new System.Drawing.Size(18, 17);
-            this.useBldCheckBox.TabIndex = 11;
-            this.useBldCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // bldVersionLabel
-            // 
-            this.bldVersionLabel.AutoSize = true;
-            this.bldVersionLabel.Location = new System.Drawing.Point(283, 67);
-            this.bldVersionLabel.Name = "bldVersionLabel";
-            this.bldVersionLabel.Size = new System.Drawing.Size(30, 17);
-            this.bldVersionLabel.TabIndex = 10;
-            this.bldVersionLabel.Text = "X.X";
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(191, 67);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(106, 21);
-            this.label6.TabIndex = 9;
-            this.label6.Text = "BLD version";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(191, 31);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(80, 21);
-            this.label7.TabIndex = 8;
-            this.label7.Text = "Use BLD";
-            // 
-            // imageToolToolStripMenuItem
-            // 
-            this.imageToolToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.createFLASHImageToolStripMenuItem});
-            this.imageToolToolStripMenuItem.Name = "imageToolToolStripMenuItem";
-            this.imageToolToolStripMenuItem.Size = new System.Drawing.Size(116, 24);
-            this.imageToolToolStripMenuItem.Text = "Binary merger";
-            // 
-            // createFLASHImageToolStripMenuItem
-            // 
-            this.createFLASHImageToolStripMenuItem.Enabled = false;
-            this.createFLASHImageToolStripMenuItem.Name = "createFLASHImageToolStripMenuItem";
-            this.createFLASHImageToolStripMenuItem.Size = new System.Drawing.Size(228, 26);
-            this.createFLASHImageToolStripMenuItem.Text = "Create FLASH image";
-            // 
-            // softwareInstallToolStripMenuItem
-            // 
-            this.softwareInstallToolStripMenuItem.Enabled = false;
-            this.softwareInstallToolStripMenuItem.Name = "softwareInstallToolStripMenuItem";
-            this.softwareInstallToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
-            this.softwareInstallToolStripMenuItem.Text = "Software install";
-            // 
-            // systemMonitoringToolStripMenuItem
-            // 
-            this.systemMonitoringToolStripMenuItem.Enabled = false;
-            this.systemMonitoringToolStripMenuItem.Name = "systemMonitoringToolStripMenuItem";
-            this.systemMonitoringToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
-            this.systemMonitoringToolStripMenuItem.Text = "System monitoring";
-            // 
-            // aboutToolStripMenuItem
-            // 
-            this.aboutToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.aboutToolStripMenuItem1});
-            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(55, 24);
-            this.aboutToolStripMenuItem.Text = "Help";
-            // 
-            // aboutToolStripMenuItem1
-            // 
-            this.aboutToolStripMenuItem1.Enabled = false;
-            this.aboutToolStripMenuItem1.Name = "aboutToolStripMenuItem1";
-            this.aboutToolStripMenuItem1.Size = new System.Drawing.Size(224, 26);
-            this.aboutToolStripMenuItem1.Text = "About";
+            this.projectDataUserControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.projectDataUserControl1.Location = new System.Drawing.Point(3, 18);
+            this.projectDataUserControl1.Name = "projectDataUserControl1";
+            this.projectDataUserControl1.Size = new System.Drawing.Size(990, 101);
+            this.projectDataUserControl1.TabIndex = 1;
             // 
             // MainWindow
             // 

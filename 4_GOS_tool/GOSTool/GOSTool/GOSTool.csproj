@@ -70,6 +70,7 @@
     <Compile Include="AppConfig\TaskPrivilegeSelector.Designer.cs">
       <DependentUpon>TaskPrivilegeSelector.cs</DependentUpon>
     </Compile>
+    <Compile Include="Bootloader\Com\Bootloader.cs" />
     <Compile Include="CodeGenerator\CodeGenerator.cs" />
     <Compile Include="Converter\Converter.cs" />
     <Compile Include="DataHandler\DataVariable.cs" />
@@ -108,6 +109,35 @@
     <Compile Include="Program.cs" />
     <Compile Include="ProjectHandler\ProjectHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SystemMonitoring\Com\Crc.cs" />
+    <Compile Include="SystemMonitoring\Com\GCP.cs" />
+    <Compile Include="SystemMonitoring\Com\SysmonFunctions.cs" />
+    <Compile Include="SystemMonitoring\Com\SysmonMessages.cs" />
+    <Compile Include="SystemMonitoring\Com\Uart.cs" />
+    <Compile Include="SystemMonitoring\LoadGraphUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="SystemMonitoring\LoadGraphUserControl.Designer.cs">
+      <DependentUpon>LoadGraphUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SystemMonitoring\MonitoringWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SystemMonitoring\MonitoringWindow.Designer.cs">
+      <DependentUpon>MonitoringWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SystemMonitoring\TaskDetailViewUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="SystemMonitoring\TaskDetailViewUserControl.Designer.cs">
+      <DependentUpon>TaskDetailViewUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SystemMonitoring\UsbConfigUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="SystemMonitoring\UsbConfigUserControl.Designer.cs">
+      <DependentUpon>UsbConfigUserControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="ValueHandler\ValueHandler.cs" />
     <EmbeddedResource Include="AppConfig\AppConfigWindow.resx">
       <DependentUpon>AppConfigWindow.cs</DependentUpon>
@@ -145,6 +175,18 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="SystemMonitoring\LoadGraphUserControl.resx">
+      <DependentUpon>LoadGraphUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SystemMonitoring\MonitoringWindow.resx">
+      <DependentUpon>MonitoringWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SystemMonitoring\TaskDetailViewUserControl.resx">
+      <DependentUpon>TaskDetailViewUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SystemMonitoring\UsbConfigUserControl.resx">
+      <DependentUpon>UsbConfigUserControl.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
