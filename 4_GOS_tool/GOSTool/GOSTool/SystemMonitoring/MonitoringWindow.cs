@@ -109,11 +109,11 @@ namespace GOSTool
                             BootloaderData softwareInfo = SysmonFunctions.GetSoftwareInfo();
                             List<ListViewItem> swInfoItems = new List<ListViewItem>();
 
-                            swInfoItems.Add(new ListViewItem(new string[] {" Driver lib name", softwareInfo.DriverInfo.Name }));
-                            swInfoItems.Add(new ListViewItem(new string[] {" Driver lib version", softwareInfo.DriverInfo.Major.ToString("D2") + "." + softwareInfo.DriverInfo.Minor.ToString("D2") + "." + softwareInfo.DriverInfo.Build.ToString("D2") }));
-                            swInfoItems.Add(new ListViewItem(new string[] {" Driver lib author", softwareInfo.DriverInfo.Author }));
-                            swInfoItems.Add(new ListViewItem(new string[] {" Driver lib description", softwareInfo.DriverInfo.Description }));
-                            swInfoItems.Add(new ListViewItem(new string[] {" Driver lib date", softwareInfo.DriverInfo.Date.ToString("yyyy-MM-dd") }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Bootloader driver lib name", softwareInfo.BootloaderDriverInfo.Name }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Bootloader driver lib version", softwareInfo.BootloaderDriverInfo.Major.ToString("D2") + "." + softwareInfo.BootloaderDriverInfo.Minor.ToString("D2") + "." + softwareInfo.BootloaderDriverInfo.Build.ToString("D2") }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Bootloader driver lib author", softwareInfo.BootloaderDriverInfo.Author }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Bootloader driver lib description", softwareInfo.BootloaderDriverInfo.Description }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Bootloader driver lib date", softwareInfo.BootloaderDriverInfo.Date.ToString("yyyy-MM-dd") }));
 
                             swInfoItems.Add(new ListViewItem(new string[] { "Bootloader name", softwareInfo.BootloaderInfo.Name }));
                             swInfoItems.Add(new ListViewItem(new string[] { "Bootloader version", softwareInfo.BootloaderInfo.Major.ToString("D2") + "." + softwareInfo.BootloaderInfo.Minor.ToString("D2") + "." + softwareInfo.BootloaderInfo.Build.ToString("D2") }));
@@ -125,11 +125,17 @@ namespace GOSTool
                             swInfoItems.Add(new ListViewItem(new string[] { "Bootloader CRC", "0x" + softwareInfo.Crc.ToString("X8") }));
                             swInfoItems.Add(new ListViewItem(new string[] { "Bootloader update mode", softwareInfo.BootUpdateMode.ToString() }));
 
-                            swInfoItems.Add(new ListViewItem(new string[] { "Application name", softwareInfo.ApplicationData.Version.Name }));
-                            swInfoItems.Add(new ListViewItem(new string[] { "Application version", softwareInfo.ApplicationData.Version.Major.ToString("D2") + "." + softwareInfo.ApplicationData.Version.Minor.ToString("D2") + "." + softwareInfo.ApplicationData.Version.Build.ToString("D2") }));
-                            swInfoItems.Add(new ListViewItem(new string[] { "Application author", softwareInfo.ApplicationData.Version.Author }));
-                            swInfoItems.Add(new ListViewItem(new string[] { "Application description", softwareInfo.ApplicationData.Version.Description }));
-                            swInfoItems.Add(new ListViewItem(new string[] { "Application date", softwareInfo.ApplicationData.Version.Date.ToString("yyyy-MM-dd") }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application driver lib name", softwareInfo.ApplicationData.DriverVersion.Name }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application driver lib version", softwareInfo.ApplicationData.DriverVersion.Major.ToString("D2") + "." + softwareInfo.ApplicationData.DriverVersion.Minor.ToString("D2") + "." + softwareInfo.ApplicationData.DriverVersion.Build.ToString("D2") }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application driver lib author", softwareInfo.ApplicationData.DriverVersion.Author }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application driver lib description", softwareInfo.ApplicationData.DriverVersion.Description }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application driver lib date", softwareInfo.ApplicationData.DriverVersion.Date.ToString("yyyy-MM-dd") }));
+
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application name", softwareInfo.ApplicationData.AppVersion.Name }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application version", softwareInfo.ApplicationData.AppVersion.Major.ToString("D2") + "." + softwareInfo.ApplicationData.AppVersion.Minor.ToString("D2") + "." + softwareInfo.ApplicationData.AppVersion.Build.ToString("D2") }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application author", softwareInfo.ApplicationData.AppVersion.Author }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application description", softwareInfo.ApplicationData.AppVersion.Description }));
+                            swInfoItems.Add(new ListViewItem(new string[] { "Application date", softwareInfo.ApplicationData.AppVersion.Date.ToString("yyyy-MM-dd") }));
                             swInfoItems.Add(new ListViewItem(new string[] { "Application address", "0x" + softwareInfo.ApplicationData.StartAddress.ToString("X8") }));
                             swInfoItems.Add(new ListViewItem(new string[] { "Application size", softwareInfo.ApplicationData.Size.ToString() }));
                             swInfoItems.Add(new ListViewItem(new string[] { "Application CRC", "0x" + softwareInfo.ApplicationData.Crc.ToString("X8") }));

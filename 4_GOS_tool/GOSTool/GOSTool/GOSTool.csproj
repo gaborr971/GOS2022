@@ -71,6 +71,12 @@
       <DependentUpon>TaskPrivilegeSelector.cs</DependentUpon>
     </Compile>
     <Compile Include="Bootloader\Com\Bootloader.cs" />
+    <Compile Include="Bootloader\SoftwareInstallWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Bootloader\SoftwareInstallWindow.Designer.cs">
+      <DependentUpon>SoftwareInstallWindow.cs</DependentUpon>
+    </Compile>
     <Compile Include="CodeGenerator\CodeGenerator.cs" />
     <Compile Include="Converter\Converter.cs" />
     <Compile Include="DataHandler\DataVariable.cs" />
@@ -150,6 +156,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="AppConfig\TaskPrivilegeSelector.resx">
       <DependentUpon>TaskPrivilegeSelector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Bootloader\SoftwareInstallWindow.resx">
+      <DependentUpon>SoftwareInstallWindow.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FileViewer\FileViewerWindow.resx">
       <DependentUpon>FileViewerWindow.cs</DependentUpon>

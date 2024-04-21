@@ -100,5 +100,11 @@ namespace GOSTool
             MonitoringWindow monitoringWindow = new MonitoringWindow();
             monitoringWindow.Show();
         }
+
+        private void softwareInstallToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SoftwareInstallWindow softwareInstallWindow = new SoftwareInstallWindow();
+            softwareInstallWindow.Show();
+        }
     }
 }
