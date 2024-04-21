@@ -222,7 +222,7 @@ GOS_INLINE gos_result_t gos_messageRx (
             messageWaiterArray[nextWaiterIndex].target         = target;
             messageWaiterArray[nextWaiterIndex].waiterServed   = GOS_FALSE;
 
-            memset(messageWaiterArray[nextWaiterIndex].messageIdArray, 0, CFG_MESSAGE_MAX_WAITER_IDS * sizeof(gos_messageId_t));
+            (void_t*) memset(messageWaiterArray[nextWaiterIndex].messageIdArray, 0, CFG_MESSAGE_MAX_WAITER_IDS * sizeof(gos_messageId_t));
 
             for (messageIdIndex = 0u; messageIdIndex < CFG_MESSAGE_MAX_WAITER_IDS; messageIdIndex++)
             {
@@ -322,7 +322,7 @@ GOS_INLINE gos_result_t gos_messageTx (
     {
         if (messageArray[nextMessageIndex].messageId == GOS_MESSAGE_INVALID_ID)
         {
-            memcpy((void_t*)&messageArray[nextMessageIndex], (void_t*)message, sizeof(*message));
+        	(void_t*) memcpy((void_t*)&messageArray[nextMessageIndex], (void_t*)message, sizeof(*message));
 
             messageTxResult = GOS_SUCCESS;
 
@@ -399,7 +399,7 @@ GOS_STATIC void_t gos_messageDaemonTask (void_t)
                             if (messageWaiterArray[messageWaiterIndex].messageIdArray[messageIdIndex] ==
                                 messageArray[messageIndex].messageId)
                             {
-                                memcpy(messageWaiterArray[messageWaiterIndex].target->messageBytes,
+                            	(void_t*) memcpy(messageWaiterArray[messageWaiterIndex].target->messageBytes,
                                       (void_t*)messageArray[messageIndex].messageBytes,
                                       messageArray[messageIndex].messageSize);
                                 messageWaiterArray[messageWaiterIndex].target->messageSize  = messageArray[messageIndex].messageSize;

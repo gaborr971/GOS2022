@@ -147,7 +147,7 @@
 /**
  * Sysmon daemon task stack size.
  */
-#define CFG_TASK_SYSMON_DAEMON_STACK    ( 0x400 )
+#define CFG_TASK_SYSMON_DAEMON_STACK    ( 0x600 )
 
 /*
  * OS task priorities.

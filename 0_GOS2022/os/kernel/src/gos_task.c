@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_task.c
 //! @author     Ahmed Gazar
-//! @date       2023-11-06
-//! @version    1.0
+//! @date       2024-04-19
+//! @version    1.1
 //!
 //! @brief      GOS task source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -25,6 +25,7 @@
 // Version    Date          Author          Description
 // ------------------------------------------------------------------------------------------------
 // 1.0        2023-11-06    Ahmed Gazar     Initial version created.
+// 1.1        2024-04-19    Ahmed Gazar     *    Task register task CPU limit range check fixed
 //*************************************************************************************************
 //
 // Copyright (c) 2023 Ahmed Gazar
@@ -233,6 +234,10 @@ gos_result_t gos_taskRegister (gos_taskDescriptor_t* taskDescriptor, gos_tid_t* 
             if (taskDescriptor->taskCpuUsageLimit == 0u)
             {
                 taskDescriptors[taskIndex].taskCpuUsageLimit = 10000u;
+            }
+            else if (taskDescriptor->taskCpuUsageLimit > 10000u)
+            {
+            	taskDescriptors[taskIndex].taskCpuUsageLimit = 10000u;
             }
             else
             {

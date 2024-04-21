@@ -14,8 +14,8 @@
 //*************************************************************************************************
 //! @file       gos_kernel.c
 //! @author     Ahmed Gazar
-//! @date       2024-04-02
-//! @version    1.18
+//! @date       2024-04-17
+//! @version    1.19
 //!
 //! @brief      GOS kernel source.
 //! @details    For a more detailed description of this module, please refer to @ref gos_kernel.h
@@ -72,6 +72,7 @@
 // 1.17       2023-11-10    Ahmed Gazar     +    Missing else branches and void casts added
 // 1.18       2024-04-02    Ahmed Gazar     *    gos_kernelCalculateTaskCpuUsages: break from loop
 //                                               moved to the beginning of loop
+// 1.19       2024-04-17    Ahmed Gazar     *    Task block timeout check fixed
 //*************************************************************************************************
 //
 // Copyright (c) 2022 Ahmed Gazar
@@ -1070,7 +1071,7 @@ GOS_UNUSED GOS_STATIC void_t gos_kernelSelectNextTask (void_t)
             // Unblock tasks if their timeout time has elapsed.
             else if ((taskDescriptors[taskIndex].taskState == GOS_TASK_BLOCKED) &&
                     (taskDescriptors[taskIndex].taskBlockTicks != GOS_TASK_MAX_BLOCK_TIME_MS) &&
-                    ((taskDescriptors[taskIndex].taskBlockTickCounter += elapsedTicks) == taskDescriptors[taskIndex].taskBlockTicks))
+                    ((taskDescriptors[taskIndex].taskBlockTickCounter += elapsedTicks) >= taskDescriptors[taskIndex].taskBlockTicks))
             {
                 taskDescriptors[taskIndex].taskState = GOS_TASK_READY;
             }
