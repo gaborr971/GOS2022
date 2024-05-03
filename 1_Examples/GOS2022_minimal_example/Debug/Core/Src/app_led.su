@@ -1,2 +1,0 @@
-../Core/Src/app_led.c:84:14:APP_LedInit	16	static
-../Core/Src/app_led.c:104:19:APP_LedTask	8	static

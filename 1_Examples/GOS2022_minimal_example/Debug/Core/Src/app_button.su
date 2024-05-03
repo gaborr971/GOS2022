@@ -1,3 +1,0 @@
-../Core/Src/app_button.c:90:14:APP_ButtonInit	16	static
-../Core/Src/app_button.c:120:8:APP_ButtonPressedInterruptCallback	8	static
-../Core/Src/app_button.c:144:19:APP_ButtonTask	8	static

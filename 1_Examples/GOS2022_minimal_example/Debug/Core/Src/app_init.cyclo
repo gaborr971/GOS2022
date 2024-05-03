@@ -1,2 +1,0 @@
-../Core/Src/app_init.c:75:14:gos_platformDriverInit	3
-../Core/Src/app_init.c:133:14:gos_userApplicationInit	2

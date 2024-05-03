@@ -1,2 +1,0 @@
-../Core/driver/src/driver.c:68:14:driver_init	2
-../Core/driver/src/driver.c:104:19:sysTickHook	1
