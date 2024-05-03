@@ -1,0 +1,37 @@
+/*
+ * cfg_def.h
+ *
+ *  Created on: Apr 2, 2024
+ *      Author: Gabor
+ */
+
+#ifndef CFG_DEF_H
+#define CFG_DEF_H
+
+/*
+ * Type definitions
+ */
+/**
+ * DMA configuration instance.
+ */
+typedef enum
+{
+	DMA_CFG_USART2_TX = 0,/**< DMA_CFG_USART2_TX */
+	DMA_CFG_USART1,       /**< DMA_CFG_USART1 */
+}dma_cfgInstance_t;
+
+/**
+ * IO pin enumerator.
+ */
+typedef enum
+{
+    IO_USER_LED     = 0u, //!< User LED.
+    IO_USER_BUTTON,       //!< User button.
+    IO_UART_1_RX,         //!< UART1 RX pin.
+    IO_UART_1_TX,         //!< UART1 TX pin.
+    IO_UART_2_RX,         //!< UART2 RX pin.
+    IO_UART_2_TX,         //!< UART2 TX pin.
+    IO_NUMBER             //!< Number of defined IOs.
+}io_pin_t;
+
+#endif /* DRIVER_CFG_CFG_DEF_H_ */

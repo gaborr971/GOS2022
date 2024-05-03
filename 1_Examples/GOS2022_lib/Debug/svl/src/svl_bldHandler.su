@@ -1,0 +1,3 @@
+../svl/src/svl_bldHandler.c:91:14:svl_bldHandlerInit	16	static
+../svl/src/svl_bldHandler.c:120:19:svl_bldHandlerBootModeReqMsgReceived	352	static
+../svl/src/svl_bldHandler.c:157:19:svl_bldHandlerBootDataReqMsgReceived	704	static

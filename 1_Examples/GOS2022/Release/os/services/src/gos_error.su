@@ -1,0 +1,3 @@
+../os/services/src/gos_error.c:107:30:gos_printStartupLogo	8	static
+../os/services/src/gos_error.c:128:8:gos_errorHandler	28	static,ignoring_inline_asm
+../os/services/src/gos_error.c:236:14:gos_errorTraceInit	16	static

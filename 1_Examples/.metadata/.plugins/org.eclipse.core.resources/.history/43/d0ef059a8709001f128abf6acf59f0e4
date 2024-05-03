@@ -1,0 +1,115 @@
+/*
+ * app_init.c
+ *
+ *  Created on: May 3, 2024
+ *      Author: Gabor
+ */
+#include "gos.h"
+#include <drv_shell.h>
+#include <drv_trace.h>
+#include "driver.h"
+#include "timer_driver.h"
+#include "stm32f4xx.h"
+
+/*
+ * Function: gos_platformDriverInit
+ *
+ * This function is defined as weak in the OS and shall be redefined by the user
+ * as seen here.
+ *
+ * This is to initialize the low-level drivers required by the OS, and it is called
+ * during the OS startup.
+ */
+gos_result_t gos_platformDriverInit (void_t)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t platformDriverInitResult = GOS_SUCCESS;
+
+    /*
+     * These are the implementation of the necessary driver functions that
+     * match the skeletons defined by the kernel driver functions.
+     */
+    GOS_STATIC gos_driver_functions_t driverFunctions =
+    {
+		.traceDriverTransmitString       = drv_traceTransmit,
+		.traceDriverTransmitStringUnsafe = drv_traceTransmitUnsafe,
+		.shellDriverTransmitString       = drv_shellTransmitString,
+		.shellDriverReceiveChar          = drv_shellReceiveChar,
+		.timerDriverSysTimerGetValue     = timer_driver_systimer_get,
+    };
+
+    /*
+     * Function code.
+     */
+    __enable_irq();
+
+    // Low-level initialization.
+    if (HAL_Init() != HAL_OK)
+    {
+        platformDriverInitResult = GOS_ERROR;
+    }
+
+    // Driver initialization.
+    platformDriverInitResult = driver_init();
+
+    // Register kernel drivers.
+    platformDriverInitResult &= gos_driverInit(&driverFunctions);
+
+    if (platformDriverInitResult != GOS_SUCCESS)
+    {
+        platformDriverInitResult = GOS_ERROR;
+    }
+
+    // Systick initialization.
+    SysTick->VAL = 0;
+    SysTick->CTRL = 0b111;
+
+    return platformDriverInitResult;
+}
+
+/*
+ * Function: gos_userApplicationInit
+ *
+ * This function is defined as weak in the OS and shall be redefined by the user
+ * as seen here.
+ *
+ * This is to initialize the user application before the kernel starts the scheduling.
+ * This can be used to register user tasks and initialize application modules.
+ */
+gos_result_t gos_userApplicationInit (void_t)
+{
+    /*
+     * Local variables.
+     */
+    gos_result_t appInitResult = GOS_SUCCESS;
+
+    /*
+     * Function code.
+     */
+    // Register tasks.
+    /*appInitResult &= gos_taskRegister(&ledTaskDesc, NULL);
+    appInitResult &= gos_taskRegister(&lifeSignTaskDesc, NULL);
+    appInitResult &= gos_taskRegister(&buttonTaskDesc, NULL);
+    appInitResult &= gos_taskRegister(&highPrioTaskDesc, NULL);
+    appInitResult &= gos_taskRegister(&mediumPrioTaskDesc, NULL);
+    appInitResult &= gos_taskRegister(&lowPrioTaskDesc, NULL);*/
+    appInitResult &= gos_errorTraceInit("LED task initialization", APP_LedInit());
+
+    // Initialize triggers.
+    gos_triggerInit(&lifeSignTrigger);
+    gos_triggerInit(&buttonTrigger);
+
+    // Test user-level warning.
+    gos_errorHandler(GOS_ERROR_LEVEL_USER_WARNING, __func__, __LINE__, "Test user-level warning. Starting OS...");
+
+    if (appInitResult != GOS_SUCCESS)
+    {
+        appInitResult = GOS_ERROR;
+    }
+
+    (void_t) gos_errorTraceInit("Application initializetion", appInitResult);
+
+    return appInitResult;
+}

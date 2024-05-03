@@ -1,0 +1,2 @@
+../os/driver/src/gos_trace_driver.c:65:14:gos_traceDriverTransmitString	0	static
+../os/driver/src/gos_trace_driver.c:86:14:gos_traceDriverTransmitString_Unsafe	0	static

@@ -1,0 +1,10 @@
+../bld/src/bld_data.c:24:14:bld_dataInitialize	24	static
+../bld/src/bld_data.c:83:14:bld_dataReset	24	static
+../bld/src/bld_data.c:147:14:bld_dataGet	728	static
+../bld/src/bld_data.c:174:14:bld_appDataGet	728	static
+../bld/src/bld_data.c:201:14:bld_configGet	728	static
+../bld/src/bld_data.c:228:14:bld_dataSet	728	static
+../bld/src/bld_data.c:269:14:bld_appDataSet	728	static
+../bld/src/bld_data.c:310:14:bld_configSet	728	static
+../bld/src/bld_data.c:351:8:bld_dataPrint	8	static
+../bld/src/bld_data.c:398:18:bld_dataGetBootloaderSize	16	static

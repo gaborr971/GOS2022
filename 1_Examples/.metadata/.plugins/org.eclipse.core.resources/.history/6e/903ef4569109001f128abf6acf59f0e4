@@ -1,0 +1,85 @@
+/*
+ * app_cpu.c
+ *
+ *  Created on: May 3, 2024
+ *      Author: Gabor
+ */
+#include "gos.h"
+
+/*
+ * Macros
+ */
+/**
+ * CPU task sleep time in [ms].
+ */
+#define CPU_TASK_SLEEP_TIME_MS ( 128u )
+
+/**
+ * Number of CPU load measurements for average calculation.
+ */
+#define CPU_LOAD_SAMPLES       ( 8u   )
+
+/*
+ * Static function prototypes
+ */
+GOS_STATIC void_t APP_CpuTask (void_t);
+
+/**
+ * CPU task descriptor.
+ */
+GOS_STATIC gos_taskDescriptor_t cpuTaskDesc =
+{
+	.taskFunction       = APP_CpuTask,
+	.taskStackSize      = 0x200,
+	.taskPriority       = 0,
+	.taskName           = "app_cpu_task",
+	.taskPrivilegeLevel = GOS_TASK_PRIVILEGED_USER
+};
+
+/*
+ * CPU initializer
+ *
+ * Registers the CPU task in the scheduler.
+ */
+gos_result_t APP_CpuInit (void_t)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t cpuInitResult = GOS_SUCCESS;
+
+	/*
+	 * Function code.
+	 */
+	cpuInitResult = gos_taskRegister(&cpuTaskDesc, NULL);
+
+	return cpuInitResult;
+}
+
+/*
+ * CPU task
+ *
+ * Every 10 milliseconds, it traces the current CPU load.
+ */
+GOS_STATIC void_t APP_CpuTask (void_t)
+{
+	/*
+	 * Local variables.
+	 */
+	u16_t cpuLoad = 0u;
+	u16_t loadArray [CPU_LOAD_SAMPLES];
+	u8_t  measIndex = 0u;
+
+	/*
+	 * Function code.
+	 */
+	for (;;)
+	{
+		cpuLoad = gos_kernelGetCpuUsage();
+
+		loadArray[measIndex++ % CPU_LOAD_SAMPLES] = cpuLoad;;
+
+		(void_t) gos_traceTraceFormatted(GOS_TRUE, "CPU load: %3u.%02u%%\r", cpuLoad / 100, cpuLoad % 100);
+		(void_t) gos_taskSleep(CPU_TASK_SLEEP_TIME_MS);
+	}
+}

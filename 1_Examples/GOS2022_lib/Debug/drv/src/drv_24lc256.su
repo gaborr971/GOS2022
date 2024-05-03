@@ -1,0 +1,4 @@
+../drv/src/drv_24lc256.c:61:14:drv_24lc256Init	16	static
+../drv/src/drv_24lc256.c:70:8:drv_24lc256IsDeviceAvailable	16	static
+../drv/src/drv_24lc256.c:79:14:drv_24lc256Read	72	static
+../drv/src/drv_24lc256.c:139:14:drv_24lc256Write	72	static

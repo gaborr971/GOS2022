@@ -1,0 +1,12 @@
+../os/services/src/gos_time.c:160:14:gos_timeInit	3
+../os/services/src/gos_time.c:187:14:gos_timeGet	2
+../os/services/src/gos_time.c:798:19:gos_timeDaemonTask	7
+../os/services/src/gos_time.c:214:14:gos_timeSet	2
+../os/services/src/gos_time.c:241:14:gos_runTimeGet	2
+../os/services/src/gos_time.c:268:14:gos_timeCompare	10
+../os/services/src/gos_time.c:312:14:gos_timeAddMilliseconds	11
+../os/services/src/gos_time.c:408:14:gos_timeAddSeconds	10
+../os/services/src/gos_time.c:498:14:gos_runTimeAddMicroseconds	13
+../os/services/src/gos_time.c:638:14:gos_runTimeAddMilliseconds	6
+../os/services/src/gos_time.c:707:14:gos_runTimeAddSeconds	6
+../os/services/src/gos_time.c:768:14:gos_timeIncreaseSystemTime	3

@@ -1,0 +1,43 @@
+/*
+ * app_button.c
+ *
+ *  Created on: May 3, 2024
+ *      Author: Gabor
+ */
+#include "gos.h"
+
+GOS_STATIC void_t APP_ButtonPressedInterruptCallback (void_t);
+
+gos_result_t APP_ButtonInit (void_t)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t buttonInitResult = GOS_SUCCESS;
+
+	/*
+	 * Function code.
+	 */
+	buttonInitResult = gos_taskRegister(&buttonTaskDesc, NULL);
+
+	return buttonInitResult;
+}
+
+/*
+ * Button pressed interrupt callback
+ *
+ * Called by HW interrupt.
+ * Only effective when the debounce-flag is not set.
+ * It sets the debounce-flag to active, and increments the trigger.
+ */
+GOS_STATIC void_t APP_ButtonPressedInterruptCallback (void_t)
+{
+    /*
+     * Function code.
+     */
+    if (buttonBlocked == GOS_FALSE)
+    {
+        buttonBlocked = GOS_TRUE;
+        gos_triggerIncrement(&buttonTrigger);
+    }
+}

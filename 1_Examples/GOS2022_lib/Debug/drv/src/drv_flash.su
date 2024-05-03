@@ -1,0 +1,8 @@
+../drv/src/drv_flash.c:64:14:drv_flashErase	56	static
+../drv/src/drv_flash.c:107:14:drv_flashWrite	48	static
+../drv/src/drv_flash.c:146:14:drv_flashWriteWithoutLock	48	static,ignoring_inline_asm
+../drv/src/drv_flash.c:182:14:drv_flashUnlock	16	static
+../drv/src/drv_flash.c:207:14:drv_flashLock	16	static
+../drv/src/drv_flash.c:232:14:drv_flashRead	32	static
+../drv/src/drv_flash.c:263:18:drv_flashGetSector	24	static
+../drv/src/drv_flash.c:321:29:drv_flashGetSectorSize	24	static

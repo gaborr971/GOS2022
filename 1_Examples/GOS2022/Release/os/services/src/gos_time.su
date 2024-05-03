@@ -1,0 +1,12 @@
+../os/services/src/gos_time.c:160:14:gos_timeInit	8	static
+../os/services/src/gos_time.c:187:14:gos_timeGet	0	static
+../os/services/src/gos_time.c:798:19:gos_timeDaemonTask	24	static
+../os/services/src/gos_time.c:214:14:gos_timeSet	0	static
+../os/services/src/gos_time.c:241:14:gos_runTimeGet	0	static
+../os/services/src/gos_time.c:268:14:gos_timeCompare	8	static
+../os/services/src/gos_time.c:312:14:gos_timeAddMilliseconds	12	static
+../os/services/src/gos_time.c:408:14:gos_timeAddSeconds	12	static
+../os/services/src/gos_time.c:498:14:gos_runTimeAddMicroseconds	8	static
+../os/services/src/gos_time.c:638:14:gos_runTimeAddMilliseconds	8	static
+../os/services/src/gos_time.c:707:14:gos_runTimeAddSeconds	8	static
+../os/services/src/gos_time.c:768:14:gos_timeIncreaseSystemTime	16	static

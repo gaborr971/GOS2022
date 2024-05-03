@@ -1,0 +1,17 @@
+/*
+ * cfg_def.h
+ *
+ *  Created on: Apr 2, 2024
+ *      Author: Gabor
+ */
+
+#ifndef CFG_DEF_H
+#define CFG_DEF_H
+
+typedef enum
+{
+	DMA_CFG_USART2_TX = 0,
+	DMA_CFG_USART1,
+}dma_cfgInstance_t;
+
+#endif /* DRIVER_CFG_CFG_DEF_H_ */

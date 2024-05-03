@@ -1,0 +1,96 @@
+/*
+ * it_cfg.c
+ *
+ *  Created on: Mar 7, 2024
+ *      Author: Gabor
+ */
+
+#include <drv_it.h>
+#include "stm32f4xx_hal.h"
+
+/**
+ * TODO
+ */
+GOS_CONST drv_itDescriptor_t itConfig [] =
+{
+	{
+		.irqType        = USART2_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = DMA1_Stream6_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = UART5_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = DMA1_Stream0_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = DMA2_Stream7_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = USART1_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = EXTI9_5_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = EXTI15_10_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = DMA1_Stream5_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = TIM2_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = I2C1_EV_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	/*{
+		.irqType        = I2C2_EV_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},*/
+	{
+		.irqType        = SPI2_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = SPI3_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+	{
+		.irqType        = DMA1_Stream7_IRQn,
+		.preemtPriority = 0,
+		.subPriority    = 0
+	},
+};
+
+/**
+ * TODO
+ */
+u32_t itConfigSize = sizeof(itConfig);

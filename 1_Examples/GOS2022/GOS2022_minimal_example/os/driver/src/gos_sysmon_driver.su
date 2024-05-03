@@ -1,0 +1,2 @@
+../os/driver/src/gos_sysmon_driver.c:63:14:gos_sysmonDriverReceive	24	static
+../os/driver/src/gos_sysmon_driver.c:84:14:gos_sysmonDriverTransmit	24	static

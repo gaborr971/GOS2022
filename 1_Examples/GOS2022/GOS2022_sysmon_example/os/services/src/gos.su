@@ -1,0 +1,6 @@
+../os/services/src/gos.c:160:5:main	16	static
+../os/services/src/gos.c:208:8:gos_Dump	16	static
+../os/services/src/gos.c:239:36:gos_platformDriverInit	8	static
+../os/services/src/gos.c:251:36:gos_userApplicationInit	8	static
+../os/services/src/gos.c:272:25:gos_Start	16	static
+../os/services/src/gos.c:301:19:gos_systemTask	24	static

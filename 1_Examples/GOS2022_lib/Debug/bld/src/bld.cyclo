@@ -1,0 +1,3 @@
+../bld/src/bld.c:25:14:bld_getVersion	3
+../bld/src/bld.c:61:14:bld_checkApplication	8
+../bld/src/bld.c:124:14:bld_jumpToApplication	2

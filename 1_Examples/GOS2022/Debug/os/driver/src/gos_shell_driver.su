@@ -1,0 +1,2 @@
+../os/driver/src/gos_shell_driver.c:75:14:gos_shellDriverReceiveChar	24	static
+../os/driver/src/gos_shell_driver.c:96:14:gos_shellDriverTransmitString	16	static

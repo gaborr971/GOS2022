@@ -1,0 +1,23 @@
+/*
+ * app_button.c
+ *
+ *  Created on: May 3, 2024
+ *      Author: Gabor
+ */
+
+
+gos_result_t APP_ButtonInit (void_t)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t buttonInitResult = GOS_SUCCESS;
+
+	/*
+	 * Function code.
+	 */
+	buttonInitResult = gos_taskRegister(&buttonTaskDesc, NULL);
+
+	return buttonInitResult;
+}
+

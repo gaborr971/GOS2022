@@ -1,0 +1,17 @@
+../drv/src/drv_i2c.c:117:14:drv_i2cInit	16	static
+../drv/src/drv_i2c.c:147:14:drv_i2cInitInstance	24	static
+../drv/src/drv_i2c.c:204:14:drv_i2cMemWrite	40	static
+../drv/src/drv_i2c.c:244:14:drv_i2cMemRead	40	static
+../drv/src/drv_i2c.c:284:14:drv_i2cTransmitBlocking	40	static
+../drv/src/drv_i2c.c:322:14:drv_i2cReceiveBlocking	40	static
+../drv/src/drv_i2c.c:360:14:drv_i2cTransmitIT	32	static
+../drv/src/drv_i2c.c:401:14:drv_i2cReceiveIT	32	static
+../drv/src/drv_i2c.c:441:14:drv_i2cTransmitDMA	32	static
+../drv/src/drv_i2c.c:482:14:drv_i2cReceiveDMA	32	static
+../drv/src/drv_i2c.c:522:8:HAL_I2C_MasterTxCpltCallback	16	static
+../drv/src/drv_i2c.c:544:8:HAL_I2C_MemTxCpltCallback	16	static
+../drv/src/drv_i2c.c:566:8:HAL_I2C_MasterRxCpltCallback	16	static
+../drv/src/drv_i2c.c:588:8:HAL_I2C_MemRxCpltCallback	16	static
+../drv/src/drv_i2c.c:610:8:I2C1_EV_IRQHandler	8	static
+../drv/src/drv_i2c.c:625:8:I2C2_EV_IRQHandler	8	static
+../drv/src/drv_i2c.c:640:8:HAL_I2C_MspInit	24	static

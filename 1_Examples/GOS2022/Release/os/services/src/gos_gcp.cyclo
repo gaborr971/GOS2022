@@ -1,0 +1,6 @@
+../os/services/src/gos_gcp.c:301:25:gos_gcpTransmitFrames	6
+../os/services/src/gos_gcp.c:383:25:gos_gcpReceiveFrames	10
+../os/services/src/gos_gcp.c:141:14:gos_gcpInit	2
+../os/services/src/gos_gcp.c:169:14:gos_gcpRegisterPhysicalDriver	4
+../os/services/src/gos_gcp.c:198:25:gos_gcpTransmitMessage	9
+../os/services/src/gos_gcp.c:246:25:gos_gcpReceiveMessage	9

@@ -1,0 +1,6 @@
+23:41:14 **** Incremental Build of configuration Debug for project GOS2022_lib ****
+make -j8 all 
+make: Nothing to be done for 'all'.
+
+23:41:15 Build Finished. 0 errors, 0 warnings. (took 1s.139ms)
+

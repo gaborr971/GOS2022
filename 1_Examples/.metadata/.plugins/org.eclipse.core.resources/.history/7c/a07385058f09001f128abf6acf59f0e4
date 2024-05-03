@@ -1,0 +1,69 @@
+/*
+ * app_cpu.c
+ *
+ *  Created on: May 3, 2024
+ *      Author: Gabor
+ */
+#include "gos.h"
+
+/*
+ * Macros
+ */
+/**
+ * CPU task sleep time in [ms].
+ */
+#define CPU_TASK_SLEEP_TIME_MS ( 10u )
+
+/*
+ * Static function prototypes
+ */
+GOS_STATIC void_t APP_CpuTask (void_t);
+
+/**
+ * LED task descriptor.
+ */
+GOS_STATIC gos_taskDescriptor_t cpuTaskDesc =
+{
+	.taskFunction       = APP_CpuTask,
+	.taskStackSize      = 0x200,
+	.taskPriority       = 0,
+	.taskName           = "app_cpu_task",
+	.taskPrivilegeLevel = GOS_TASK_PRIVILEGE_USER
+};
+
+/*
+ * LED initializer
+ *
+ * Registers the LED task in the scheduler.
+ */
+gos_result_t APP_LedInit (void_t)
+{
+	/*
+	 * Local variables.
+	 */
+	gos_result_t ledInitResult = GOS_SUCCESS;
+
+	/*
+	 * Function code.
+	 */
+	ledInitResult = gos_taskRegister(&ledTaskDesc, NULL);
+
+	return ledInitResult;
+}
+
+/*
+ * LED task
+ *
+ * Every 1 second, it toggles the user LED.
+ */
+GOS_STATIC void_t APP_LedTask (void_t)
+{
+	/*
+	 * Function code.
+	 */
+	for (;;)
+	{
+		(void_t) drv_gpioTgglePin(IO_USER_LED);
+		(void_t) gos_taskSleep(CPU_TASK_SLEEP_TIME_MS);
+	}
+}

@@ -1,0 +1,3 @@
+../svl/src/svl_hwi.c:69:14:svl_hwiInit	4
+../svl/src/svl_hwi.c:96:14:svl_hwiRead	3
+../svl/src/svl_hwi.c:125:14:svl_hwiWrite	3

@@ -1,0 +1,16 @@
+../drv/src/drv_crc.c:111:14:drv_crcGetCrc8	6
+../drv/src/drv_crc.c:158:14:drv_crcGetCrc16	6
+../drv/src/drv_crc.c:205:14:drv_crcGetCrc32	6
+../drv/src/drv_crc.c:252:14:drv_crcGetCrc64	6
+../drv/src/drv_crc.c:299:22:drv_crcCheckCrc8	5
+../drv/src/drv_crc.c:343:22:drv_crcCheckCrc16	5
+../drv/src/drv_crc.c:387:22:drv_crcCheckCrc32	5
+../drv/src/drv_crc.c:431:22:drv_crcCheckCrc64	5
+../drv/src/drv_crc.c:475:14:drv_crcGetChkSum8	4
+../drv/src/drv_crc.c:508:14:drv_crcGetChkSum16	4
+../drv/src/drv_crc.c:541:14:drv_crcGetChkSum32	4
+../drv/src/drv_crc.c:574:14:drv_crcGetChkSum64	4
+../drv/src/drv_crc.c:607:28:drv_crcCheckChkSum8	5
+../drv/src/drv_crc.c:651:28:drv_crcCheckChkSum16	5
+../drv/src/drv_crc.c:695:28:drv_crcCheckChkSum32	5
+../drv/src/drv_crc.c:739:28:drv_crcCheckChkSum64	5

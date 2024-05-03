@@ -1,0 +1,6 @@
+../os/services/src/gos.c:157:5:main	4
+../os/services/src/gos.c:205:8:gos_Dump	2
+../os/services/src/gos.c:236:36:gos_platformDriverInit	1
+../os/services/src/gos.c:248:36:gos_userApplicationInit	1
+../os/services/src/gos.c:269:25:gos_Start	2
+../os/services/src/gos.c:298:19:gos_systemTask	5

@@ -1,0 +1,6 @@
+../svl/src/svl_frs.c:79:14:svl_frsInit	4
+../svl/src/svl_frs.c:106:14:svl_frsCreate	6
+../svl/src/svl_frs.c:159:14:svl_frsGetNumOfEntries	3
+../svl/src/svl_frs.c:187:14:svl_frsGetFaultByIndex	5
+../svl/src/svl_frs.c:228:14:svl_frsGetAllFaults	7
+../svl/src/svl_frs.c:278:14:svl_frsClearFaults	1

@@ -1,0 +1,2 @@
+../drv/src/drv_sysmon.c:71:25:drv_sysmonTransmit	32	static
+../drv/src/drv_sysmon.c:100:25:drv_sysmonReceive	32	static

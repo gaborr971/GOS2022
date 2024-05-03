@@ -1,0 +1,14 @@
+../os/services/src/gos_sysmon.c:540:14:gos_sysmonInit	16	static
+../os/services/src/gos_sysmon.c:573:14:gos_sysmonRegisterUserMessage	24	static
+../os/services/src/gos_sysmon.c:612:19:gos_sysmonDaemonTask	16	static
+../os/services/src/gos_sysmon.c:687:36:gos_sysmonGetLutIndex	24	static
+../os/services/src/gos_sysmon.c:721:19:gos_sysmonSendResponse	16	static
+../os/services/src/gos_sysmon.c:741:19:gos_sysmonHandlePingRequest	16	static
+../os/services/src/gos_sysmon.c:758:19:gos_sysmonHandleCpuUsageGet	16	static
+../os/services/src/gos_sysmon.c:785:19:gos_sysmonHandleTaskDataGet	24	static
+../os/services/src/gos_sysmon.c:873:19:gos_sysmonHandleTaskVariableDataGet	24	static
+../os/services/src/gos_sysmon.c:950:19:gos_sysmonHandleTaskModification	16	static
+../os/services/src/gos_sysmon.c:1059:19:gos_sysmonHandleSysRuntimeGet	16	static
+../os/services/src/gos_sysmon.c:1093:19:gos_sysmonHandleSystimeSet	16	static
+../os/services/src/gos_sysmon.c:1127:19:gos_sysmonHandleResetRequest	16	static
+../os/services/src/gos_sysmon.c:1154:38:gos_sysmonCheckMessage	32	static

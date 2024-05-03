@@ -1,0 +1,5 @@
+../os/services/src/gos_signal.c:295:19:gos_signalDaemonTask	32	static
+../os/services/src/gos_signal.c:169:14:gos_signalCreate	16	static
+../os/services/src/gos_signal.c:132:14:gos_signalInit	8	static
+../os/services/src/gos_signal.c:203:14:gos_signalSubscribe	16	static
+../os/services/src/gos_signal.c:246:25:gos_signalInvoke	136	static

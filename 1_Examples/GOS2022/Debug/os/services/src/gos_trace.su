@@ -1,0 +1,5 @@
+../os/services/src/gos_trace.c:151:14:gos_traceInit	16	static
+../os/services/src/gos_trace.c:176:25:gos_traceTrace	184	static,ignoring_inline_asm
+../os/services/src/gos_trace.c:274:14:gos_traceTraceFormatted	188	static,ignoring_inline_asm
+../os/services/src/gos_trace.c:373:14:gos_traceTraceFormattedUnsafe	16	static
+../os/services/src/gos_trace.c:411:19:gos_traceDaemonTask	8	static

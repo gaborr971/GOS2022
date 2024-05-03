@@ -1,0 +1,5 @@
+../os/services/src/gos_trigger.c:76:14:gos_triggerInit	24	static
+../os/services/src/gos_trigger.c:105:25:gos_triggerReset	24	static,ignoring_inline_asm
+../os/services/src/gos_trigger.c:138:25:gos_triggerWait	32	static,ignoring_inline_asm
+../os/services/src/gos_trigger.c:197:25:gos_triggerIncrement	24	static,ignoring_inline_asm
+../os/services/src/gos_trigger.c:244:25:gos_triggerDecrement	24	static,ignoring_inline_asm

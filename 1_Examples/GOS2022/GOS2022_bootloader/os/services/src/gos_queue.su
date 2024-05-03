@@ -1,0 +1,11 @@
+../os/services/src/gos_queue.c:150:14:gos_queueInit	16	static
+../os/services/src/gos_queue.c:184:14:gos_queueCreate	24	static
+../os/services/src/gos_queue.c:230:14:gos_queuePut	32	static
+../os/services/src/gos_queue.c:309:14:gos_queueGet	40	static
+../os/services/src/gos_queue.c:384:14:gos_queuePeek	40	static
+../os/services/src/gos_queue.c:434:14:gos_queueReset	24	static
+../os/services/src/gos_queue.c:472:14:gos_queueRegisterFullHook	24	static
+../os/services/src/gos_queue.c:498:14:gos_queueRegisterEmptyHook	24	static
+../os/services/src/gos_queue.c:524:14:gos_queueGetName	24	static
+../os/services/src/gos_queue.c:563:14:gos_queueGetElementNumber	24	static
+../os/services/src/gos_queue.c:597:8:gos_queueDump	24	static

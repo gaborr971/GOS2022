@@ -1,0 +1,262 @@
+/*
+ * gpio_cfg.c
+ *
+ *  Created on: Feb 27, 2024
+ *      Author: Gabor
+ */
+
+#include <drv_gpio.h>
+#include "iodef.h"
+
+GOS_EXTERN void_t gpio_cfgButton1Callback (void_t);
+GOS_EXTERN void_t gpio_cfgUserButtonCallback (void_t);
+
+/**
+ * TODO
+ */
+GOS_CONST drv_gpioDescriptor_t gpioConfig [] =
+{
+		[IO_USER_LED] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_5,
+			.mode = GPIO_MODE_OUTPUT_PP,
+			.pull = GPIO_NOPULL,
+		},
+		[IO_USER_BUTTON] =
+		{
+			.port = GPIOC,
+			.pin = GPIO_PIN_13,
+			.mode = GPIO_MODE_IT_FALLING,
+			.pull = GPIO_NOPULL
+		},
+		[IO_BUTTON_1] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_15,
+			.mode = GPIO_MODE_IT_FALLING,
+			.pull = GPIO_NOPULL
+		},
+		[IO_BUTTON_2] =
+		{
+			.port = GPIOC,
+			.pin = GPIO_PIN_7,
+			.mode = GPIO_MODE_IT_FALLING,
+			.pull = GPIO_NOPULL
+		},
+		[IO_BUTTON_3] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_8,
+			.mode = GPIO_MODE_IT_FALLING,
+			.pull = GPIO_NOPULL
+		},
+		[IO_DISPL_MOSI] =
+		{
+			.port = GPIOB,
+			.pin = GPIO_PIN_5,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF6_SPI3
+		},
+		[IO_TOUCH_MISO] =
+		{
+			.port = GPIOC,
+			.pin = GPIO_PIN_11,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF6_SPI3
+		},
+		[IO_DISPL_SCK] =
+		{
+			.port = GPIOC,
+			.pin = GPIO_PIN_10,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF6_SPI3
+		},
+		[IO_DISPL_RST] =
+		{
+			.port = GPIOB,
+			.pin = GPIO_PIN_4,
+			.mode = GPIO_MODE_OUTPUT_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_LOW
+		},
+		[IO_DISPL_CS] =
+		{
+			.port = GPIOB,
+			.pin = GPIO_PIN_13,
+			.mode = GPIO_MODE_OUTPUT_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_HIGH
+		},
+		[IO_DISPL_DC] =
+		{
+			.port = GPIOB,
+			.pin = GPIO_PIN_15,
+			.mode = GPIO_MODE_OUTPUT_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_HIGH
+		},
+		[IO_TOUCH_CS] =
+		{
+			.port = GPIOB,
+			.pin = GPIO_PIN_8,
+			.mode = GPIO_MODE_OUTPUT_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_HIGH
+		},
+		[IO_SD_MOSI] =
+		{
+			.port = GPIOC,
+			.pin = GPIO_PIN_1,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF7_SPI2
+		},
+		[IO_SD_MISO] =
+		{
+			.port = GPIOC,
+			.pin = GPIO_PIN_2,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF5_SPI2
+		},
+		[IO_SD_SCK] =
+		{
+			.port = GPIOC, //GPIOB,
+			.pin = GPIO_PIN_7, //GPIO_PIN_10,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF5_SPI2
+		},
+		[IO_SD_CS] =
+		{
+			.port = GPIOB,
+			.pin = GPIO_PIN_0,
+			.mode = GPIO_MODE_OUTPUT_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_LOW
+		},
+		[IO_RTC_LCD_SCL] =
+		{
+			.port = GPIOB,
+			.pin = GPIO_PIN_6,
+			.mode = GPIO_MODE_AF_OD,
+			.pull = GPIO_NOPULL, //GPIO_PULLUP,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF4_I2C1
+		},
+		[IO_RTC_LCD_SDA] =
+		{
+			.port = GPIOB,
+			.pin = GPIO_PIN_7,
+			.mode = GPIO_MODE_AF_OD,
+			.pull = GPIO_NOPULL, //GPIO_PULLUP,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF4_I2C1
+		},
+		[IO_ANALOG_IN] =
+		{
+			.port = GPIOC,
+			.pin = GPIO_PIN_0,
+			.mode = GPIO_MODE_ANALOG,
+			.pull = GPIO_PULLUP
+		},
+		[IO_ANALOG_OUT] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_4,
+			.mode = GPIO_MODE_ANALOG,
+			.pull = GPIO_NOPULL
+		},
+		[IO_PWM_OUT] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_6,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_LOW,
+			.alternate = GPIO_AF2_TIM3
+		},
+		[IO_UART_1_RX] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_10,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF7_USART1
+		},
+		[IO_UART_1_TX] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_9,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF7_USART1
+		},
+		[IO_UART_2_RX] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_3,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF7_USART2
+		},
+		[IO_UART_2_TX] =
+		{
+			.port = GPIOA,
+			.pin = GPIO_PIN_2,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF7_USART2
+		},
+		[IO_UART_5_RX] =
+		{
+			.port = GPIOD,
+			.pin = GPIO_PIN_2,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF8_UART5
+		},
+		[IO_UART_5_TX] =
+		{
+			.port = GPIOC,
+			.pin = GPIO_PIN_12,
+			.mode = GPIO_MODE_AF_PP,
+			.pull = GPIO_NOPULL,
+			.speed = GPIO_SPEED_FREQ_VERY_HIGH,
+			.alternate = GPIO_AF8_UART5
+		},
+};
+
+/**
+ * TODO
+ */
+u32_t gpioConfigSize = sizeof(gpioConfig);
+
+GOS_CONST drv_gpioItCallbackDescriptor_t gpioItConfig [] =
+{
+	{
+		.callback = gpio_cfgButton1Callback,
+		.pin      = gpioConfig[IO_BUTTON_1].pin
+	},
+	{
+		.callback = gpio_cfgUserButtonCallback,
+		.pin      = gpioConfig[IO_USER_BUTTON].pin
+	}
+};
+
+u32_t gpioItConfigSize = sizeof(gpioItConfig);

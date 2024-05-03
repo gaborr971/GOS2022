@@ -1,0 +1,7 @@
+../drv/src/drv_adc.c:99:14:drv_adcInit	16	static
+../drv/src/drv_adc.c:129:14:drv_adcInitInstance	40	static
+../drv/src/drv_adc.c:192:14:drv_adcGetValueBlocking	32	static
+../drv/src/drv_adc.c:234:14:drv_adcGetValueIT	32	static
+../drv/src/drv_adc.c:288:8:HAL_ADC_ConvCpltCallback	16	static
+../drv/src/drv_adc.c:314:8:ADC_IRQHandler	16	static
+../drv/src/drv_adc.c:337:8:HAL_ADC_MspInit	24	static

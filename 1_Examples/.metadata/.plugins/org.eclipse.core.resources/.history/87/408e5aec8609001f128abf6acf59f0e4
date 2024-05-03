@@ -1,0 +1,45 @@
+/*
+ * app_led.c
+ *
+ *  Created on: Sep 15, 2022
+ *      Author: Gabor
+ */
+
+#include "drv_gpio.h"
+#include "iodef.h"
+
+#define LED_TASK_PERIOD     ( 1000u )
+
+GOS_STATIC void_t APP_LedTask (void_t);
+
+GOS_STATIC gos_taskDescriptor_t ledTaskDesc =
+{
+	.taskFunction       = APP_LedTask,
+	.taskName           = "app_led_task",
+	.taskPriority       = 0,
+	.taskPrivilegeLevel = GOS_TASK_PRIVILEGE_USER,
+	.taskStackSize      = 0x300
+};
+
+gos_result_t APP_LedInit (void_t)
+{
+	gos_result_t ledInitResult = GOS_SUCCESS;
+
+	ledInitResult &= gos_taskRegister(&ledTaskDesc, NULL);
+
+	if (ledInitResult != GOS_SUCCESS)
+	{
+		ledInitResult = GOS_ERROR;
+	}
+
+	return ledInitResult;
+}
+
+GOS_STATIC void_t APP_LedTask (void_t)
+{
+	for (;;)
+	{
+		drv_gpioTgglePin(IO_USER_LED);
+		gos_taskSleep(LED_TASK_PERIOD);
+	}
+}

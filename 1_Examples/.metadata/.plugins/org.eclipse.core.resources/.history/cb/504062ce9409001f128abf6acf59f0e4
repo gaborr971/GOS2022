@@ -1,0 +1,15 @@
+
+#ifndef IODEF_H
+#define IODEF_H
+
+/*
+ * Includes.
+ */
+#include "gos.h"
+
+/*
+ * Type definitions.
+ */
+
+
+#endif

@@ -1,0 +1,4 @@
+../os/services/src/gos_message.c:375:19:gos_messageDaemonTask	32	static
+../os/services/src/gos_message.c:149:14:gos_messageInit	8	static
+../os/services/src/gos_message.c:192:25:gos_messageRx	56	static
+../os/services/src/gos_message.c:305:25:gos_messageTx	40	static

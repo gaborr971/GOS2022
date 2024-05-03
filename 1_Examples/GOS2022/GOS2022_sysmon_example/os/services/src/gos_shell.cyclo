@@ -1,0 +1,9 @@
+../os/services/src/gos_shell.c:148:14:gos_shellInit	4
+../os/services/src/gos_shell.c:182:14:gos_shellRegisterCommands	5
+../os/services/src/gos_shell.c:230:14:gos_shellRegisterCommand	5
+../os/services/src/gos_shell.c:265:14:gos_shellSuspend	1
+../os/services/src/gos_shell.c:283:14:gos_shellResume	1
+../os/services/src/gos_shell.c:301:14:gos_shellEchoOn	1
+../os/services/src/gos_shell.c:319:14:gos_shellEchoOff	1
+../os/services/src/gos_shell.c:344:19:gos_shellDaemonTask	14
+../os/services/src/gos_shell.c:471:19:gos_shellCommandHandler	26
