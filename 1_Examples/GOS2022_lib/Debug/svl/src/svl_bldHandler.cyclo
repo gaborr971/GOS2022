@@ -1,3 +1,0 @@
-../svl/src/svl_bldHandler.c:91:14:svl_bldHandlerInit	3
-../svl/src/svl_bldHandler.c:120:19:svl_bldHandlerBootModeReqMsgReceived	3
-../svl/src/svl_bldHandler.c:157:19:svl_bldHandlerBootDataReqMsgReceived	3

@@ -1,2 +1,0 @@
-../drv/src/drv_trace.c:71:25:drv_traceTransmitUnsafe	24	static
-../drv/src/drv_trace.c:100:25:drv_traceTransmit	32	static

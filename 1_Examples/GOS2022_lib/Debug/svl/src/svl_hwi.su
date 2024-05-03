@@ -1,3 +1,0 @@
-../svl/src/svl_hwi.c:69:14:svl_hwiInit	24	static
-../svl/src/svl_hwi.c:96:14:svl_hwiRead	24	static
-../svl/src/svl_hwi.c:125:14:svl_hwiWrite	24	static

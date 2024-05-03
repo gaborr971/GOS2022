@@ -1,2 +1,0 @@
-../drv/src/drv_shell.c:71:25:drv_shellTransmitString	32	static
-../drv/src/drv_shell.c:100:25:drv_shellReceiveChar	32	static

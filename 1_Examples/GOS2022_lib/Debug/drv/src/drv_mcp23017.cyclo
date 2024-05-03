@@ -1,8 +1,0 @@
-../drv/src/drv_mcp23017.c:111:14:drv_mcp23017Init	3
-../drv/src/drv_mcp23017.c:137:8:drv_mcp23017IsDeviceAvailable	2
-../drv/src/drv_mcp23017.c:163:14:drv_mcp23017ReadPin	4
-../drv/src/drv_mcp23017.c:194:14:drv_mcp23017WritePin	4
-../drv/src/drv_mcp23017.c:243:25:drv_mcp23017Read	1
-../drv/src/drv_mcp23017.c:255:25:drv_mcp23017Write	1
-../drv/src/drv_mcp23017.c:266:25:drv_mcp23017SetIoDir	3
-../drv/src/drv_mcp23017.c:294:25:drv_mcp23017SetIoPol	3

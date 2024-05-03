@@ -1,7 +1,0 @@
-../drv/src/drv_adc.c:99:14:drv_adcInit	3
-../drv/src/drv_adc.c:129:14:drv_adcInitInstance	7
-../drv/src/drv_adc.c:192:14:drv_adcGetValueBlocking	6
-../drv/src/drv_adc.c:234:14:drv_adcGetValueIT	7
-../drv/src/drv_adc.c:288:8:HAL_ADC_ConvCpltCallback	4
-../drv/src/drv_adc.c:314:8:ADC_IRQHandler	6
-../drv/src/drv_adc.c:337:8:HAL_ADC_MspInit	6

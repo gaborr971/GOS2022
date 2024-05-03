@@ -1,8 +1,0 @@
-../drv/src/drv_flash.c:64:14:drv_flashErase	2
-../drv/src/drv_flash.c:107:14:drv_flashWrite	3
-../drv/src/drv_flash.c:146:14:drv_flashWriteWithoutLock	3
-../drv/src/drv_flash.c:182:14:drv_flashUnlock	2
-../drv/src/drv_flash.c:207:14:drv_flashLock	2
-../drv/src/drv_flash.c:232:14:drv_flashRead	2
-../drv/src/drv_flash.c:263:18:drv_flashGetSector	17
-../drv/src/drv_flash.c:321:29:drv_flashGetSectorSize	9
