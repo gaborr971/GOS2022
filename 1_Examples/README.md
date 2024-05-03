@@ -1,4 +1,4 @@
-#Example projects
+# Example projects
 This folder contains example projects that are based on GOS2022 and GOS2022_lib.
 
 # Minimal example project
