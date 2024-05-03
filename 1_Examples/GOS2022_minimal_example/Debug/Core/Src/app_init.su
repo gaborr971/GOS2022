@@ -1,0 +1,2 @@
+../Core/Src/app_init.c:75:14:gos_platformDriverInit	16	static,ignoring_inline_asm
+../Core/Src/app_init.c:133:14:gos_userApplicationInit	16	static

@@ -1,0 +1,2 @@
+../Core/Src/app_cpu.c:88:14:APP_CpuInit	16	static
+../Core/Src/app_cpu.c:108:19:APP_CpuTask	56	static
