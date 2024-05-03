@@ -400,7 +400,7 @@ namespace GOSTool
 
                                     int perc = (int)((double)100 * appBytesCntr / memoryContent.Count);
                                     SetProgressBar_ThreadSafe(perc);
-                                    TraceProgressChanging_ThreadSafe("Installing progress: [" + appBytesCntr + " / " + memoryContent.Count + "] bytes (" + perc + "%)");
+                                    TraceProgressChanging_ThreadSafe("Installing progress: [" + appBytesCntr + " / " + memoryContent.Count + "] bytes");
 
                                     packetCntr++;
                                     //Thread.Sleep(100);

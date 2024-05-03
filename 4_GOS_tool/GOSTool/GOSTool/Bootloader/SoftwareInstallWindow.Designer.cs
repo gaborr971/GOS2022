@@ -41,6 +41,7 @@ namespace GOSTool
             this.paramCol = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.valCol = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.bldConnectBtn = new System.Windows.Forms.Button();
             this.disconnectButton = new System.Windows.Forms.Button();
             this.installButton = new System.Windows.Forms.Button();
             this.browseButton = new System.Windows.Forms.Button();
@@ -65,7 +66,7 @@ namespace GOSTool
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.progressLabel = new System.Windows.Forms.Label();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
-            this.bldConnectBtn = new System.Windows.Forms.Button();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -73,17 +74,23 @@ namespace GOSTool
             ((System.ComponentModel.ISupportInitialize)(this.minorNUD)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.majorNUD)).BeginInit();
             this.groupBox4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox2
             // 
+            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox2.Controls.Add(this.usbConfigUserControl1);
             this.groupBox2.Controls.Add(this.label1);
             this.groupBox2.Controls.Add(this.wirelessComRadioButton);
             this.groupBox2.Controls.Add(this.usbComRadioButton);
             this.groupBox2.Location = new System.Drawing.Point(12, 12);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(595, 176);
+            this.groupBox2.Size = new System.Drawing.Size(629, 176);
             this.groupBox2.TabIndex = 3;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Communication configuration";
@@ -132,7 +139,7 @@ namespace GOSTool
             // bootModeRequestButton
             // 
             this.bootModeRequestButton.Enabled = false;
-            this.bootModeRequestButton.Location = new System.Drawing.Point(372, 31);
+            this.bootModeRequestButton.Location = new System.Drawing.Point(408, 31);
             this.bootModeRequestButton.Name = "bootModeRequestButton";
             this.bootModeRequestButton.Size = new System.Drawing.Size(146, 32);
             this.bootModeRequestButton.TabIndex = 6;
@@ -143,7 +150,7 @@ namespace GOSTool
             // resetRequestButton
             // 
             this.resetRequestButton.Enabled = false;
-            this.resetRequestButton.Location = new System.Drawing.Point(195, 31);
+            this.resetRequestButton.Location = new System.Drawing.Point(212, 31);
             this.resetRequestButton.Name = "resetRequestButton";
             this.resetRequestButton.Size = new System.Drawing.Size(146, 32);
             this.resetRequestButton.TabIndex = 5;
@@ -163,15 +170,16 @@ namespace GOSTool
             // 
             // swInfoListView
             // 
-            this.swInfoListView.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
+            this.swInfoListView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.swInfoListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.paramCol,
             this.valCol});
             this.swInfoListView.HideSelection = false;
-            this.swInfoListView.Location = new System.Drawing.Point(12, 194);
+            this.swInfoListView.Location = new System.Drawing.Point(12, 197);
             this.swInfoListView.Name = "swInfoListView";
-            this.swInfoListView.Size = new System.Drawing.Size(595, 726);
+            this.swInfoListView.Size = new System.Drawing.Size(629, 616);
             this.swInfoListView.TabIndex = 4;
             this.swInfoListView.UseCompatibleStateImageBehavior = false;
             this.swInfoListView.View = System.Windows.Forms.View.Details;
@@ -197,17 +205,27 @@ namespace GOSTool
             this.groupBox1.Controls.Add(this.appBinaryPathTb);
             this.groupBox1.Controls.Add(this.resetRequestButton);
             this.groupBox1.Controls.Add(this.label2);
-            this.groupBox1.Location = new System.Drawing.Point(613, 12);
+            this.groupBox1.Location = new System.Drawing.Point(3, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(580, 176);
+            this.groupBox1.Size = new System.Drawing.Size(699, 176);
             this.groupBox1.TabIndex = 5;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Control";
             // 
+            // bldConnectBtn
+            // 
+            this.bldConnectBtn.Location = new System.Drawing.Point(18, 78);
+            this.bldConnectBtn.Name = "bldConnectBtn";
+            this.bldConnectBtn.Size = new System.Drawing.Size(146, 32);
+            this.bldConnectBtn.TabIndex = 13;
+            this.bldConnectBtn.Text = "Bootloader connect";
+            this.bldConnectBtn.UseVisualStyleBackColor = true;
+            this.bldConnectBtn.Click += new System.EventHandler(this.bldConnectBtn_Click);
+            // 
             // disconnectButton
             // 
             this.disconnectButton.Enabled = false;
-            this.disconnectButton.Location = new System.Drawing.Point(372, 78);
+            this.disconnectButton.Location = new System.Drawing.Point(408, 78);
             this.disconnectButton.Name = "disconnectButton";
             this.disconnectButton.Size = new System.Drawing.Size(146, 32);
             this.disconnectButton.TabIndex = 12;
@@ -218,7 +236,7 @@ namespace GOSTool
             // installButton
             // 
             this.installButton.Enabled = false;
-            this.installButton.Location = new System.Drawing.Point(195, 78);
+            this.installButton.Location = new System.Drawing.Point(212, 78);
             this.installButton.Name = "installButton";
             this.installButton.Size = new System.Drawing.Size(146, 32);
             this.installButton.TabIndex = 11;
@@ -228,7 +246,7 @@ namespace GOSTool
             // 
             // browseButton
             // 
-            this.browseButton.Location = new System.Drawing.Point(477, 131);
+            this.browseButton.Location = new System.Drawing.Point(512, 131);
             this.browseButton.Name = "browseButton";
             this.browseButton.Size = new System.Drawing.Size(42, 26);
             this.browseButton.TabIndex = 10;
@@ -240,7 +258,7 @@ namespace GOSTool
             // 
             this.appBinaryPathTb.Location = new System.Drawing.Point(147, 133);
             this.appBinaryPathTb.Name = "appBinaryPathTb";
-            this.appBinaryPathTb.Size = new System.Drawing.Size(324, 22);
+            this.appBinaryPathTb.Size = new System.Drawing.Size(359, 22);
             this.appBinaryPathTb.TabIndex = 9;
             // 
             // label2
@@ -270,9 +288,9 @@ namespace GOSTool
             this.groupBox3.Controls.Add(this.minorNUD);
             this.groupBox3.Controls.Add(this.majorNUD);
             this.groupBox3.Controls.Add(this.nameTb);
-            this.groupBox3.Location = new System.Drawing.Point(613, 194);
+            this.groupBox3.Location = new System.Drawing.Point(3, 197);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(580, 225);
+            this.groupBox3.Size = new System.Drawing.Size(699, 224);
             this.groupBox3.TabIndex = 6;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Application data";
@@ -281,7 +299,7 @@ namespace GOSTool
             // 
             this.dateDTP.Location = new System.Drawing.Point(310, 180);
             this.dateDTP.Name = "dateDTP";
-            this.dateDTP.Size = new System.Drawing.Size(200, 22);
+            this.dateDTP.Size = new System.Drawing.Size(244, 22);
             this.dateDTP.TabIndex = 27;
             // 
             // label7
@@ -297,14 +315,14 @@ namespace GOSTool
             // 
             this.descTb.Location = new System.Drawing.Point(310, 127);
             this.descTb.Name = "descTb";
-            this.descTb.Size = new System.Drawing.Size(200, 22);
+            this.descTb.Size = new System.Drawing.Size(244, 22);
             this.descTb.TabIndex = 25;
             // 
             // authorTb
             // 
             this.authorTb.Location = new System.Drawing.Point(310, 76);
             this.authorTb.Name = "authorTb";
-            this.authorTb.Size = new System.Drawing.Size(200, 22);
+            this.authorTb.Size = new System.Drawing.Size(244, 22);
             this.authorTb.TabIndex = 24;
             // 
             // label6
@@ -386,7 +404,7 @@ namespace GOSTool
             // 
             this.nameTb.Location = new System.Drawing.Point(310, 30);
             this.nameTb.Name = "nameTb";
-            this.nameTb.Size = new System.Drawing.Size(200, 22);
+            this.nameTb.Size = new System.Drawing.Size(244, 22);
             this.nameTb.TabIndex = 14;
             // 
             // groupBox4
@@ -394,12 +412,12 @@ namespace GOSTool
             this.groupBox4.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox4.Controls.Add(this.richTextBox1);
             this.groupBox4.Controls.Add(this.progressLabel);
             this.groupBox4.Controls.Add(this.progressBar1);
-            this.groupBox4.Location = new System.Drawing.Point(613, 423);
+            this.groupBox4.Controls.Add(this.richTextBox1);
+            this.groupBox4.Location = new System.Drawing.Point(3, 427);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(580, 495);
+            this.groupBox4.Size = new System.Drawing.Size(699, 386);
             this.groupBox4.TabIndex = 7;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Status";
@@ -411,10 +429,11 @@ namespace GOSTool
             | System.Windows.Forms.AnchorStyles.Right)));
             this.richTextBox1.BackColor = System.Drawing.Color.Black;
             this.richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.richTextBox1.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.richTextBox1.ForeColor = System.Drawing.Color.White;
             this.richTextBox1.Location = new System.Drawing.Point(18, 21);
             this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(556, 416);
+            this.richTextBox1.Size = new System.Drawing.Size(671, 307);
             this.richTextBox1.TabIndex = 10;
             this.richTextBox1.Text = "";
             this.richTextBox1.TextChanged += new System.EventHandler(this.richTextBox1_TextChanged);
@@ -423,7 +442,7 @@ namespace GOSTool
             // 
             this.progressLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.progressLabel.AutoSize = true;
-            this.progressLabel.Location = new System.Drawing.Point(542, 460);
+            this.progressLabel.Location = new System.Drawing.Point(661, 351);
             this.progressLabel.Name = "progressLabel";
             this.progressLabel.Size = new System.Drawing.Size(28, 17);
             this.progressLabel.TabIndex = 9;
@@ -433,31 +452,37 @@ namespace GOSTool
             // 
             this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.progressBar1.Location = new System.Drawing.Point(18, 454);
+            this.progressBar1.Location = new System.Drawing.Point(18, 345);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(513, 23);
+            this.progressBar1.Size = new System.Drawing.Size(632, 23);
             this.progressBar1.TabIndex = 8;
             // 
-            // bldConnectBtn
+            // splitContainer1
             // 
-            this.bldConnectBtn.Location = new System.Drawing.Point(18, 78);
-            this.bldConnectBtn.Name = "bldConnectBtn";
-            this.bldConnectBtn.Size = new System.Drawing.Size(146, 32);
-            this.bldConnectBtn.TabIndex = 13;
-            this.bldConnectBtn.Text = "Bootloader connect";
-            this.bldConnectBtn.UseVisualStyleBackColor = true;
-            this.bldConnectBtn.Click += new System.EventHandler(this.bldConnectBtn_Click);
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.swInfoListView);
+            this.splitContainer1.Panel1.Controls.Add(this.groupBox2);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.groupBox1);
+            this.splitContainer1.Panel2.Controls.Add(this.groupBox3);
+            this.splitContainer1.Panel2.Controls.Add(this.groupBox4);
+            this.splitContainer1.Size = new System.Drawing.Size(1373, 825);
+            this.splitContainer1.SplitterDistance = 655;
+            this.splitContainer1.TabIndex = 4;
             // 
             // SoftwareInstallWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1205, 930);
-            this.Controls.Add(this.groupBox4);
-            this.Controls.Add(this.groupBox3);
-            this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.swInfoListView);
-            this.Controls.Add(this.groupBox2);
+            this.ClientSize = new System.Drawing.Size(1373, 825);
+            this.Controls.Add(this.splitContainer1);
             this.Name = "SoftwareInstallWindow";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Software Install";
@@ -473,6 +498,10 @@ namespace GOSTool
             ((System.ComponentModel.ISupportInitialize)(this.majorNUD)).EndInit();
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -516,5 +545,6 @@ namespace GOSTool
         private System.Windows.Forms.Label progressLabel;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Button bldConnectBtn;
+        private System.Windows.Forms.SplitContainer splitContainer1;
     }
 }

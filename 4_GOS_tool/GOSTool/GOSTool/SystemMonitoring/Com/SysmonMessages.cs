@@ -115,6 +115,9 @@ namespace GOSTool
         GOS_SYSMON_TASK_MOD_TYPE_SUSPEND = 12,
         GOS_SYSMON_TASK_MOD_TYPE_RESUME = 34,
         GOS_SYSMON_TASK_MOD_TYPE_DELETE = 49,
+        GOS_SYSMON_TASK_MOD_TYPE_BLOCK = 52,
+        GOS_SYSMON_TASK_MOD_TYPE_UNBLOCK = 63,
+        GOS_SYSMON_TASK_MOD_TYPE_WAKEUP = 74
     }
 
     /// <summary>
@@ -438,8 +441,9 @@ namespace GOSTool
     {
         public UInt16 TaskIndex { get; set; }
         public SysmonTaskModifyType TaskModifyType { get; set; }
+        public UInt32 Param { get; set; }
 
-        public const UInt16 ExpectedSize = 3;
+        public const UInt16 ExpectedSize = 2 + 1 + 4;
 
         /// <summary>
         /// Returns the message as a byte array.
@@ -451,7 +455,11 @@ namespace GOSTool
             {
                 (byte)(TaskIndex),
                 (byte)((int)TaskIndex >> 8),
-                (byte)(TaskModifyType)
+                (byte)(TaskModifyType),
+                (byte)(Param >> 24),
+                (byte)(Param >> 16),
+                (byte)(Param >> 8),
+                (byte)(Param)
             };
         }
     }

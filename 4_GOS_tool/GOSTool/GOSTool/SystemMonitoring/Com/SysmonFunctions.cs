@@ -121,7 +121,14 @@ namespace GOSTool
                     bootloaderData.BootloaderDriverInfo.Major = respMsg.bldData.bldDriverVersion.major;
                     bootloaderData.BootloaderDriverInfo.Minor = respMsg.bldData.bldDriverVersion.minor;
                     bootloaderData.BootloaderDriverInfo.Build = respMsg.bldData.bldDriverVersion.build;
-                    bootloaderData.BootloaderDriverInfo.Date = DateTime.Parse(respMsg.bldData.bldDriverVersion.date.Years.ToString("D4") + "-" + respMsg.bldData.bldDriverVersion.date.Months.ToString("D2") + "-" + respMsg.bldData.bldDriverVersion.date.Days.ToString("D2"));
+                    try
+                    {
+                        bootloaderData.BootloaderDriverInfo.Date = DateTime.Parse(respMsg.bldData.bldDriverVersion.date.Years.ToString("D4") + "-" + respMsg.bldData.bldDriverVersion.date.Months.ToString("D2") + "-" + respMsg.bldData.bldDriverVersion.date.Days.ToString("D2"));
+                    }
+                    catch
+                    {
+                        bootloaderData.BootloaderDriverInfo.Date = new DateTime();
+                    }
                     bootloaderData.BootloaderDriverInfo.Description = respMsg.bldData.bldDriverVersion.description;
                     bootloaderData.BootloaderDriverInfo.Name = respMsg.bldData.bldDriverVersion.name;
 
@@ -153,24 +160,6 @@ namespace GOSTool
                     bootloaderData.ApplicationData.AppVersion.Major = respMsg.appData.appVersion.major;
                     bootloaderData.ApplicationData.AppVersion.Minor = respMsg.appData.appVersion.minor;
                     bootloaderData.ApplicationData.AppVersion.Build = respMsg.appData.appVersion.build;
-
-                    bootloaderData.ApplicationData.DriverVersion = new VersionInfo();
-                    bootloaderData.ApplicationData.DriverVersion.Author = respMsg.appData.appDriverVersion.author;
-                    bootloaderData.ApplicationData.DriverVersion.Major = respMsg.appData.appDriverVersion.major;
-                    bootloaderData.ApplicationData.DriverVersion.Minor = respMsg.appData.appDriverVersion.minor;
-                    bootloaderData.ApplicationData.DriverVersion.Build = respMsg.appData.appDriverVersion.build;
-
-                    try
-                    {
-                        bootloaderData.ApplicationData.DriverVersion.Date = DateTime.Parse(respMsg.appData.appVersion.date.Years.ToString("D4") + "-" + respMsg.appData.appVersion.date.Months.ToString("D2") + "-" + respMsg.appData.appVersion.date.Days.ToString("D2"));
-                    }
-                    catch
-                    {
-                        bootloaderData.ApplicationData.DriverVersion.Date = new DateTime();
-                    }
-                    bootloaderData.ApplicationData.DriverVersion.Description = respMsg.appData.appVersion.description;
-                    bootloaderData.ApplicationData.DriverVersion.Name = respMsg.appData.appVersion.name;
-
                     try
                     {
                         bootloaderData.ApplicationData.AppVersion.Date = DateTime.Parse(respMsg.appData.appVersion.date.Years.ToString("D4") + "-" + respMsg.appData.appVersion.date.Months.ToString("D2") + "-" + respMsg.appData.appVersion.date.Days.ToString("D2"));
@@ -181,6 +170,26 @@ namespace GOSTool
                     }
                     bootloaderData.ApplicationData.AppVersion.Description = respMsg.appData.appVersion.description;
                     bootloaderData.ApplicationData.AppVersion.Name = respMsg.appData.appVersion.name;
+
+                    // Application driver data.
+                    bootloaderData.ApplicationData.DriverVersion = new VersionInfo();
+                    bootloaderData.ApplicationData.DriverVersion.Author = respMsg.appData.appDriverVersion.author;
+                    bootloaderData.ApplicationData.DriverVersion.Major = respMsg.appData.appDriverVersion.major;
+                    bootloaderData.ApplicationData.DriverVersion.Minor = respMsg.appData.appDriverVersion.minor;
+                    bootloaderData.ApplicationData.DriverVersion.Build = respMsg.appData.appDriverVersion.build;
+
+                    try
+                    {
+                        bootloaderData.ApplicationData.DriverVersion.Date = DateTime.Parse(respMsg.appData.appDriverVersion.date.Years.ToString("D4") + "-" + respMsg.appData.appDriverVersion.date.Months.ToString("D2") + "-" + respMsg.appData.appDriverVersion.date.Days.ToString("D2"));
+                    }
+                    catch
+                    {
+                        bootloaderData.ApplicationData.DriverVersion.Date = new DateTime();
+                    }
+                    bootloaderData.ApplicationData.DriverVersion.Description = respMsg.appData.appDriverVersion.description;
+                    bootloaderData.ApplicationData.DriverVersion.Name = respMsg.appData.appDriverVersion.name;
+
+
                     bootloaderData.ApplicationData.Crc = (int)respMsg.appData.appCrc;
                     bootloaderData.ApplicationData.Size = (int)respMsg.appData.appSize;
                     bootloaderData.ApplicationData.StartAddress = (int)respMsg.appData.appStartAddress;
