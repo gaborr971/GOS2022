@@ -14,7 +14,7 @@ The project is created for an STM32F446RE board with the following properties:
 	-	CPU-load task (to print an average CPU load on the trace output)
 
 Observe the code and the behavior of the system. The shell is configured, built-in commands can be run (type 'shell help' for available command parameters).
-The syntax to execute shell commands is 'shell <parameter>'. For example, 'shell runtime' will print out the system runtime from last reset on the shell output.
+The syntax to execute shell commands is 'shell <parameter>'. For example, 'shell runtime' will print out the system runtime since last reset on the shell output.
 
 Last updated: 2024-05-03
 (c) 2024, Ahmed Gazar
