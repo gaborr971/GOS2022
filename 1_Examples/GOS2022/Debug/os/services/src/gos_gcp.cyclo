@@ -1,4 +1,0 @@
-../os/services/src/gos_gcp.c:141:14:gos_gcpInit	3
-../os/services/src/gos_gcp.c:169:14:gos_gcpRegisterPhysicalDriver	4
-../os/services/src/gos_gcp.c:198:14:gos_gcpTransmitMessage	20
-../os/services/src/gos_gcp.c:248:14:gos_gcpReceiveMessage	27

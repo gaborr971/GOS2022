@@ -1,3 +1,0 @@
-../os/services/src/gos_mutex.c:76:14:gos_mutexInit	2
-../os/services/src/gos_mutex.c:103:14:gos_mutexLock	21
-../os/services/src/gos_mutex.c:202:14:gos_mutexUnlock	7

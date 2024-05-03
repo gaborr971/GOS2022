@@ -1,3 +1,0 @@
-../os/services/src/gos_mutex.c:76:14:gos_mutexInit	24	static
-../os/services/src/gos_mutex.c:103:14:gos_mutexLock	32	static,ignoring_inline_asm
-../os/services/src/gos_mutex.c:202:14:gos_mutexUnlock	24	static,ignoring_inline_asm
